@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34321.82
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "[01]DataCore", "[01]DataCore", "{640ABC70-4DAF-49E5-B1F8-C505F2B0F8DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.Data.Core", "iml6yu.DataCore\iml6yu.Data.Core\iml6yu.Data.Core.csproj", "{4F9F48C4-9EC9-4A85-BE39-ADADEEAB32B4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "[02]DataReceive", "[02]DataReceive", "{3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "iml6yu.DataReceive.Core", "iml6yu.DataReceive\iml6yu.DataReceive.Core\iml6yu.DataReceive.Core.csproj", "{72F2C0F1-56B0-45F5-999E-EB190FB4CD99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataReceive.Mqtt", "iml6yu.DataReceive\iml6yu.DataReceive.Mqtt\iml6yu.DataReceive.Mqtt.csproj", "{6AD412A4-5446-4FB0-82BB-665045AEBC34}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F9F48C4-9EC9-4A85-BE39-ADADEEAB32B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F9F48C4-9EC9-4A85-BE39-ADADEEAB32B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F9F48C4-9EC9-4A85-BE39-ADADEEAB32B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F9F48C4-9EC9-4A85-BE39-ADADEEAB32B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72F2C0F1-56B0-45F5-999E-EB190FB4CD99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72F2C0F1-56B0-45F5-999E-EB190FB4CD99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72F2C0F1-56B0-45F5-999E-EB190FB4CD99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72F2C0F1-56B0-45F5-999E-EB190FB4CD99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AD412A4-5446-4FB0-82BB-665045AEBC34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AD412A4-5446-4FB0-82BB-665045AEBC34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AD412A4-5446-4FB0-82BB-665045AEBC34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AD412A4-5446-4FB0-82BB-665045AEBC34}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4F9F48C4-9EC9-4A85-BE39-ADADEEAB32B4} = {640ABC70-4DAF-49E5-B1F8-C505F2B0F8DE}
+		{72F2C0F1-56B0-45F5-999E-EB190FB4CD99} = {3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}
+		{6AD412A4-5446-4FB0-82BB-665045AEBC34} = {3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {17FDDAE9-6592-4AE5-9DC7-85C0D6913D5A}
+	EndGlobalSection
+EndGlobal
