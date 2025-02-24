@@ -13,6 +13,12 @@ using System.Threading.Channels;
 
 namespace iml6yu.DataReceive.Core
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TClient">客户端类型</typeparam>
+    /// <typeparam name="TOption">客户端配置参数</typeparam>
+    /// <typeparam name="TReceiveContent">接收文件内容</typeparam>
     public abstract class DataReceiver<TClient, TOption, TReceiveContent> : IDataReceiver<TClient, TOption, TReceiveContent>
         where TClient : class
         where TOption : DataReceiverOption
@@ -360,7 +366,7 @@ namespace iml6yu.DataReceive.Core
 
                 if (!VerifyValue(values[key].Value, CacheDataDic[key].Data.ValueType))
                 {
-                    Logger.LogWarning($"{key}上报的数据类型是{values[key].Value.GetType()}与配置的类型{CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
+                    Logger.LogWarning($"{key}上报的数据类型是{values[key].Value.GetType()}与配置的类型{(TypeCode)CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
                     continue;
                 }
 

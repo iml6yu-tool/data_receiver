@@ -5,13 +5,31 @@ VisualStudioVersion = 17.9.34321.82
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "[01]DataCore", "[01]DataCore", "{640ABC70-4DAF-49E5-B1F8-C505F2B0F8DE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.Data.Core", "iml6yu.DataCore\iml6yu.Data.Core\iml6yu.Data.Core.csproj", "{4F9F48C4-9EC9-4A85-BE39-ADADEEAB32B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "iml6yu.Data.Core", "iml6yu.DataCore\iml6yu.Data.Core\iml6yu.Data.Core.csproj", "{4F9F48C4-9EC9-4A85-BE39-ADADEEAB32B4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "[02]DataReceive", "[02]DataReceive", "{3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "iml6yu.DataReceive.Core", "iml6yu.DataReceive\iml6yu.DataReceive.Core\iml6yu.DataReceive.Core.csproj", "{72F2C0F1-56B0-45F5-999E-EB190FB4CD99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataReceive.Mqtt", "iml6yu.DataReceive\iml6yu.DataReceive.Mqtt\iml6yu.DataReceive.Mqtt.csproj", "{6AD412A4-5446-4FB0-82BB-665045AEBC34}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "iml6yu.DataReceive.Mqtt", "iml6yu.DataReceive\iml6yu.DataReceive.Mqtt\iml6yu.DataReceive.Mqtt.csproj", "{6AD412A4-5446-4FB0-82BB-665045AEBC34}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "[00]Docs", "[00]Docs", "{C71D8900-BCB0-426F-8B7E-6B19AD4E407E}"
+	ProjectSection(SolutionItems) = preProject
+		..\doc\index.html = ..\doc\index.html
+		..\doc\readme.md = ..\doc\readme.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "iml6yu.DataReceive.OPCUA", "iml6yu.DataReceive\iml6yu.DataReceive.OPCUA\iml6yu.DataReceive.OPCUA.csproj", "{1F8FB11B-30D1-4619-9B70-EE015D1DD6AE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "[10]Database", "[10]Database", "{59AC5D6D-E7BF-4ADC-9861-C4FC5873F9F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.Database.Constant", "iml6yu.Database\iml6yu.Database.Constant\iml6yu.Database.Constant.csproj", "{EB0310DF-F441-4677-80A0-3CB5E8682A8E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "[03]DataPublish", "[03]DataPublish", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataPublish.Core", "iml6yu.DataPublish\iml6yu.DataPublish.Core\iml6yu.DataPublish.Core.csproj", "{299F5DA5-AF17-483B-BCA2-2B532EC83335}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataPublish.Mqtt", "iml6yu.DataPublish\iml6yu.DataPublish.Mqtt\iml6yu.DataPublish.Mqtt.csproj", "{6A862458-F3A6-434D-9266-151DA230AADD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +49,22 @@ Global
 		{6AD412A4-5446-4FB0-82BB-665045AEBC34}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6AD412A4-5446-4FB0-82BB-665045AEBC34}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6AD412A4-5446-4FB0-82BB-665045AEBC34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F8FB11B-30D1-4619-9B70-EE015D1DD6AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F8FB11B-30D1-4619-9B70-EE015D1DD6AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F8FB11B-30D1-4619-9B70-EE015D1DD6AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F8FB11B-30D1-4619-9B70-EE015D1DD6AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB0310DF-F441-4677-80A0-3CB5E8682A8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB0310DF-F441-4677-80A0-3CB5E8682A8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB0310DF-F441-4677-80A0-3CB5E8682A8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB0310DF-F441-4677-80A0-3CB5E8682A8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{299F5DA5-AF17-483B-BCA2-2B532EC83335}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{299F5DA5-AF17-483B-BCA2-2B532EC83335}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{299F5DA5-AF17-483B-BCA2-2B532EC83335}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{299F5DA5-AF17-483B-BCA2-2B532EC83335}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A862458-F3A6-434D-9266-151DA230AADD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A862458-F3A6-434D-9266-151DA230AADD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A862458-F3A6-434D-9266-151DA230AADD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A862458-F3A6-434D-9266-151DA230AADD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -39,6 +73,10 @@ Global
 		{4F9F48C4-9EC9-4A85-BE39-ADADEEAB32B4} = {640ABC70-4DAF-49E5-B1F8-C505F2B0F8DE}
 		{72F2C0F1-56B0-45F5-999E-EB190FB4CD99} = {3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}
 		{6AD412A4-5446-4FB0-82BB-665045AEBC34} = {3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}
+		{1F8FB11B-30D1-4619-9B70-EE015D1DD6AE} = {3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}
+		{EB0310DF-F441-4677-80A0-3CB5E8682A8E} = {59AC5D6D-E7BF-4ADC-9861-C4FC5873F9F4}
+		{299F5DA5-AF17-483B-BCA2-2B532EC83335} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{6A862458-F3A6-434D-9266-151DA230AADD} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {17FDDAE9-6592-4AE5-9DC7-85C0D6913D5A}
