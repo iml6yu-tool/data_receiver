@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace iml6yu.DataReceive.Core.Configs
+﻿namespace iml6yu.DataReceive.Core.Configs
 {
     /// <summary>
     /// 设备节点配置
@@ -38,7 +32,7 @@ namespace iml6yu.DataReceive.Core.Configs
 
 
         /// <summary>
-        /// 定时查询数据(opc专用）
+        /// 定时查询数据 主动查询数据专用
         /// </summary>
         public int Interval { get; set; }
 

@@ -26,10 +26,36 @@ namespace iml6yu.DataReceive.Core
         public TClient Client { get; set; }
         public TOption Option { get; set; }
 
-        public ReceiverState State { get; protected set; }
+        public ReceiverState State
+        {
+            get
+            {
+                if (DoTask == null)
+                    return ReceiverState.Reading;
+                if (DoTask.Status == TaskStatus.Created)
+                    return ReceiverState.Ready;
+                if (DoTask.Status == TaskStatus.WaitingForActivation)
+                    return ReceiverState.Ready;
+                if (DoTask.Status == TaskStatus.WaitingToRun)
+                    return ReceiverState.Ready;
+                if (DoTask.Status == TaskStatus.Running)
+                    return ReceiverState.Working;
+                if (DoTask.Status == TaskStatus.WaitingForChildrenToComplete)
+                    return ReceiverState.Working;
+                if (DoTask.Status == TaskStatus.RanToCompletion)
+                    return ReceiverState.Stoped;
+                if (DoTask.Status == TaskStatus.Canceled)
+                    return ReceiverState.Stoped;
+                if (DoTask.Status == TaskStatus.Faulted)
+                    return ReceiverState.Error;
+                return ReceiverState.Stoped;
+            }
+        }
+
         public abstract bool IsConnected { get; }
 
         protected ILogger Logger { get; }
+        protected Task DoTask;
         /// <summary>
         /// 配置的节点
         /// </summary>
@@ -96,7 +122,6 @@ namespace iml6yu.DataReceive.Core
             if (isAutoLoadNodeConfig && string.IsNullOrEmpty(option.NodeFile) && nodes == null)
                 throw new ArgumentException($"当自动加载Node配置时，option.NodeFile和nodes参数不可以同时时空\r\nen: When AutoConnect, 'option.NodeFile' and 'nodes' are not both null");
             iml6yu.Fingerprint.UseFingerprint();
-            State = ReceiverState.Reading;
             Logger = logger;
             Option = option;
             StopTokenSource = tokenSource ?? new CancellationTokenSource();
@@ -127,10 +152,9 @@ namespace iml6yu.DataReceive.Core
                 {
                     if (t.Status == TaskStatus.RanToCompletion && t.Result.State)
                     {
-                        State = ReceiverState.Ready;
                         if (Option.AutoWork)
                         {
-                            StartWorkAsync();
+                            StartWorkAsync(StopTokenSource);
                         }
                     }
                 });
@@ -232,39 +256,40 @@ namespace iml6yu.DataReceive.Core
             });
         }
 
-        public async Task StartWorkAsync()
+        public async Task StartWorkAsync(CancellationTokenSource tokenSource)
         {
             await Task.Run(async () =>
             {
-                ReceiveDatas();
                 try
                 {
-                    while (!StopTokenSource.IsCancellationRequested)
+                    ReceiveDatas();
+                    //避免重复调用的时候出现多个检测的task
+                    if (DoTask != null && DoTask.Status == TaskStatus.Running)
+                        DoTask.Dispose();
+                    DoTask = DoAsync(tokenSource);
+                    while (!tokenSource.IsCancellationRequested)
                     {
                         if (!VerifyConnect())
                         {
-                            await Task.Delay(TimeSpan.FromSeconds(10));
-                            continue;
+                            await ConnectAsync();
+                            await Task.Delay(TimeSpan.FromSeconds(5));
                         }
-                        if (State != ReceiverState.Working)
-                            State = ReceiverState.Working;
-                        await DoAsync();
                     }
                 }
                 catch (Exception ex)
                 {
-                    State = ReceiverState.Error;
                     this.Logger.LogError(ex.Message, ex);
                     await Task.Delay(TimeSpan.FromSeconds(10));
-                    StartWorkAsync();
+                    StartWorkAsync(StopTokenSource);
                 }
             });
         }
 
         public async Task StopWorkAsync()
         {
+            StopTokenSource.Cancel();
+            DoTask.Dispose();
             await DisConnectAsync();
-            State = ReceiverState.Stoped;
         }
 
         public MessageResult Subscribe(string key, IEnumerable<string> addressArray)
@@ -480,7 +505,7 @@ namespace iml6yu.DataReceive.Core
         /// <summary>
         /// 开始工作
         /// </summary>
-        protected abstract Task DoAsync();
+        protected abstract Task DoAsync(CancellationTokenSource tokenSource);
 
         /// <summary>
         /// 创建客户端
@@ -495,7 +520,7 @@ namespace iml6yu.DataReceive.Core
         public virtual void Dispose()
         {
             StopTokenSource.Cancel();
-            State = ReceiverState.Stoped;
+            DoTask.Dispose();
             Subscribers?.Clear();
             MessageChannel.Writer.Complete();
             CacheDataDic.Clear();

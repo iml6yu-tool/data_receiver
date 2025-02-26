@@ -14,9 +14,9 @@ using System.Text.Json;
 namespace iml6yu.DataReceive.Mqtt
 {
     public class DataReceiverMqtt : DataReceiver<IMqttClient, DataReceiverMqttOption, string>
-    { 
+    {
         public DataReceiverMqtt(DataReceiverMqttOption option, ILogger logger, Func<string, Dictionary<string, ReceiverTempDataValue>> dataParse, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null, CancellationTokenSource tokenSource = null) : base(option, logger, dataParse, isAutoLoadNodeConfig, nodes, tokenSource)
-        { 
+        {
 
         }
 
@@ -107,13 +107,16 @@ namespace iml6yu.DataReceive.Mqtt
             return Client;
         }
 
-        protected override async Task DoAsync()
+        protected override Task DoAsync(CancellationTokenSource tokenSource)
         {
-            if (!VerifyConnect())
-            {
-                await ConnectAsync();
-            }
-            await Task.Delay(TimeSpan.FromSeconds(30));
+            if (!IsConnected)
+                ConnectAsync().Wait();
+            //如果取消信号发出，则断开当前连接
+            return Task.Run(async () =>
+              {
+                  if (tokenSource.IsCancellationRequested)
+                      await DisConnectAsync();
+              });
         }
 
         /// <summary>
@@ -154,12 +157,15 @@ namespace iml6yu.DataReceive.Mqtt
         /// <exception cref="NotImplementedException"></exception>
         private async Task Client_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs arg)
         {
-            await Task.Run(async () =>
+            if (State == ReceiverState.Working)
             {
-                var list = await MessageReceivedAsync(arg);
-                if (list != null)
-                    await ReceiveDataToMessageChannelAsync(list);
-            });
+                await Task.Run(async () =>
+                {
+                    var list = await MessageReceivedAsync(arg);
+                    if (list != null)
+                        await ReceiveDataToMessageChannelAsync(list);
+                });
+            }
         }
 
         private async void SubscribeMqtt(List<string> topics)

@@ -122,7 +122,7 @@ namespace iml6yu.DataReceive.Core
         /// <summary>
         /// 开始轮询读取
         /// </summary>
-        Task StartWorkAsync();
+        Task StartWorkAsync(CancellationTokenSource tokenSource);
 
         /// <summary>
         /// 停止轮询读取操作
