@@ -24,11 +24,11 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
             if (services == null)
                 throw new ArgumentNullException(nameof(services));
 
-            services.AddSingleton<DataReceiverMqtt>(provider =>
+            services.AddSingleton<DataReceiverModbusRTU>(provider =>
             {
                 var logFactory = provider.GetService<ILoggerFactory>();
-                var log = logFactory.CreateLogger<DataReceiverMqtt>();
-                return new DataReceiverMqtt(option, log, dataParse, isAutoLoadNodeConfig, nodes, stopTokenSource);
+                var log = logFactory.CreateLogger<DataReceiverModbusRTU>();
+                return new DataReceiverModbusRTU(option, log, isAutoLoadNodeConfig, nodes, stopTokenSource);
             });
             return services;
         }

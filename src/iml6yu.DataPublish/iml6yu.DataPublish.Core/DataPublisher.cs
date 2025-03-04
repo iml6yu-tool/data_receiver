@@ -1,11 +1,6 @@
 ﻿using iml6yu.Data.Core;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace iml6yu.DataPublish.Core
 {
@@ -56,8 +51,7 @@ namespace iml6yu.DataPublish.Core
             Option = option;
             Logger = logger;
             CreateClient(option);
-        }
-
+        } 
         /// <summary>
         /// 初始化
         /// </summary>
@@ -79,6 +73,7 @@ namespace iml6yu.DataPublish.Core
             return IsConnected;
         }
 
+//#error 通过外部设置connect 和disconnect action的方式进行处理
         public abstract Task<MessageResult> ConnectAsync();
 
         public abstract Task<MessageResult> DisConnectAsync();

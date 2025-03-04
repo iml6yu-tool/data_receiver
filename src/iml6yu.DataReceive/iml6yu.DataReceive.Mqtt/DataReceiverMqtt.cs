@@ -1,5 +1,6 @@
 ﻿using iml6yu.Data.Core;
 using iml6yu.Data.Core.JsonConverts;
+using iml6yu.Data.Core.Models;
 using iml6yu.DataReceive.Core;
 using iml6yu.DataReceive.Core.Configs;
 using iml6yu.DataReceive.Core.Models;
@@ -208,6 +209,39 @@ namespace iml6yu.DataReceive.Mqtt
 
             var mqttSubscribeOptions = mqttUnsubscribeOptionsBuilder.Build();
             return mqttSubscribeOptions;
+        }
+
+        public override async Task<MessageResult> WriteAsync(DataWriteContract data)
+        {
+            var result = await Client.PublishStringAsync(data.Key, JsonSerializer.Serialize(data));
+
+            if (result.IsSuccess)
+                return MessageResult.Success();
+            return MessageResult.Failed((int)result.ReasonCode, result.ReasonString, null);
+        }
+
+        public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)
+        {
+            return MessageResult.Failed(ResultType.NotImplemented, "Mqtt not allow this method", null);
+        }
+
+        /// <summary>
+        /// address 作为topic的name
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="address"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public override async Task<MessageResult> WriteAsync<T>(string address, T data)
+        {
+            if(!(data is string content))
+                return MessageResult.Failed(ResultType.ParameterError, "the data must be type of string, when on mqtt", null);
+
+            var result = await Client.PublishStringAsync(address, content);
+
+            if (result.IsSuccess)
+                return MessageResult.Success();
+            return MessageResult.Failed((int)result.ReasonCode, result.ReasonString, null);
         }
     }
 

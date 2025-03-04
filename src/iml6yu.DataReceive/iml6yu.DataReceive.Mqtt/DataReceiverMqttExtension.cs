@@ -3,8 +3,6 @@ using iml6yu.DataReceive.Core.Models;
 using iml6yu.DataReceive.Mqtt.Configs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Net.Http;
-using System.Text.Json;
 
 namespace iml6yu.DataReceive.Mqtt
 {
@@ -60,7 +58,7 @@ namespace iml6yu.DataReceive.Mqtt
                 return new DataReceiverMqtt(option, log, dataParse, isAutoLoadNodeConfig, nodes, stopTokenSource);
             });
             return services;
-        }
+        } 
     }
 }
 

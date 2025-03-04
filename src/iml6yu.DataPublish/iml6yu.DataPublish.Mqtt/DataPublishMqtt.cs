@@ -20,6 +20,8 @@ namespace iml6yu.DataPublish.Mqtt
         {
         }
 
+     
+
         protected override bool IsConnected
         {
             get

@@ -106,6 +106,27 @@ namespace iml6yu.DataReceive.Core
         Task<DataResult<DataReceiveContractItem>> ReadAsync(string address, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// 写数据
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        Task<MessageResult> WriteAsync(DataWriteContract data);
+        /// <summary>
+        /// 写单条数据
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        Task<MessageResult> WriteAsync(DataWriteContractItem data);
+
+        /// <summary>
+        /// 写单条数据
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="address"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        Task<MessageResult> WriteAsync<T>(string address, T data);
+        /// <summary>
         /// 订阅某些Node的值
         /// </summary>
         /// <param name="key">当前订阅的key</param>

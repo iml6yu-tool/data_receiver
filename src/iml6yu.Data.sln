@@ -35,6 +35,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataReceive.ModbusSl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataReceive.ModbusMasterRTU", "iml6yu.DataReceive\iml6yu.DataReceive.ModbusMasterRTU\iml6yu.DataReceive.ModbusMasterRTU.csproj", "{19D875D9-0099-48BB-9044-123EDF11D344}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "[99]Test", "[99]Test", "{3A3AFE5E-83DD-42A5-9266-4EB65E10073F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "验证", "test\验证\验证.csproj", "{1C60C64C-BF90-4B24-9F59-3D3A042B337F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +81,10 @@ Global
 		{19D875D9-0099-48BB-9044-123EDF11D344}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19D875D9-0099-48BB-9044-123EDF11D344}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19D875D9-0099-48BB-9044-123EDF11D344}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C60C64C-BF90-4B24-9F59-3D3A042B337F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C60C64C-BF90-4B24-9F59-3D3A042B337F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C60C64C-BF90-4B24-9F59-3D3A042B337F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C60C64C-BF90-4B24-9F59-3D3A042B337F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -91,6 +99,7 @@ Global
 		{6A862458-F3A6-434D-9266-151DA230AADD} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{08769188-5184-473C-ACE0-93576459C4BB} = {3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}
 		{19D875D9-0099-48BB-9044-123EDF11D344} = {3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}
+		{1C60C64C-BF90-4B24-9F59-3D3A042B337F} = {3A3AFE5E-83DD-42A5-9266-4EB65E10073F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {17FDDAE9-6592-4AE5-9DC7-85C0D6913D5A}

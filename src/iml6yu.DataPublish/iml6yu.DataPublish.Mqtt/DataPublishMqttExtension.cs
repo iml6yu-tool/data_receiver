@@ -1,6 +1,7 @@
 ﻿using iml6yu.DataPublish.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MQTTnet.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,6 +59,46 @@ namespace iml6yu.DataPublish.Mqtt
             });
             return services;
         }
+
+        ///// <summary>
+        ///// 使用读取客户端关联推送客户端
+        ///// </summary>
+        ///// <param name="services"></param>
+        ///// <param name="option"></param>
+        ///// <param name="client"></param>
+        ///// <returns></returns>
+        ///// <exception cref="ArgumentNullException"></exception>
+        //public static IServiceCollection WithPublisher(this IServiceCollection services, DataPublisherOption option, IMqttClient client)
+        //{
+        //    if (services == null)
+        //        throw new ArgumentNullException(nameof(services));
+
+        //    services.AddSingleton(provider =>
+        //    {
+        //        var logFactory = provider.GetService<ILoggerFactory>();
+        //        var log = logFactory.CreateLogger<DataPublishMqtt<object>>();
+        //        return new DataPublishMqtt<object>(option, log, client);
+        //    });
+        //    return services;
+
+        //}
+
+        //public static IServiceCollection WithPublisher<TReceiver>(this IServiceCollection services, DataPublisherOption option, TReceiver receiver)
+           
+        //{
+        //    if (services == null)
+        //        throw new ArgumentNullException(nameof(services));
+
+        //    services.AddSingleton(provider =>
+        //    {
+        //        var logFactory = provider.GetService<ILoggerFactory>();
+        //        var log = logFactory.CreateLogger<DataPublishMqtt<object>>();
+        //        var receiver = provider.GetService<TReceiver>();
+        //        return new DataPublishMqtt<object>(option, log, receiver);
+        //    });
+        //    return services;
+
+        //}
     }
 
 }

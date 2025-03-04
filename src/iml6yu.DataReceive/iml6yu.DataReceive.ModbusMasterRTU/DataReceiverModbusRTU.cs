@@ -1,4 +1,5 @@
-﻿using iml6yu.DataReceive.Core;
+﻿using iml6yu.Data.Core.Models;
+using iml6yu.DataReceive.Core;
 using iml6yu.DataReceive.Core.Configs;
 using iml6yu.DataReceive.Core.Models;
 using iml6yu.DataReceive.ModbusMasterRTU.Configs;
@@ -7,14 +8,19 @@ using Microsoft.Extensions.Logging;
 using NModbus;
 using NModbus.Serial;
 using System.IO.Ports;
+using System.Xml.Linq;
 
 namespace iml6yu.DataReceive.ModbusMasterRTU
 {
     public class DataReceiverModbusRTU : DataReceiver<NModbus.IModbusMaster, DataReceiverModbusOption, string>
     {
         private SerialPort serial;
+        private Dictionary<int, List<ModbusReadConfig>> readNodes;
         public DataReceiverModbusRTU(DataReceiverModbusOption option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null, CancellationTokenSource tokenSource = null) : base(option, logger, isAutoLoadNodeConfig, nodes, tokenSource)
         {
+            if (ConfigNodes == null)
+                throw new ArgumentNullException(nameof(ConfigNodes));
+            readNodes = ConvertConfigNodeToModbusReadConfig(ConfigNodes);
         }
 
         public override bool IsConnected => serial != null && Client != null && serial.IsOpen;
@@ -25,8 +31,10 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                 return MessageResult.Success();
             else
             {
-                await DisConnectAsync();
-                CreateClient(Option);
+                //await DisConnectAsync();
+                if (!serial.IsOpen)
+                    serial.Open();
+                //CreateClient(Option);
                 return MessageResult.Success();
             }
         }
@@ -55,12 +63,8 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
 
         protected override Task DoAsync(CancellationTokenSource tokenSource)
         {
-
             return Task.Run(() =>
             {
-                if (ConfigNodes == null)
-                    throw new ArgumentNullException(nameof(ConfigNodes));
-                var readNodes = ConvertConfigNodeToModbusReadConfig(ConfigNodes);
                 //按照分组进行多线程并行
                 Parallel.ForEach(readNodes, item =>
                 {
@@ -72,7 +76,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                         {
                             readConfig.ReadItems.ForEach(async node =>
                             {
-                                if (node.ReadType == ModbusReadType.Coils)
+                                if (node.ReadType == ModbusReadWriteType.Coils)
                                 {
                                     var values = await Client.ReadCoilsAsync(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
                                     if (values != null && values.Length > 0)
@@ -80,7 +84,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                                         AddReceiveValue(readConfig, node, values, ref tempDatas);
                                     }
                                 }
-                                else if (node.ReadType == ModbusReadType.Inputs)
+                                else if (node.ReadType == ModbusReadWriteType.Inputs)
                                 {
                                     var values = await Client.ReadInputsAsync(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
                                     if (values != null && values.Length > 0)
@@ -88,7 +92,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                                         AddReceiveValue(readConfig, node, values, ref tempDatas);
                                     }
                                 }
-                                else if (node.ReadType == ModbusReadType.HoldingRegisters)
+                                else if (node.ReadType == ModbusReadWriteType.HoldingRegisters)
                                 {
                                     var values = await Client.ReadHoldingRegistersAsync(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
                                     if (values != null && values.Length > 0)
@@ -96,7 +100,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                                         AddReceiveValue(readConfig, node, values, ref tempDatas);
                                     }
                                 }
-                                else if (node.ReadType == ModbusReadType.ReadInputRegisters)
+                                else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters)
                                 {
                                     var values = await Client.ReadInputRegistersAsync(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
                                     if (values != null && values.Length > 0)
@@ -143,8 +147,8 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
             {
                 //局部变量，用字典存储方便过滤
                 //格式 dic<slaveaddress,dic<readtype,sortList<点位，实际配置地址>>>
-                Dictionary<byte, Dictionary<ModbusReadType, SortedList<ushort, NodeItem>>>
-                    tempNode = new Dictionary<byte, Dictionary<ModbusReadType, SortedList<ushort, NodeItem>>>();
+                Dictionary<byte, Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>>
+                    tempNode = new Dictionary<byte, Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>>();
                 foreach (var item in node.Value)
                 {
                     var array = item.FullAddress.Split(['.', '。'], StringSplitOptions.RemoveEmptyEntries);
@@ -158,7 +162,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                         Logger.LogWarning($"node({item.FullAddress}) slaveAddress config error.the first bit must byte type(0~255)");
                         continue;
                     }
-                    if (!Enum.TryParse(array[1], out ModbusReadType readType))
+                    if (!Enum.TryParse(array[1], out ModbusReadWriteType readType))
                     {
                         Logger.LogWarning($"node({item.FullAddress}) readType config error.the second bit must ModbusReadType type(Coils,Inputs,HoldingRegisters,ReadInputRegisters)");
                         continue;
@@ -169,7 +173,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                         continue;
                     }
                     if (!tempNode.ContainsKey(slaveAddress))
-                        tempNode.Add(slaveAddress, new Dictionary<ModbusReadType, SortedList<ushort, NodeItem>>());
+                        tempNode.Add(slaveAddress, new Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>());
                     if (!tempNode[slaveAddress].ContainsKey(readType))
                         tempNode[slaveAddress].Add(readType, new SortedList<ushort, NodeItem>());
                     tempNode[slaveAddress][readType].Add(bits, item);
@@ -182,7 +186,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                         SlaveAddress = t.Key,
                         ReadItems = new List<ModbusReadItem>(),
                     };
-                    foreach (ModbusReadType rt in t.Value.Keys)
+                    foreach (ModbusReadWriteType rt in t.Value.Keys)
                     {
                         readconfig.ReadItems.AddRange(GetModbusReadItems(rt, t.Value[rt]));
                     }
@@ -193,7 +197,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
             return modbusReadConfigDic;
         }
 
-        private List<ModbusReadItem> GetModbusReadItems(ModbusReadType readType, SortedList<ushort, NodeItem> items)
+        private List<ModbusReadItem> GetModbusReadItems(ModbusReadWriteType readType, SortedList<ushort, NodeItem> items)
         {
             List<ModbusReadItem> list = new List<ModbusReadItem>();
             if (items == null || items.Count == 0)
@@ -219,6 +223,87 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
             }
             return list;
         }
+
+        public override async Task<MessageResult> WriteAsync(DataWriteContract data)
+        {
+            await Parallel.ForEachAsync(data.Datas, async (item, token) =>
+            {
+                await WriteAsync(item);
+            });
+            return MessageResult.Success();
+        }
+
+        public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)
+        {
+            if (!VerifyWriteAddress(data.Address, out byte slaveAddress, out ModbusReadWriteType writeType, out ushort bits))
+                return MessageResult.Failed(ResultType.ParameterError, $"write address({data.Address}) is error.the right format is “slaveAddress.ReadWriteType.Bit”", null);
+            await WriteAsync(slaveAddress, writeType, bits, data.Value);
+            return MessageResult.Success();
+        }
+
+
+
+        public override async Task<MessageResult> WriteAsync<T>(string address, T data)
+        {
+            if (!VerifyWriteAddress(address, out byte slaveAddress, out ModbusReadWriteType writeType, out ushort bits))
+                return MessageResult.Failed(ResultType.ParameterError, $"write address({address}) is error.the right format is “slaveAddress.ReadWriteType.Bit”", null);
+            if (data is bool || data is ushort)
+            {
+                await WriteAsync(slaveAddress, writeType, bits, data);
+                return MessageResult.Success();
+            }
+            else
+            {
+                return MessageResult.Failed(ResultType.ParameterError, $"write data({data.GetType().Name})must be bool or ushort", null);
+            }
+
+        }
+        private async Task WriteAsync(byte slaveAddress, ModbusReadWriteType writeType, ushort bits, object value)
+        {
+            if (writeType == ModbusReadWriteType.Coils)
+                await Client.WriteSingleCoilAsync(slaveAddress, bits, (bool)value);
+            else
+                await Client.WriteSingleRegisterAsync(slaveAddress, bits, (ushort)value);
+        }
+
+        private bool VerifyWriteAddress(string address, out byte slaveAddress, out ModbusReadWriteType writeType, out ushort bits)
+        {
+            slaveAddress = default;
+            writeType = default;
+            bits = default;
+            var array = address.Split(['.', '。'], StringSplitOptions.RemoveEmptyEntries);
+            if (array.Length != 3)
+            {
+                Logger.LogWarning($"node({address}) config error.");
+                return false;
+            }
+            if (!byte.TryParse(array[0], out slaveAddress))
+            {
+                Logger.LogWarning($"node({address}) slaveAddress config error.the first bit must byte type(0~255)");
+                return false;
+            }
+            if (!Enum.TryParse(array[1], out writeType))
+            {
+                Logger.LogWarning($"node({address}) wirteType config error.the second bit must ModbusReadType type(Coils,Inputs,HoldingRegisters,ReadInputRegisters)");
+                return false;
+            }
+            else
+            {
+                if (writeType != ModbusReadWriteType.Coils && writeType != ModbusReadWriteType.HoldingRegisters)
+                {
+                    Logger.LogWarning($"node({address}) wirteType config error.the second bit must ModbusReadType type(Coils,HoldingRegisters)");
+                    return false;
+                }
+            }
+
+            if (!ushort.TryParse(array[2], out bits))
+            {
+                Logger.LogWarning($"node({address}) bit config error.the third bit must ushort type");
+                return false;
+            }
+
+            return true;
+        }
         /// <summary>
         /// 读取的配置信息
         /// </summary>
@@ -235,7 +320,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
             /// <summary>
             /// 读取类型
             /// </summary>
-            public ModbusReadType ReadType { get; set; }
+            public ModbusReadWriteType ReadType { get; set; }
             /// <summary>
             /// 起始点位
             /// </summary>
@@ -251,7 +336,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
             public List<NodeItem> ReadNodes { get; set; }
         }
 
-        private enum ModbusReadType
+        public enum ModbusReadWriteType
         {
             /// <summary>
             /// 用于读取和控制远程设备的开关状态，通常用于控制继电器等开关设备, Reads from 1 to 2000 contiguous coils status.

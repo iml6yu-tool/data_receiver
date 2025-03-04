@@ -526,5 +526,11 @@ namespace iml6yu.DataReceive.Core
             CacheDataDic.Clear();
             ConfigNodes.Clear();
         }
+
+        public abstract Task<MessageResult> WriteAsync(DataWriteContract data);
+
+        public abstract Task<MessageResult> WriteAsync(DataWriteContractItem data);
+
+        public abstract Task<MessageResult> WriteAsync<T>(string address, T data)  ;
     }
 }
