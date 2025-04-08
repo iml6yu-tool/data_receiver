@@ -4,7 +4,18 @@
     /// 连接状态参数
     /// </summary>
     public class ConnectArgs : EventArgs
-    { 
+    {
+        public ConnectArgs()
+        {
+        }
+
+        public ConnectArgs(bool isConntion, string message = null)
+        {
+            IsConntion = isConntion;
+            Message = message;
+        }
+
+
         /// <summary>
         /// 是否是连接状态
         /// </summary>

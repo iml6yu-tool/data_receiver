@@ -47,9 +47,6 @@
         /// 是否自动连接
         /// </summary>
         public bool AutoConnect { get; set; } = false;
-        /// <summary>
-        /// 是否自动工作
-        /// </summary>
-        public bool AutoWork { get; set; } = false;
+     
     }
 }

@@ -5,9 +5,7 @@ using iml6yu.DataReceive.Core.Configs;
 using iml6yu.DataReceive.Core.Models;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
-using System.Collections;
 using System.Collections.Concurrent;
-using System.Net;
 using System.Text;
 using System.Threading.Channels;
 
@@ -76,13 +74,14 @@ namespace iml6yu.DataReceive.Core
         /// </summary>
         protected Channel<Dictionary<string, ReceiverTempDataValue>> MessageChannel { get; }
 
-        protected CancellationTokenSource StopTokenSource { get; }
+        //protected CancellationToken StopToken { get; }
 
         protected Func<TReceiveContent, Dictionary<string, ReceiverTempDataValue>> DataParse { get; set; }
 
 
         private static readonly int maxMessageCount = 5000;
         private static readonly int maxMessageWarningCount = (int)(maxMessageCount * 0.8);
+
         #region event
         /// <summary>
         /// 连接事件，当连接状态发生变化时触发
@@ -117,14 +116,13 @@ namespace iml6yu.DataReceive.Core
         /// <param name="nodes">配置的节点信息，当NodeFile有内容时，此参数可以是null</param>
         /// <param name="tokenSource"></param>
         /// <exception cref="ArgumentException"></exception>
-        public DataReceiver(TOption option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null, CancellationTokenSource tokenSource = default)
+        public DataReceiver(TOption option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null)
         {
             if (isAutoLoadNodeConfig && string.IsNullOrEmpty(option.NodeFile) && nodes == null)
                 throw new ArgumentException($"当自动加载Node配置时，option.NodeFile和nodes参数不可以同时时空\r\nen: When AutoConnect, 'option.NodeFile' and 'nodes' are not both null");
             iml6yu.Fingerprint.UseFingerprint();
             Logger = logger;
             Option = option;
-            StopTokenSource = tokenSource ?? new CancellationTokenSource();
             Subscribers = new Dictionary<string, HashSet<string>>();
             MessageChannel = Channel.CreateBounded<Dictionary<string, ReceiverTempDataValue>>(new BoundedChannelOptions(maxMessageCount)
             {
@@ -136,32 +134,26 @@ namespace iml6yu.DataReceive.Core
 
             if (isAutoLoadNodeConfig)
             {
+                MessageResult loadResult;
                 if (nodes != null && nodes.Count > 0)
                 {
-                    LoadConfig(nodes);
+                    loadResult = LoadConfig(nodes);
                 }
                 else
                 {
-                    LoadConfigAsync(Option).Wait();
+                    loadResult = LoadConfigAsync(Option).Result;
                 }
+                if (!loadResult.State)
+                    Logger.LogError($"load config error!\r\n{loadResult.Message}");
             }
 
             if (Option.AutoConnect)
             {
-                ConnectAsync().ContinueWith(t =>
-                {
-                    if (t.Status == TaskStatus.RanToCompletion && t.Result.State)
-                    {
-                        if (Option.AutoWork)
-                        {
-                            StartWorkAsync(StopTokenSource);
-                        }
-                    }
-                });
+                ConnectAsync().Wait();
             }
         }
 
-        public DataReceiver(TOption option, ILogger logger, Func<TReceiveContent, Dictionary<string, ReceiverTempDataValue>> dataParse, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null, CancellationTokenSource tokenSource = null) : this(option, logger, isAutoLoadNodeConfig, nodes, tokenSource)
+        public DataReceiver(TOption option, ILogger logger, Func<TReceiveContent, Dictionary<string, ReceiverTempDataValue>> dataParse, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : this(option, logger, isAutoLoadNodeConfig, nodes)
         {
             DataParse = dataParse;
         }
@@ -183,7 +175,7 @@ namespace iml6yu.DataReceive.Core
             }
         }
 
-        public MessageResult LoadConfig(List<NodeItem> nodes)
+        public virtual MessageResult LoadConfig(List<NodeItem> nodes)
         {
             try
             {
@@ -256,18 +248,18 @@ namespace iml6yu.DataReceive.Core
             });
         }
 
-        public async Task StartWorkAsync(CancellationTokenSource tokenSource)
+        public Task StartWorkAsync(CancellationToken token)
         {
-            await Task.Run(async () =>
+            return Task.Run(async () =>
             {
                 try
                 {
-                    ReceiveDatas();
+                    ReceiveDatas(token);
                     //避免重复调用的时候出现多个检测的task
                     if (DoTask != null && DoTask.Status == TaskStatus.Running)
                         DoTask.Dispose();
-                    DoTask = DoAsync(tokenSource);
-                    while (!tokenSource.IsCancellationRequested)
+                    DoTask = WhileDoAsync(token);
+                    while (!token.IsCancellationRequested)
                     {
                         if (!VerifyConnect())
                         {
@@ -280,14 +272,13 @@ namespace iml6yu.DataReceive.Core
                 {
                     this.Logger.LogError(ex.Message, ex);
                     await Task.Delay(TimeSpan.FromSeconds(10));
-                    StartWorkAsync(StopTokenSource);
+                    StartWorkAsync(token);
                 }
             });
         }
 
         public async Task StopWorkAsync()
         {
-            StopTokenSource.Cancel();
             DoTask.Dispose();
             await DisConnectAsync();
         }
@@ -298,10 +289,10 @@ namespace iml6yu.DataReceive.Core
                 return MessageResult.Failed(ResultType.RepetitiveData, "Subscribe Key is Repetitve Data", null);
 
             if (Subscribers.Count > 20)
-                return MessageResult.Failed(ResultType.Code413, "The Subscribers of DataGatherer is too many,not allow gather 20", null);
+                return MessageResult.Failed(ResultType.ParameterError, "The Subscribers of DataGatherer is too many,not allow gather 20", null);
 
             if (addressArray.Count() > 100)
-                return MessageResult.Failed(ResultType.Code413, "The addressArray is too many,not allow gather 100", null);
+                return MessageResult.Failed(ResultType.ParameterError, "The addressArray is too many,not allow gather 100", null);
 
             Subscribers.Add(key, new HashSet<string>(addressArray));
             return MessageResult.Success();
@@ -329,11 +320,11 @@ namespace iml6yu.DataReceive.Core
         /// 收到数据后进行的逻辑处理
         /// </summary>
         /// <param name="items"></param>
-        protected virtual void ReceiveDatas()
+        protected virtual void ReceiveDatas(CancellationToken token)
         {
             Task.Run(async () =>
             {
-                while (!StopTokenSource.IsCancellationRequested)
+                while (!token.IsCancellationRequested)
                 {
                     await foreach (var data in MessageChannel.Reader.ReadAllAsync())
                     {
@@ -503,9 +494,9 @@ namespace iml6yu.DataReceive.Core
         #endregion
 
         /// <summary>
-        /// 开始工作
+        /// 循环开始读取数据工作
         /// </summary>
-        protected abstract Task DoAsync(CancellationTokenSource tokenSource);
+        protected abstract Task WhileDoAsync(CancellationToken tokenSource);
 
         /// <summary>
         /// 创建客户端
@@ -519,7 +510,6 @@ namespace iml6yu.DataReceive.Core
 
         public virtual void Dispose()
         {
-            StopTokenSource.Cancel();
             DoTask.Dispose();
             Subscribers?.Clear();
             MessageChannel.Writer.Complete();
@@ -531,6 +521,6 @@ namespace iml6yu.DataReceive.Core
 
         public abstract Task<MessageResult> WriteAsync(DataWriteContractItem data);
 
-        public abstract Task<MessageResult> WriteAsync<T>(string address, T data)  ;
+        public abstract Task<MessageResult> WriteAsync<T>(string address, T data);
     }
 }

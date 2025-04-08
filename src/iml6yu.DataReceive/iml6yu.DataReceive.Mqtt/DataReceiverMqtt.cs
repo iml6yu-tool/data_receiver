@@ -16,7 +16,7 @@ namespace iml6yu.DataReceive.Mqtt
 {
     public class DataReceiverMqtt : DataReceiver<IMqttClient, DataReceiverMqttOption, string>
     {
-        public DataReceiverMqtt(DataReceiverMqttOption option, ILogger logger, Func<string, Dictionary<string, ReceiverTempDataValue>> dataParse, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null, CancellationTokenSource tokenSource = null) : base(option, logger, dataParse, isAutoLoadNodeConfig, nodes, tokenSource)
+        public DataReceiverMqtt(DataReceiverMqttOption option, ILogger logger, Func<string, Dictionary<string, ReceiverTempDataValue>> dataParse, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null ) : base(option, logger, dataParse, isAutoLoadNodeConfig, nodes)
         {
 
         }
@@ -108,14 +108,14 @@ namespace iml6yu.DataReceive.Mqtt
             return Client;
         }
 
-        protected override Task DoAsync(CancellationTokenSource tokenSource)
+        protected override Task WhileDoAsync(CancellationToken token)
         {
             if (!IsConnected)
                 ConnectAsync().Wait();
             //如果取消信号发出，则断开当前连接
             return Task.Run(async () =>
               {
-                  if (tokenSource.IsCancellationRequested)
+                  if (token.IsCancellationRequested)
                       await DisConnectAsync();
               });
         }
@@ -234,7 +234,7 @@ namespace iml6yu.DataReceive.Mqtt
         /// <returns></returns>
         public override async Task<MessageResult> WriteAsync<T>(string address, T data)
         {
-            if(!(data is string content))
+            if (!(data is string content))
                 return MessageResult.Failed(ResultType.ParameterError, "the data must be type of string, when on mqtt", null);
 
             var result = await Client.PublishStringAsync(address, content);

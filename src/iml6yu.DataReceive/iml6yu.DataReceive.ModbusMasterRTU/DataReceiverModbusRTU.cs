@@ -1,4 +1,5 @@
-﻿using iml6yu.Data.Core.Models;
+﻿using iml6yu.Data.Core;
+using iml6yu.Data.Core.Models;
 using iml6yu.DataReceive.Core;
 using iml6yu.DataReceive.Core.Configs;
 using iml6yu.DataReceive.Core.Models;
@@ -16,14 +17,30 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
     {
         private SerialPort serial;
         private Dictionary<int, List<ModbusReadConfig>> readNodes;
-        public DataReceiverModbusRTU(DataReceiverModbusOption option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null, CancellationTokenSource tokenSource = null) : base(option, logger, isAutoLoadNodeConfig, nodes, tokenSource)
+        public override bool IsConnected => serial != null && Client != null && serial.IsOpen;
+        public DataReceiverModbusRTU(DataReceiverModbusOption option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : base(option, logger, isAutoLoadNodeConfig, nodes)
         {
-            if (ConfigNodes == null)
-                throw new ArgumentNullException(nameof(ConfigNodes));
-            readNodes = ConvertConfigNodeToModbusReadConfig(ConfigNodes);
+
         }
 
-        public override bool IsConnected => serial != null && Client != null && serial.IsOpen;
+        public override MessageResult LoadConfig(List<NodeItem> nodes)
+        {
+            var r = base.LoadConfig(nodes);
+            if (!r.State)
+                return r;
+
+            if (ConfigNodes == null)
+                return MessageResult.Failed(ResultType.ParameterError, "", new ArgumentNullException(nameof(ConfigNodes)));
+            try
+            {
+                readNodes = ConvertConfigNodeToModbusReadConfig(ConfigNodes);
+                return MessageResult.Success();
+            }
+            catch (Exception ex)
+            {
+                return MessageResult.Failed(ResultType.ParameterError, ex.Message, ex);
+            }
+        }
 
         public override async Task<MessageResult> ConnectAsync()
         {
@@ -31,11 +48,22 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                 return MessageResult.Success();
             else
             {
-                //await DisConnectAsync();
-                if (!serial.IsOpen)
-                    serial.Open();
-                //CreateClient(Option);
-                return MessageResult.Success();
+
+                try
+                {
+                    if (!serial.IsOpen)
+                        serial.Open();
+                    OnConnectionEvent(this.Option, new ConnectArgs(true));
+                    return MessageResult.Success();
+
+                }
+                catch (Exception ex)
+                {
+                    OnConnectionEvent(this.Option, new ConnectArgs(false, ex.Message));
+                    return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+                }
+
+
             }
         }
 
@@ -43,12 +71,19 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
         {
             return await Task.Run(() =>
             {
-                if (serial?.IsOpen ?? false)
-                    serial?.Close();
-                serial?.Dispose();
-                Client.Dispose();
+                try
+                {
+                    if (serial?.IsOpen ?? false)
+                        serial?.Close();
+                    serial?.Dispose();
+                    Client.Dispose();
 
-                return MessageResult.Success();
+                    return MessageResult.Success();
+                }
+                catch (Exception ex)
+                {
+                    return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+                }
             });
         }
 
@@ -61,7 +96,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
             return Client;
         }
 
-        protected override Task DoAsync(CancellationTokenSource tokenSource)
+        protected override Task WhileDoAsync(CancellationToken tokenSource)
         {
             return Task.Run(() =>
             {
@@ -74,48 +109,78 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                         //按照modbus slaveaddress进行分组便利读取
                         Parallel.ForEach(item.Value, async readConfig =>
                         {
-                            readConfig.ReadItems.ForEach(async node =>
+                            readConfig.ReadItems.ForEach(node =>
                             {
                                 if (node.ReadType == ModbusReadWriteType.Coils)
                                 {
-                                    var values = await Client.ReadCoilsAsync(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
-                                    if (values != null && values.Length > 0)
+                                    try
                                     {
-                                        AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                        var values = Client.ReadCoils(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
+                                        if (values != null && values.Length > 0)
+                                        {
+                                            AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                        Logger.LogError("read coils error.\r\n{0}", ex.Message);
                                     }
                                 }
                                 else if (node.ReadType == ModbusReadWriteType.Inputs)
                                 {
-                                    var values = await Client.ReadInputsAsync(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
-                                    if (values != null && values.Length > 0)
+                                    try
                                     {
-                                        AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                        var values = Client.ReadInputs(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
+                                        if (values != null && values.Length > 0)
+                                        {
+                                            AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                        Logger.LogError("read inputs error.\r\n{0}", ex.Message);
                                     }
                                 }
                                 else if (node.ReadType == ModbusReadWriteType.HoldingRegisters)
                                 {
-                                    var values = await Client.ReadHoldingRegistersAsync(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
-                                    if (values != null && values.Length > 0)
+                                    try
                                     {
-                                        AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                        var values = Client.ReadHoldingRegisters(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
+                                        if (values != null && values.Length > 0)
+                                        {
+                                            AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Logger.LogError("read holding registers error.\r\n{0}", ex.Message);
                                     }
                                 }
                                 else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters)
                                 {
-                                    var values = await Client.ReadInputRegistersAsync(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
-                                    if (values != null && values.Length > 0)
+                                    try
                                     {
-                                        AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                        var values = Client.ReadInputRegisters(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
+                                        if (values != null && values.Length > 0)
+                                        {
+                                            AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Logger.LogError("read input registers error.\r\n{0}", ex.Message);
                                     }
                                 }
                             });
                             await ReceiveDataToMessageChannelAsync(tempDatas);
                         });
-                        Task.Delay(item.Key, tokenSource.Token).Wait();
+                        Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource).Wait();
                     }
                 });
 
-            }, tokenSource.Token);
+            }, tokenSource);
         }
 
         private void AddReceiveValue<T>(ModbusReadConfig value, ModbusReadItem node, T[] values, ref Dictionary<string, ReceiverTempDataValue> tempDatas)
@@ -127,13 +192,16 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                 return;
             }
             long timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            for (var i = 0; i < node.ReadNodes.Count; i++)
+            lock (tempDatas)
             {
-                if (tempDatas.ContainsKey(node.ReadNodes[i].Address))
-                    tempDatas[node.ReadNodes[i].Address] = new ReceiverTempDataValue(values[i], timestamp);
-                else
-                    tempDatas.Add(node.ReadNodes[i].Address, new ReceiverTempDataValue(values[i], timestamp));
-            }
+                for (var i = 0; i < node.ReadNodes.Count; i++)
+                {
+                    if (tempDatas.ContainsKey(node.ReadNodes[i].Address))
+                        tempDatas[node.ReadNodes[i].Address] = new ReceiverTempDataValue(values[i], timestamp);
+                    else
+                        tempDatas.Add(node.ReadNodes[i].Address, new ReceiverTempDataValue(values[i], timestamp));
+                }
+            } 
         }
 
         private Dictionary<int, List<ModbusReadConfig>> ConvertConfigNodeToModbusReadConfig(List<NodeItem> nodes)
@@ -154,22 +222,22 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                     var array = item.FullAddress.Split(['.', '。'], StringSplitOptions.RemoveEmptyEntries);
                     if (array.Length != 3)
                     {
-                        Logger.LogWarning($"node({item.FullAddress}) config error.");
+                        Logger.LogError($"node({item.FullAddress}) config error,Must be 2 '.' spilt it");
                         continue;
                     }
                     if (!byte.TryParse(array[0], out byte slaveAddress))
                     {
-                        Logger.LogWarning($"node({item.FullAddress}) slaveAddress config error.the first bit must byte type(0~255)");
+                        Logger.LogError($"node({item.FullAddress}) slaveAddress config error.the first bit must byte type(0~255)");
                         continue;
                     }
                     if (!Enum.TryParse(array[1], out ModbusReadWriteType readType))
                     {
-                        Logger.LogWarning($"node({item.FullAddress}) readType config error.the second bit must ModbusReadType type(Coils,Inputs,HoldingRegisters,ReadInputRegisters)");
+                        Logger.LogError($"node({item.FullAddress}) readType config error.the second bit must ModbusReadType type(Coils,Inputs,HoldingRegisters,ReadInputRegisters)");
                         continue;
                     }
                     if (!ushort.TryParse(array[2], out ushort bits))
                     {
-                        Logger.LogWarning($"node({item.FullAddress}) bit config error.the third bit must ushort type");
+                        Logger.LogError($"node({item.FullAddress}) bit config error.the third bit must ushort type");
                         continue;
                     }
                     if (!tempNode.ContainsKey(slaveAddress))
@@ -226,6 +294,9 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
 
         public override async Task<MessageResult> WriteAsync(DataWriteContract data)
         {
+            if (!IsConnected)
+                return MessageResult.Failed(ResultType.ServerDoApiError, $"the dirver({Option.OriginHost}) not connect");
+
             await Parallel.ForEachAsync(data.Datas, async (item, token) =>
             {
                 await WriteAsync(item);
@@ -235,6 +306,9 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
 
         public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)
         {
+            if (!IsConnected)
+                return MessageResult.Failed(ResultType.ServerDoApiError, $"the dirver({Option.OriginHost}) not connect");
+
             if (!VerifyWriteAddress(data.Address, out byte slaveAddress, out ModbusReadWriteType writeType, out ushort bits))
                 return MessageResult.Failed(ResultType.ParameterError, $"write address({data.Address}) is error.the right format is “slaveAddress.ReadWriteType.Bit”", null);
             await WriteAsync(slaveAddress, writeType, bits, data.Value);
@@ -245,6 +319,9 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
 
         public override async Task<MessageResult> WriteAsync<T>(string address, T data)
         {
+            if (!IsConnected)
+                return MessageResult.Failed(ResultType.ServerDoApiError, $"the dirver({Option.OriginHost}) not connect");
+
             if (!VerifyWriteAddress(address, out byte slaveAddress, out ModbusReadWriteType writeType, out ushort bits))
                 return MessageResult.Failed(ResultType.ParameterError, $"write address({address}) is error.the right format is “slaveAddress.ReadWriteType.Bit”", null);
             if (data is bool || data is ushort)

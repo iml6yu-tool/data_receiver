@@ -1,0 +1,82 @@
+﻿[
+  {
+    "fullAddress": "1.Coils.0",
+    "address": "1.Coils.0",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 10000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.Coils.1",
+    "address": "1.Coils.1",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 10000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.Coils.2",
+    "address": "1.Coils.2",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 10000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.Coils.3",
+    "address": "1.Coils.3",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 10000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.Coils.4",
+    "address": "1.Coils.4",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 10000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.Coils.5",
+    "address": "1.Coils.5",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 10000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.HoldingRegisters.1",
+    "address": "1.HoldingRegisters.1",
+    "valueType": "UInt16",
+    "isSubscribe": true,
+    "interval": 10000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.HoldingRegisters.2",
+    "address": "1.HoldingRegisters.2",
+    "valueType": "UInt16",
+    "isSubscribe": true,
+    "interval": 10000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  }
+]

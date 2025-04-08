@@ -27,7 +27,9 @@ namespace iml6yu.Data.Core.Extensions
             {
                 entity = JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions
                 {
-                    PropertyNameCaseInsensitive = true
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true,
+                    ReadCommentHandling = JsonCommentHandling.Skip,
                 });
             });
             return entity;

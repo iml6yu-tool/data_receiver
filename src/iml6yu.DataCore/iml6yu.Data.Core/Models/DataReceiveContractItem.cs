@@ -42,7 +42,7 @@ namespace iml6yu.Data.Core.Models
         public object Value { get; set; }
 
         /// <summary>
-        /// 时间戳
+        /// 时间戳 从设备中读取的时间戳
         /// </summary>
         public long? Timestamp { get; set; }
     }

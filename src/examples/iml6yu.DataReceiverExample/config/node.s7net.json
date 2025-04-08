@@ -1,0 +1,72 @@
+﻿[
+  {
+    "fullAddress": "DB50.DBW848",
+    "address": "DB50.DBW848",
+    "valueType": "Int16",
+    "isSubscribe": true,
+    "interval": 1000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB50.DBW850",
+    "address": "DB50.DBW850",
+    "valueType": "Int16",
+    "isSubscribe": true,
+    "interval": 1000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB50.DBW852",
+    "address": "DB50.DBW852",
+    "valueType": "Int16",
+    "isSubscribe": true,
+    "interval": 1000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB50.DBW854",
+    "address": "DB50.DBW854",
+    "valueType": "Int16",
+    "isSubscribe": true,
+    "interval": 1000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB50.DBD856",
+    "address": "DB50.DBD856",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 1000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB50.DBD860",
+    "address": "DB50.DBD860",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 1000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB50.DBX860.0",
+    "address": "DB50.DBX860.0",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 1000,
+    "groupName": "产线1",
+    "descript": "",
+    "alisa": ""
+  }
+]
