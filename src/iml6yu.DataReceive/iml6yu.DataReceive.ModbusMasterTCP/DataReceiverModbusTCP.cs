@@ -7,6 +7,7 @@ using iml6yu.DataReceive.ModbusMasterTCP.Configs;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
 using NModbus;
+using System.Buffers.Binary;
 using System.Net.Sockets;
 
 namespace iml6yu.DataReceive.ModbusMasterTCP
@@ -122,7 +123,7 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
                                      {
 
                                          Logger.LogError("read coils error.\r\n{0}", ex.Message);
-                                     } 
+                                     }
                                  }
                                  else if (node.ReadType == ModbusReadWriteType.Inputs)
                                  {
@@ -138,37 +139,23 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
                                      {
 
                                          Logger.LogError("read inputs error.\r\n{0}", ex.Message);
-                                     } 
-                                 }
-                                 else if (node.ReadType == ModbusReadWriteType.HoldingRegisters)
-                                 {
-                                     try
-                                     {
-                                         var values = Client.ReadHoldingRegisters(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
-                                         if (values != null && values.Length > 0)
-                                         {
-                                             AddReceiveValue(readConfig, node, values, ref tempDatas);
-                                         }
                                      }
-                                     catch (Exception ex)
-                                     { 
-                                         Logger.LogError("read holding registers error.\r\n{0}", ex.Message);
-                                     } 
                                  }
-                                 else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters)
+                                 else if (node.ReadType == ModbusReadWriteType.HoldingRegisters
+                                 || node.ReadType == ModbusReadWriteType.HoldingRegisters2
+                                 || node.ReadType == ModbusReadWriteType.HoldingRegisters4
+                                 || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2
+                                 || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4)
                                  {
-                                     try
-                                     {
-                                         var values = Client.ReadInputRegisters(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
-                                         if (values != null && values.Length > 0)
-                                         {
-                                             AddReceiveValue(readConfig, node, values, ref tempDatas);
-                                         }
-                                     }
-                                     catch (Exception ex)
-                                     {
-                                         Logger.LogError("read input registers error.\r\n{0}", ex.Message);
-                                     } 
+                                     tempDatas = ReadHoldingRegisters(readConfig, node, tempDatas);
+                                 }
+                                 else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters
+                                 || node.ReadType == ModbusReadWriteType.ReadInputRegisters2
+                                 || node.ReadType == ModbusReadWriteType.ReadInputRegisters4
+                                 || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
+                                 || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4)
+                                 {
+                                     tempDatas = ReadInputRegisters(readConfig, node, tempDatas);
                                  }
                              });
                              await ReceiveDataToMessageChannelAsync(tempDatas);
@@ -180,22 +167,113 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
             }, tokenSource);
         }
 
+        private Dictionary<string, ReceiverTempDataValue> ReadInputRegisters(ModbusReadConfig readConfig, ModbusReadItem node, Dictionary<string, ReceiverTempDataValue> tempDatas)
+        {
+            try
+            {
+                var values = Client.ReadInputRegisters(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
+                if (values != null && values.Length > 0)
+                {
+                    AddReceiveValue(readConfig, node, values, ref tempDatas);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("read input registers error.\r\n{0}", ex.Message);
+            }
+
+            return tempDatas;
+        }
+
+        private Dictionary<string, ReceiverTempDataValue> ReadHoldingRegisters(ModbusReadConfig readConfig, ModbusReadItem node, Dictionary<string, ReceiverTempDataValue> tempDatas)
+        {
+            try
+            {
+                var values = Client.ReadHoldingRegisters(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
+                if (values != null && values.Length > 0)
+                {
+                    AddReceiveValue(readConfig, node, values, ref tempDatas);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("read holding registers error.\r\n{0}", ex.Message);
+            }
+
+            return tempDatas;
+        }
+
         private void AddReceiveValue<T>(ModbusReadConfig value, ModbusReadItem node, T[] values, ref Dictionary<string, ReceiverTempDataValue> tempDatas)
             where T : struct
         {
-            if (values.Length != node.ReadNodes.Count)
+            if (values.Length != node.NumberOfPoint)
             {
                 Logger.LogWarning($"Read Modbus Data Error,Return Count not equals Read count. Read Node Count is {node.ReadNodes.Count},Return Value Count is {values.Length}.Read Node Details is \r\n{System.Text.Json.JsonSerializer.Serialize(node)}");
                 return;
             }
             long timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            /**
+             * 可以将这两个放在外面的原因是每次读取的类型长度都是一样的。不一样长度会分开读取，
+             * 所以在循环外面声明可以减少内存的申请频率
+             */
+            var numberOfPoint = GetNodeItemNumberOfPoint(node.ReadType);
+            ushort[] arr = new ushort[numberOfPoint];
             for (var i = 0; i < node.ReadNodes.Count; i++)
             {
-                if (tempDatas.ContainsKey(node.ReadNodes[i].Address))
-                    tempDatas[node.ReadNodes[i].Address] = new ReceiverTempDataValue(values[i], timestamp);
+                //var numberOfPoint = GetNodeItemNumberOfPoint(node.ReadType);
+                object currentValue;
+                if (numberOfPoint == 1)
+                    currentValue = values[i];
                 else
-                    tempDatas.Add(node.ReadNodes[i].Address, new ReceiverTempDataValue(values[i], timestamp));
+                {
+                    //short[] arr = new short[numberOfPoint];
+                    Array.Copy(values, i, arr, 0, numberOfPoint);
+                    currentValue = GetNodeItemCurrentValue(node.ReadType, node.ReadNodes[i].ValueTypeCode, arr);
+                }
+                if (tempDatas.ContainsKey(node.ReadNodes[i].Address))
+                    tempDatas[node.ReadNodes[i].Address] = new ReceiverTempDataValue(currentValue, timestamp);
+                else
+                    tempDatas.Add(node.ReadNodes[i].Address, new ReceiverTempDataValue(currentValue, timestamp));
             }
+        }
+
+        private object GetNodeItemCurrentValue(ModbusReadWriteType readType, TypeCode valueTypeCode, params ushort[] values)
+        {
+            if (readType == ModbusReadWriteType.HoldingRegistersLittleEndian2
+                || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2)
+            {
+                var bytes = values.SelectMany(t => BitConverter.GetBytes(t).Reverse()).ToArray();
+                if (valueTypeCode == TypeCode.Int32)
+                    return BitConverter.ToInt32(bytes, 0);
+                return BitConverter.ToUInt32(bytes, 0);
+            }
+            else if (readType == ModbusReadWriteType.HoldingRegistersLittleEndian4
+               || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian4)
+            {
+                var bytes = values.SelectMany(t => BitConverter.GetBytes(t).Reverse()).ToArray();
+                if (valueTypeCode == TypeCode.Int64)
+                    return BitConverter.ToInt64(bytes, 0);
+                return BitConverter.ToUInt64(bytes, 0);
+            }
+
+            else if (readType == ModbusReadWriteType.HoldingRegisters2
+                || readType == ModbusReadWriteType.ReadInputRegisters2)
+            {
+                var bytes = values.Reverse().SelectMany(t => BitConverter.GetBytes(t)).ToArray();
+                if (valueTypeCode == TypeCode.Int32)
+                    return BitConverter.ToInt32(bytes, 0);
+                return BitConverter.ToUInt32(bytes, 0);
+            }
+            else if (readType == ModbusReadWriteType.HoldingRegisters4
+                || readType == ModbusReadWriteType.ReadInputRegisters4)
+            {
+                var bytes = values.Reverse().SelectMany(t => BitConverter.GetBytes(t)).ToArray();
+                if (valueTypeCode == TypeCode.Int64)
+                    return BitConverter.ToInt64(bytes, 0);
+                return BitConverter.ToUInt64(bytes, 0);
+            }
+            else
+                return 0;
         }
 
         private Dictionary<int, List<ModbusReadConfig>> ConvertConfigNodeToModbusReadConfig(List<NodeItem> nodes)
@@ -264,23 +342,30 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
             List<ModbusReadItem> list = new List<ModbusReadItem>();
             if (items == null || items.Count == 0)
                 return list;
+            var numberOfPoint = GetNodeItemNumberOfPoint(readType);
             if (items.Count == 1)
             {
-                list.Add(new ModbusReadItem() { ReadType = readType, StartPoint = items.Keys.First(), NumberOfPoint = 1, ReadNodes = items.Values.ToList() });
+                list.Add(new ModbusReadItem() { ReadType = readType, StartPoint = items.Keys.First(), NumberOfPoint = numberOfPoint, ReadNodes = items.Values.ToList() });
+                return list;
             }
 
-            list.Add(new ModbusReadItem() { ReadType = readType, StartPoint = items.ElementAt(0).Key, NumberOfPoint = 1, ReadNodes = new List<NodeItem> { items.ElementAt(0).Value } });
+            list.Add(new ModbusReadItem() { ReadType = readType, StartPoint = items.ElementAt(0).Key, NumberOfPoint = numberOfPoint, ReadNodes = new List<NodeItem> { items.ElementAt(0).Value } });
             for (int i = 1; i < items.Keys.Count; i++)
             {
-                // 检查当前元素是否与前一个元素连续
-                if (items.Keys[i] == items.Keys[i - 1] + 1)
+                if (items.Keys[i] < items.Keys[i - 1] + numberOfPoint)
                 {
-                    list.Last().NumberOfPoint += 1;
+                    Logger.LogError($"the address({items.Keys[i]}) of node is configuration error. The start address less than previous node(lenght:{numberOfPoint}) end address.");
+                    continue;
+                }
+                // 检查当前元素是否与前一个元素连续
+                if (items.Keys[i] == items.Keys[i - 1] + numberOfPoint)
+                {
+                    list.Last().NumberOfPoint += numberOfPoint;
                     list.Last().ReadNodes.Add(items.ElementAt(i).Value);
                 }
                 else
                 {
-                    list.Add(new ModbusReadItem() { ReadType = readType, StartPoint = items.ElementAt(i).Key, NumberOfPoint = 1, ReadNodes = new List<NodeItem> { items.ElementAt(i).Value } });
+                    list.Add(new ModbusReadItem() { ReadType = readType, StartPoint = items.ElementAt(i).Key, NumberOfPoint = numberOfPoint, ReadNodes = new List<NodeItem> { items.ElementAt(i).Value } });
                 }
             }
             return list;
@@ -375,6 +460,28 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
 
             return true;
         }
+
+        /// <summary>
+        /// 获取当前节点的点位长度
+        /// </summary>
+        /// <param name="readType"></param>
+        /// <returns></returns>
+        private ushort GetNodeItemNumberOfPoint(ModbusReadWriteType readType)
+        {
+            if (readType == ModbusReadWriteType.Coils || readType == ModbusReadWriteType.Inputs)
+                return 1;
+            if (readType == ModbusReadWriteType.HoldingRegisters || readType == ModbusReadWriteType.ReadInputRegisters)
+                return 1;
+
+            if (readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
+                || readType == ModbusReadWriteType.ReadInputRegisters2
+                || readType == ModbusReadWriteType.HoldingRegisters2
+                || readType == ModbusReadWriteType.HoldingRegistersLittleEndian2)
+                return 2;
+            else
+                return 4;
+        }
+
         /// <summary>
         /// 读取的配置信息
         /// </summary>
@@ -422,9 +529,41 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
             /// </summary>
             HoldingRegisters,
             /// <summary>
+            /// 32bit （默认大端） 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// </summary>
+            HoldingRegisters2,
+            /// <summary>
+            /// 64bit （默认大端） 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// </summary>
+            HoldingRegisters4,
+            /// <summary>
+            /// 32bit 小端 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// </summary>
+            HoldingRegistersLittleEndian2,
+            /// <summary>
+            /// 64bit  小端 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// </summary>
+            HoldingRegistersLittleEndian4,
+            /// <summary>
             /// 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
             /// </summary>
-            ReadInputRegisters
+            ReadInputRegisters,
+            /// <summary>
+            ///32bit 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            /// </summary>
+            ReadInputRegisters2,
+            /// <summary>
+            /// 64bit 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            /// </summary>
+            ReadInputRegisters4,
+            /// <summary>
+            ///32bit 小端 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            /// </summary>
+            ReadInputRegistersLittleEndian2,
+            /// <summary>
+            /// 64bit 小端 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            /// </summary>
+            ReadInputRegistersLittleEndian4
 
         }
     }
