@@ -16,7 +16,19 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
     public class DataReceiverModbusRTU : DataReceiver<NModbus.IModbusMaster, DataReceiverModbusOption, string>
     {
         private SerialPort serial;
-        private Dictionary<int, List<ModbusReadConfig>> readNodes;
+        /// <summary>
+        ///分组读取节点
+        ///<list type="bullet">
+        ///<item>Key:GroupName</item>
+        ///<item>Value:配置节点</item>
+        ///<list type="bullet">
+        ///<item>key:读取间隔</item> 
+        ///<item>value:ModbusReadConfig 类型</item>
+        ///</list>
+        ///</list>  
+        /// </summary>
+        private Dictionary<string, Dictionary<int, List<ModbusReadConfig>>> readNodes;
+        private ModbusFactory factory;
         public override bool IsConnected => serial != null && Client != null && serial.IsOpen;
         public DataReceiverModbusRTU(DataReceiverModbusOption option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : base(option, logger, isAutoLoadNodeConfig, nodes)
         {
@@ -27,7 +39,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
         {
             var r = base.LoadConfig(nodes);
             if (!r.State)
-                return r;
+                Logger.LogError(r.Message);
 
             if (ConfigNodes == null)
                 return MessageResult.Failed(ResultType.ParameterError, "", new ArgumentNullException(nameof(ConfigNodes)));
@@ -60,6 +72,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                 catch (Exception ex)
                 {
                     OnConnectionEvent(this.Option, new ConnectArgs(false, ex.Message));
+                    CreateClient(Option);
                     return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
                 }
 
@@ -91,79 +104,87 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
         {
             serial = new SerialPort(option.ComPort, option.BaudRate, option.Parity, option.DataBits, option.StopBit);
             serial.Open();
-            var factory = new ModbusFactory();
+            if (factory == null)
+                factory = new ModbusFactory();
             Client = factory.CreateRtuMaster(serial);
             return Client;
         }
         protected override Task WhileDoAsync(CancellationToken tokenSource)
         {
             return Task.Run(() =>
-            {
-                //按照分组进行多线程并行
-                Parallel.ForEach(readNodes, async item =>
+            {  //按照分组进行多线程并行
+                Parallel.ForEach(readNodes, readNode =>
                 {
-                    while (!tokenSource.IsCancellationRequested)
+                    Parallel.ForEach(readNode.Value, async item =>
                     {
-                        Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
-                        //按照modbus slaveaddress进行分组便利读取
-                        Parallel.ForEach(item.Value, async readConfig =>
+                        while (!tokenSource.IsCancellationRequested)
                         {
-                            readConfig.ReadItems.ForEach(node =>
+                            if (IsConnected)
                             {
-                                if (node.ReadType == ModbusReadWriteType.Coils)
+                                Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
+                                //按照modbus slaveaddress进行分组便利读取
+                                Parallel.ForEach(item.Value, async readConfig =>
+                            {
+                                readConfig.ReadItems.ForEach(node =>
                                 {
-                                    try
+                                    if (node.ReadType == ModbusReadWriteType.Coils)
                                     {
-                                        var values = Client.ReadCoils(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
-                                        if (values != null && values.Length > 0)
+                                        try
                                         {
-                                            AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                            var values = Client.ReadCoils(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
+                                            if (values != null && values.Length > 0)
+                                            {
+                                                AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+
+                                            Logger.LogError("read coils error.\r\n{0}", ex.Message);
                                         }
                                     }
-                                    catch (Exception ex)
+                                    else if (node.ReadType == ModbusReadWriteType.Inputs)
                                     {
-
-                                        Logger.LogError("read coils error.\r\n{0}", ex.Message);
-                                    }
-                                }
-                                else if (node.ReadType == ModbusReadWriteType.Inputs)
-                                {
-                                    try
-                                    {
-                                        var values = Client.ReadInputs(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
-                                        if (values != null && values.Length > 0)
+                                        try
                                         {
-                                            AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                            var values = Client.ReadInputs(readConfig.SlaveAddress, node.StartPoint, node.NumberOfPoint);
+                                            if (values != null && values.Length > 0)
+                                            {
+                                                AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+
+                                            Logger.LogError("read inputs error.\r\n{0}", ex.Message);
                                         }
                                     }
-                                    catch (Exception ex)
+                                    else if (node.ReadType == ModbusReadWriteType.HoldingRegisters
+                                    || node.ReadType == ModbusReadWriteType.HoldingRegisters2
+                                    || node.ReadType == ModbusReadWriteType.HoldingRegisters4
+                                    || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2
+                                    || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4)
                                     {
-
-                                        Logger.LogError("read inputs error.\r\n{0}", ex.Message);
+                                        tempDatas = ReadHoldingRegisters(readConfig, node, tempDatas);
                                     }
-                                }
-                                else if (node.ReadType == ModbusReadWriteType.HoldingRegisters
-                                || node.ReadType == ModbusReadWriteType.HoldingRegisters2
-                                || node.ReadType == ModbusReadWriteType.HoldingRegisters4
-                                || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2
-                                || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4)
-                                {
-                                    tempDatas = ReadHoldingRegisters(readConfig, node, tempDatas);
-                                }
-                                else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters
-                                || node.ReadType == ModbusReadWriteType.ReadInputRegisters2
-                                || node.ReadType == ModbusReadWriteType.ReadInputRegisters4
-                                || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
-                                || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4)
-                                {
-                                    tempDatas = ReadInputRegisters(readConfig, node, tempDatas);
-                                }
+                                    else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters
+                                    || node.ReadType == ModbusReadWriteType.ReadInputRegisters2
+                                    || node.ReadType == ModbusReadWriteType.ReadInputRegisters4
+                                    || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
+                                    || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4)
+                                    {
+                                        tempDatas = ReadInputRegisters(readConfig, node, tempDatas);
+                                    }
+                                });
+                                await ReceiveDataToMessageChannelAsync(readNode.Key, tempDatas);
                             });
-                            await ReceiveDataToMessageChannelAsync(tempDatas);
-                        });
-                        Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource).Wait();
-                    }
+                            }
+                            Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource).Wait();
+                        }
+                    });
                 });
+
+
 
             }, tokenSource);
         }
@@ -227,8 +248,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                     currentValue = values[i];
                 else
                 {
-                    //short[] arr = new short[numberOfPoint];
-                    Array.Copy(values, i, arr, 0, numberOfPoint);
+                    Array.Copy(values, i * numberOfPoint, arr, 0, numberOfPoint);
                     currentValue = GetNodeItemCurrentValue(node.ReadType, node.ReadNodes[i].ValueTypeCode, arr);
                 }
                 if (tempDatas.ContainsKey(node.ReadNodes[i].Address))
@@ -274,70 +294,74 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                 return BitConverter.ToUInt64(bytes, 0);
             }
             else
-            { 
+            {
                 return 0;
-            } 
+            }
         }
 
-        private Dictionary<int, List<ModbusReadConfig>> ConvertConfigNodeToModbusReadConfig(List<NodeItem> nodes)
+        private Dictionary<string, Dictionary<int, List<ModbusReadConfig>>> ConvertConfigNodeToModbusReadConfig(Dictionary<string, List<NodeItem>> nodes)
         {
-            //按照读取间隔进行分组
-            var nodeDic = nodes.Where(t => !string.IsNullOrEmpty(t.FullAddress)).GroupBy(t => t.Interval).ToDictionary(t => t.Key, t => t.ToList());
-            //按照读取间隔拼装modbus读取配置信息
-            var modbusReadConfigDic = new Dictionary<int, List<ModbusReadConfig>>();
-            //遍历读取间隔
-            foreach (var node in nodeDic)
+            Dictionary<string, Dictionary<int, List<ModbusReadConfig>>> result = new Dictionary<string, Dictionary<int, List<ModbusReadConfig>>>();
+            foreach (var key in nodes.Keys)
             {
-                //局部变量，用字典存储方便过滤
-                //格式 dic<slaveaddress,dic<readtype,sortList<点位，实际配置地址>>>
-                Dictionary<byte, Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>>
-                    tempNode = new Dictionary<byte, Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>>();
-                foreach (var item in node.Value)
+                //按照读取间隔进行分组
+                var nodeDic = nodes[key].Where(t => !string.IsNullOrEmpty(t.FullAddress)).GroupBy(t => t.Interval).ToDictionary(t => t.Key, t => t.ToList());
+                //按照读取间隔拼装modbus读取配置信息
+                var modbusReadConfigDic = new Dictionary<int, List<ModbusReadConfig>>();
+                //遍历读取间隔
+                foreach (var node in nodeDic)
                 {
-                    var array = item.FullAddress.Split(['.', '。'], StringSplitOptions.RemoveEmptyEntries);
-                    if (array.Length != 3)
+                    //局部变量，用字典存储方便过滤
+                    //格式 dic<slaveaddress,dic<readtype,sortList<点位，实际配置地址>>>
+                    Dictionary<byte, Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>>
+                        tempNode = new Dictionary<byte, Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>>();
+                    foreach (var item in node.Value)
                     {
-                        Logger.LogError($"node({item.FullAddress}) config error,Must be 2 '.' spilt it");
-                        continue;
+                        var array = item.FullAddress.Split(['.', '。'], StringSplitOptions.RemoveEmptyEntries);
+                        if (array.Length != 3)
+                        {
+                            Logger.LogError($"node({item.FullAddress}) config error,Must be 2 '.' spilt it");
+                            continue;
+                        }
+                        if (!byte.TryParse(array[0], out byte slaveAddress))
+                        {
+                            Logger.LogError($"node({item.FullAddress}) slaveAddress config error.the first bit must byte type(0~255)");
+                            continue;
+                        }
+                        if (!Enum.TryParse(array[1], out ModbusReadWriteType readType))
+                        {
+                            Logger.LogError($"node({item.FullAddress}) readType config error.the second bit must ModbusReadType type(Coils,Inputs,HoldingRegisters,ReadInputRegisters)");
+                            continue;
+                        }
+                        if (!ushort.TryParse(array[2], out ushort bits))
+                        {
+                            Logger.LogError($"node({item.FullAddress}) bit config error.the third bit must ushort type");
+                            continue;
+                        }
+                        if (!tempNode.ContainsKey(slaveAddress))
+                            tempNode.Add(slaveAddress, new Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>());
+                        if (!tempNode[slaveAddress].ContainsKey(readType))
+                            tempNode[slaveAddress].Add(readType, new SortedList<ushort, NodeItem>());
+                        tempNode[slaveAddress][readType].Add(bits, item);
                     }
-                    if (!byte.TryParse(array[0], out byte slaveAddress))
+
+                    modbusReadConfigDic.Add(node.Key, tempNode.Select(t =>
                     {
-                        Logger.LogError($"node({item.FullAddress}) slaveAddress config error.the first bit must byte type(0~255)");
-                        continue;
-                    }
-                    if (!Enum.TryParse(array[1], out ModbusReadWriteType readType))
-                    {
-                        Logger.LogError($"node({item.FullAddress}) readType config error.the second bit must ModbusReadType type(Coils,Inputs,HoldingRegisters,ReadInputRegisters)");
-                        continue;
-                    }
-                    if (!ushort.TryParse(array[2], out ushort bits))
-                    {
-                        Logger.LogError($"node({item.FullAddress}) bit config error.the third bit must ushort type");
-                        continue;
-                    }
-                    if (!tempNode.ContainsKey(slaveAddress))
-                        tempNode.Add(slaveAddress, new Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>());
-                    if (!tempNode[slaveAddress].ContainsKey(readType))
-                        tempNode[slaveAddress].Add(readType, new SortedList<ushort, NodeItem>());
-                    tempNode[slaveAddress][readType].Add(bits, item);
+                        var readconfig = new ModbusReadConfig()
+                        {
+                            SlaveAddress = t.Key,
+                            ReadItems = new List<ModbusReadItem>(),
+                        };
+                        foreach (ModbusReadWriteType rt in t.Value.Keys)
+                        {
+                            readconfig.ReadItems.AddRange(GetModbusReadItems(rt, t.Value[rt]));
+                        }
+                        return readconfig;
+                    }).ToList());
                 }
-
-                modbusReadConfigDic.Add(node.Key, tempNode.Select(t =>
-                {
-                    var readconfig = new ModbusReadConfig()
-                    {
-                        SlaveAddress = t.Key,
-                        ReadItems = new List<ModbusReadItem>(),
-                    };
-                    foreach (ModbusReadWriteType rt in t.Value.Keys)
-                    {
-                        readconfig.ReadItems.AddRange(GetModbusReadItems(rt, t.Value[rt]));
-                    }
-                    return readconfig;
-                }).ToList());
+                result.Add(key, modbusReadConfigDic);
             }
-
-            return modbusReadConfigDic;
+            return result;
         }
 
         private List<ModbusReadItem> GetModbusReadItems(ModbusReadWriteType readType, SortedList<ushort, NodeItem> items)

@@ -14,10 +14,17 @@ namespace iml6yu.DataReceive.PLCSiemens
     public class DataReceiverPlcS7 : DataReceiver<S7.Net.Plc, DataReceiverPlcS7Option, string>
     {
         /// <summary>
-        ///分组读取节点 key：读取间隔
-        ///配置节点的Address 对应 DataItem(注意非FullAddress)
+        ///分组读取节点
+        ///<list type="bullet">
+        ///<item>Key:GroupName</item>
+        ///<item>Value:配置节点</item>
+        ///<list type="bullet">
+        ///<item>key：读取间隔</item> 
+        ///<item>value中的  string, DataItem 类型对应的Address(非FullAddress) -> DataItem</item>
+        ///</list>
+        ///</list>  
         /// </summary>
-        private Dictionary<int, Dictionary<string, DataItem>> readNodes;
+        private Dictionary<string, Dictionary<int, Dictionary<string, DataItem>>> readNodes;
 
         public override bool IsConnected => Client is not null && Client.IsConnected;
         public DataReceiverPlcS7(DataReceiverPlcS7Option option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : base(option, logger, isAutoLoadNodeConfig, nodes)
@@ -166,64 +173,75 @@ namespace iml6yu.DataReceive.PLCSiemens
         protected override Task WhileDoAsync(CancellationToken tokenSource)
         {
             return Task.Run(() =>
-            {
-                //读取数据
-                Parallel.ForEach(readNodes, item =>
+            {   //读取数据
+                Parallel.ForEach(readNodes, readNode =>
                 {
-                    while (!tokenSource.IsCancellationRequested)
+                    Parallel.ForEach(readNode.Value, item =>
                     {
-                        Client.ReadMultipleVarsAsync(item.Value.Values.ToList()).ContinueWith(async t =>
+                        while (!tokenSource.IsCancellationRequested)
                         {
-                            if (t.IsFaulted)
+                            Client.ReadMultipleVarsAsync(item.Value.Values.ToList()).ContinueWith(async t =>
                             {
-                                Logger.LogError($"read data error. {t.Exception?.Message}");
-                            }
-                            //获取当前时间戳
-                            var timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                            var result = t.Result;
-                            Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
-                            foreach (var value in result)
-                            {
-                                var dataItem = item.Value.FirstOrDefault(t => t.Value == value);
-                                if (dataItem.Key != null)
+                                if (t.IsFaulted)
                                 {
-                                    tempDatas.Add(dataItem.Key, new ReceiverTempDataValue(value.Value, timestamp));
+                                    Logger.LogError($"read data error. {t.Exception?.Message}");
                                 }
-                            }
-                            await ReceiveDataToMessageChannelAsync(tempDatas);
-                        });
-                        Task.Delay(item.Key == 0 ? 500 : item.Key * 10, tokenSource).Wait();
-                    }
+                                //获取当前时间戳
+                                var timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                                var result = t.Result;
+                                Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
+                                foreach (var value in result)
+                                {
+                                    var dataItem = item.Value.FirstOrDefault(t => t.Value == value);
+                                    if (dataItem.Key != null)
+                                    {
+                                        tempDatas.Add(dataItem.Key, new ReceiverTempDataValue(value.Value, timestamp));
+                                    }
+                                }
+                                await ReceiveDataToMessageChannelAsync(readNode.Key, tempDatas);
+                            });
+                            Task.Delay(item.Key == 0 ? 500 : item.Key * 10, tokenSource).Wait();
+                        }
+
+                    });
 
                 });
             }, tokenSource);
 
         }
 
-
-        private Dictionary<int, Dictionary<string, DataItem>> ConvertConfigNodeToS7ReadConfig(List<NodeItem> configNodes)
+        /// <summary>
+        /// 将NodeConfig转成符合S7读取的点位对象
+        /// </summary>
+        /// <param name="configNodes"></param>
+        /// <returns></returns>
+        private Dictionary<string, Dictionary<int, Dictionary<string, DataItem>>> ConvertConfigNodeToS7ReadConfig(Dictionary<string, List<NodeItem>> configNodes)
         {
-            //groupby 一下configNodes,判断一下这个列表中的Address是否存在重复的，如果存在重复的，记录一个错误信息 
-            var groupByAddress = configNodes.GroupBy(t => t.Address).Where(t => t.Count() > 1).Select(t => t.Key).ToList();
-            if (groupByAddress.Count() > 1)
+            Dictionary<string, Dictionary<int, Dictionary<string, DataItem>>> result = new Dictionary<string, Dictionary<int, Dictionary<string, DataItem>>>();
+            foreach (var key in configNodes.Keys)
             {
-                Logger.LogError($"node config error. the address exist same item( {string.Join(";", groupByAddress)} ), the first item is usefull!");
+                //groupby 一下configNodes,判断一下这个列表中的Address是否存在重复的，如果存在重复的，记录一个错误信息 
+                var groupByAddress = configNodes[key].GroupBy(t => t.Address).Where(t => t.Count() > 1).Select(t => t.Key).ToList();
+                if (groupByAddress.Count() > 1)
+                {
+                    Logger.LogError($"node config error. the address exist same item( {string.Join(";", groupByAddress)} ), the first item is usefull!");
+                }
+
+                var intervalToNodeItem = configNodes[key].GroupBy(t => t.Interval).ToDictionary(t => t.Key, t => t.ToList());
+
+                //分组读取节点
+                var s7DataItems = intervalToNodeItem.ToDictionary(t => t.Key, t => t.Value.Select(t =>
+                {
+                    var dataItem = ConvertFullAddressToS7DataItem(t.FullAddress, t.ValueTypeCode);
+                    return (t.FullAddress, t.Address, dataItem);
+                }).Where(t => t.Item3 != null).ToDictionary(t => t.Item2, t => t.Item3));
+                result.Add(key, s7DataItems);
             }
-
-            var intervalToNodeItem = configNodes.GroupBy(t => t.Interval).ToDictionary(t => t.Key, t => t.ToList());
-
-            //分组读取节点
-            var s7DataItems = intervalToNodeItem.ToDictionary(t => t.Key, t => t.Value.Select(t =>
-            {
-                var dataItem = ConvertFullAddressToS7DataItem(t.FullAddress, t.ValueTypeCode);
-                return (t.FullAddress, t.Address, dataItem);
-            }).Where(t => t.Item3 != null).ToDictionary(t => t.Item2, t => t.Item3));
-
-            return s7DataItems;
+            return result;
         }
 
         private DataItem? ConvertFullAddressToS7DataItem(string fullAddress, TypeCode valueType)
-        {     
+        {
             if (string.IsNullOrEmpty(fullAddress))
             {
                 Logger.LogError($"node config error. exist [FullAdress] is null or empty");

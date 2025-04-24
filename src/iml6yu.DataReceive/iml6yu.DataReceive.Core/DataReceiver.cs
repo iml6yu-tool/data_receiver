@@ -6,6 +6,7 @@ using iml6yu.DataReceive.Core.Models;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Reflection;
 using System.Text;
 using System.Threading.Channels;
 
@@ -41,7 +42,7 @@ namespace iml6yu.DataReceive.Core
                 if (DoTask.Status == TaskStatus.WaitingForChildrenToComplete)
                     return ReceiverState.Working;
                 if (DoTask.Status == TaskStatus.RanToCompletion)
-                    return ReceiverState.Stoped;
+                    return ReceiverState.Working;
                 if (DoTask.Status == TaskStatus.Canceled)
                     return ReceiverState.Stoped;
                 if (DoTask.Status == TaskStatus.Faulted)
@@ -56,8 +57,12 @@ namespace iml6yu.DataReceive.Core
         protected Task DoTask;
         /// <summary>
         /// 配置的节点
+        /// <list type="bullet">
+        /// <item>Key:GroupName</item>
+        /// <item>Value:配置的节点</item>
+        /// </list>
         /// </summary>
-        protected List<NodeItem> ConfigNodes { get; set; }
+        protected Dictionary<string, List<NodeItem>> ConfigNodes { get; set; }
         /// <summary>
         /// 数据缓存
         /// </summary>
@@ -66,13 +71,13 @@ namespace iml6yu.DataReceive.Core
         protected Dictionary<string, HashSet<string>> Subscribers { get; set; }
 
         /// <summary>
-        /// 消息通道 
+        /// 消息通道 KeyValue->GroupName:AddressAndValues
         /// <list type="bullet">
         /// <item>Key:address</item>
         /// <item>Value:value,timestamp</item>
         /// </list> 
-        /// </summary>
-        protected Channel<Dictionary<string, ReceiverTempDataValue>> MessageChannel { get; }
+        /// </summary> 
+        protected Channel<KeyValuePair<string, Dictionary<string, ReceiverTempDataValue>>> MessageChannel { get; }
 
         //protected CancellationToken StopToken { get; }
 
@@ -101,7 +106,10 @@ namespace iml6yu.DataReceive.Core
         /// 当数据发生变动时触发
         /// </summary>
         public event EventHandler<DataReceiveContract> DataChangedEvent;
-
+        /// <summary>
+        /// 数据定时读取出发事件
+        /// </summary>
+        public event EventHandler<DataReceiveContract> DataIntervalEvent;
         /// <summary>
         /// 当订阅数据发生变动时触发
         /// </summary> 
@@ -124,7 +132,7 @@ namespace iml6yu.DataReceive.Core
             Logger = logger;
             Option = option;
             Subscribers = new Dictionary<string, HashSet<string>>();
-            MessageChannel = Channel.CreateBounded<Dictionary<string, ReceiverTempDataValue>>(new BoundedChannelOptions(maxMessageCount)
+            MessageChannel = Channel.CreateBounded<KeyValuePair<string, Dictionary<string, ReceiverTempDataValue>>>(new BoundedChannelOptions(maxMessageCount)
             {
                 AllowSynchronousContinuations = true,
                 FullMode = BoundedChannelFullMode.DropOldest
@@ -177,11 +185,13 @@ namespace iml6yu.DataReceive.Core
 
         public virtual MessageResult LoadConfig(List<NodeItem> nodes)
         {
+            if (nodes == null)
+                return MessageResult.Failed(ResultType.ParameterError, nameof(nodes) + " parameter is null!");
             try
             {
-                ConfigNodes = nodes;
+                ConfigNodes = nodes.GroupBy(t => t.GroupName).ToDictionary(t => t.Key, t => t.ToList());
                 CacheDataDic = new ConcurrentDictionary<string, CacheDataItem>(
-                    ConfigNodes.GroupBy(t => t.Address)
+                    nodes.GroupBy(t => t.Address)
                     .ToDictionary(t => t.Key, t => new CacheDataItem(DateTimeOffset.Now.ToUnixTimeMilliseconds(), new DataReceiveContractItem()
                     {
                         Address = t.First().Address,
@@ -194,7 +204,7 @@ namespace iml6yu.DataReceive.Core
                 Logger.LogError(ex?.ToString());
 
                 #region 发生异常后给定空数据，让程序能够运行，但是无法接收数据
-                ConfigNodes = ConfigNodes ?? new List<NodeItem>();
+                ConfigNodes = ConfigNodes ?? new Dictionary<string, List<NodeItem>>();
                 CacheDataDic = CacheDataDic ?? new ConcurrentDictionary<string, CacheDataItem>();
                 #endregion
 
@@ -220,17 +230,20 @@ namespace iml6yu.DataReceive.Core
 
         public async Task<DataResult<DataReceiveContractItem>> ReadAsync(string address, CancellationToken cancellationToken = default)
         {
-            if (CacheDataDic == null)
-                return DataResult<DataReceiveContractItem>.Failed(ResultType.NotFind, "CacheDataDic is not init");
+            return await Task.Run(() =>
+              {
+                  if (CacheDataDic == null)
+                      return DataResult<DataReceiveContractItem>.Failed(ResultType.NotFind, "CacheDataDic is not init");
 
-            if (!CacheDataDic.ContainsKey(address))
-                return DataResult<DataReceiveContractItem>.Failed(ResultType.NotFind, $"{address} not exist");
+                  if (!CacheDataDic.ContainsKey(address))
+                      return DataResult<DataReceiveContractItem>.Failed(ResultType.NotFind, $"{address} not exist");
 
-            if (CacheDataDic.TryGetValue(address, out CacheDataItem v) && v.Data.Value != null)
-            {
-                return DataResult<DataReceiveContractItem>.Success(v.Data);
-            }
-            return DataResult<DataReceiveContractItem>.Failed(ResultType.NotFind, $"{address} not data");
+                  if (CacheDataDic.TryGetValue(address, out CacheDataItem v) && v.Data.Value != null)
+                  {
+                      return DataResult<DataReceiveContractItem>.Success(v.Data);
+                  }
+                  return DataResult<DataReceiveContractItem>.Failed(ResultType.NotFind, $"{address} not data");
+              });
         }
 
         public async Task<CollectionResult<DataReceiveContractItem>> ReadsAsync(IEnumerable<string> addressArray, CancellationToken cancellationToken = default)
@@ -272,7 +285,7 @@ namespace iml6yu.DataReceive.Core
                 {
                     this.Logger.LogError(ex.Message, ex);
                     await Task.Delay(TimeSpan.FromSeconds(10));
-                    StartWorkAsync(token);
+                    _ = StartWorkAsync(token);
                 }
             });
         }
@@ -330,6 +343,16 @@ namespace iml6yu.DataReceive.Core
                     {
                         try
                         {
+                            if (DataIntervalEvent != null)
+                            {
+                                _ = Task.Run(() =>
+                                  {
+                                      var intervalDatas = GetDataContract(data);
+                                      if (intervalDatas != null && intervalDatas.Datas.Count > 0)
+                                          DataIntervalEvent?.Invoke(Option, intervalDatas);
+                                  });
+                            }
+
                             var changeDatas = UpdateCatch(data);
 
                             if (changeDatas.Datas.Count > 0)
@@ -353,46 +376,72 @@ namespace iml6yu.DataReceive.Core
                         {
                             Logger.LogError(ex.ToString());
                         }
-
-
                     }
                 }
             });
         }
 
+        private DataReceiveContract GetDataContract(KeyValuePair<string, Dictionary<string, ReceiverTempDataValue>> datas)
+        {
+            if (datas.Value == null || datas.Value.Count == 0)
+                return null;
+            long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            DataReceiveContract data = new DataReceiveContract(now) { Key = datas.Key };
+
+            foreach (var key in datas.Value.Keys)
+            {
+                if (!CacheDataDic.ContainsKey(key))
+                    continue;
+                if (CacheDataDic[key].Data.Value == null)
+                    continue;
+                if (!VerifyValue(datas.Value[key].Value, CacheDataDic[key].Data.ValueType))
+                {
+                    Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{(TypeCode)CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
+                    continue;
+                }
+                data.Datas.Add(new DataReceiveContractItem()
+                {
+                    Address = key,
+                    Value = datas.Value[key].Value,
+                    Timestamp = now,
+                    ValueType = CacheDataDic[key].Data.ValueType
+                });
+            }
+            return data;
+        }
+
         /// <summary>
         /// 更新缓存
         /// </summary>
-        /// <param name="values"></param>
+        /// <param name="datas"></param>
         /// <returns></returns>
-        protected virtual DataReceiveContract UpdateCatch(Dictionary<string, ReceiverTempDataValue> values)
+        protected virtual DataReceiveContract UpdateCatch(KeyValuePair<string, Dictionary<string, ReceiverTempDataValue>> datas)
         {
             long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            DataReceiveContract data = new DataReceiveContract(now);
-            foreach (var key in values.Keys)
+            DataReceiveContract data = new DataReceiveContract(now) { Key = datas.Key };
+            foreach (var key in datas.Value.Keys)
             {
                 if (!CacheDataDic.ContainsKey(key))
                     continue;
 
-                if (values[key].Value == null)
+                if (datas.Value[key].Value == null)
                     continue;
 
-                if (CacheDataDic[key].Data.Value != null && CacheDataDic[key].Data.Value.Equals(values[key].Value))
+                if (CacheDataDic[key].Data.Value != null && CacheDataDic[key].Data.Value.Equals(datas.Value[key].Value))
                     continue;
 
-                if (!VerifyValue(values[key].Value, CacheDataDic[key].Data.ValueType))
+                if (!VerifyValue(datas.Value[key].Value, CacheDataDic[key].Data.ValueType))
                 {
-                    Logger.LogWarning($"{key}上报的数据类型是{values[key].Value.GetType()}与配置的类型{(TypeCode)CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
+                    Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{(TypeCode)CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
                     continue;
                 }
 
-                CacheDataDic[key].Data.Value = values[key].Value;
-                CacheDataDic[key].Data.Timestamp = values[key].Timestamp;
+                CacheDataDic[key].Data.Value = datas.Value[key].Value;
+                CacheDataDic[key].Data.Timestamp = datas.Value[key].Timestamp;
                 CacheDataDic[key].Timestamp = now;
 #warning 这里有可能会发生当数据多线程时的变动
                 data.Datas.Add(CacheDataDic[key].Data);
-            }
-            values.Clear();
+            } 
             return data;
         }
 
@@ -435,14 +484,14 @@ namespace iml6yu.DataReceive.Core
             }
         }
 
-        protected virtual async Task ReceiveDataToMessageChannelAsync(Dictionary<string, ReceiverTempDataValue> msg)
+        protected virtual async Task ReceiveDataToMessageChannelAsync(string groupName, Dictionary<string, ReceiverTempDataValue> msg)
         {
             if (msg == null) await Task.CompletedTask;
             if (MessageChannel.Reader.Count > maxMessageWarningCount)
             {
                 Logger.LogWarning("zh-cn:读取设备点位的缓存数据已经预警，有可能出现数据丢失情况！en-us:The ThreadChannel Cache will full!");
             }
-            await MessageChannel.Writer.WriteAsync(msg);
+            await MessageChannel.Writer.WriteAsync(new KeyValuePair<string, Dictionary<string, ReceiverTempDataValue>>(groupName, msg));
         }
 
         #region event on method
@@ -464,15 +513,7 @@ namespace iml6yu.DataReceive.Core
         {
             DataSubscribeEvent?.Invoke(sender, args);
         }
-        /// <summary>
-        /// 触发DataChangeEvent
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="args"></param>
-        protected void OnDataChangedEvent(object sender, DataReceiveContract args)
-        {
-            DataChangedEvent?.Invoke(sender, args);
-        }
+
         /// <summary>
         /// 触发 ExceptionEvent
         /// </summary>

@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\boshiac\DataCenterClusters\src\DataCenter\ReCheckBalance\iml6yu.DataCenter.ReBalance\iml6yu.DataCenter.ReBalance.csproj" />
     <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.ModbusMasterTCP\iml6yu.DataReceive.ModbusMasterTCP.csproj" />
   </ItemGroup>
 </Project>

@@ -16,9 +16,43 @@ namespace iml6yu.DataReceive.Mqtt
 {
     public class DataReceiverMqtt : DataReceiver<IMqttClient, DataReceiverMqttOption, string>
     {
-        public DataReceiverMqtt(DataReceiverMqttOption option, ILogger logger, Func<string, Dictionary<string, ReceiverTempDataValue>> dataParse, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null ) : base(option, logger, dataParse, isAutoLoadNodeConfig, nodes)
+        /// <summary>
+        /// 地址对应Groupname
+        /// <list type="number">
+        /// <item>Key: FullAddress </item>
+        /// <item>Value:(GroupName,Address)</item>
+        /// </list>
+        /// </summary>
+        protected Dictionary<string, (string, string)> AddressRefGroupName = new Dictionary<string, (string, string)>();
+        public DataReceiverMqtt(DataReceiverMqttOption option, ILogger logger, Func<string, Dictionary<string, ReceiverTempDataValue>> dataParse, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : base(option, logger, dataParse, isAutoLoadNodeConfig, nodes)
         {
 
+        }
+
+        public override MessageResult LoadConfig(List<NodeItem> nodes)
+        {
+            var r = base.LoadConfig(nodes);
+            if (!r.State)
+                Logger.LogError(r.Message);
+
+            if (ConfigNodes == null)
+                return MessageResult.Failed(ResultType.ParameterError, "", new ArgumentNullException(nameof(ConfigNodes)));
+            try
+            {
+                foreach (var key in ConfigNodes.Keys)
+                {
+                    foreach (var item in ConfigNodes[key])
+                    {
+                        if (AddressRefGroupName.ContainsKey(item.FullAddress)) continue;
+                        AddressRefGroupName.Add(item.FullAddress, (key, item.Address));
+                    }
+                }
+                return MessageResult.Success();
+            }
+            catch (Exception ex)
+            {
+                return MessageResult.Failed(ResultType.ParameterError, ex.Message, ex);
+            }
         }
 
         public override bool IsConnected
@@ -125,7 +159,7 @@ namespace iml6yu.DataReceive.Mqtt
         /// </summary>
         /// <param name="arg"></param>
         /// <returns></returns>
-        protected virtual Task<Dictionary<string, ReceiverTempDataValue>> MessageReceivedAsync(MqttApplicationMessageReceivedEventArgs arg)
+        protected virtual Task<Dictionary<string, Dictionary<string, ReceiverTempDataValue>>> MessageReceivedAsync(MqttApplicationMessageReceivedEventArgs arg)
         {
             return Task.Run(() =>
               {
@@ -133,7 +167,21 @@ namespace iml6yu.DataReceive.Mqtt
                   {
                       var stringContent = arg.ApplicationMessage.ConvertPayloadToString();
                       var dic = DataParse?.Invoke(stringContent);
-                      return dic;
+                      if (dic == null || dic.Count == 0)
+                          return new Dictionary<string, Dictionary<string, ReceiverTempDataValue>>();
+
+                      var result = new Dictionary<string, Dictionary<string, ReceiverTempDataValue>>();
+
+                      foreach (var address in dic.Keys)
+                      {
+                          if (!AddressRefGroupName.ContainsKey(address)) continue;
+                          if (!result.ContainsKey(AddressRefGroupName[address].Item1))
+                              result.Add(AddressRefGroupName[address].Item1, new Dictionary<string, ReceiverTempDataValue>());
+                          result[AddressRefGroupName[address].Item1].Add(AddressRefGroupName[address].Item2, dic[address]);
+                      }
+                      dic.Clear();
+                      dic = null;
+                      return result;
                   }
                   catch (Exception ex)
                   {
@@ -164,7 +212,10 @@ namespace iml6yu.DataReceive.Mqtt
                 {
                     var list = await MessageReceivedAsync(arg);
                     if (list != null)
-                        await ReceiveDataToMessageChannelAsync(list);
+                        foreach (var key in list.Keys)
+                        {
+                            await ReceiveDataToMessageChannelAsync(key, list[key]);
+                        }
                 });
             }
         }

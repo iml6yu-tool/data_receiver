@@ -13,7 +13,7 @@ namespace iml6yu.DataReceive.Core
     /// <typeparam name="TOption">参数</typeparam>
     public interface IDataReceiver<TClient, TOption, TReceiveContent> : IDisposable
         where TClient : class
-        where TOption : DataReceiverOption 
+        where TOption : DataReceiverOption
     {
         /// <summary>
         /// 客户端
@@ -47,6 +47,10 @@ namespace iml6yu.DataReceive.Core
         /// </summary>
 
         event EventHandler<DataReceiveContract> DataChangedEvent;
+        /// <summary>
+        /// 数据定时读取出发事件
+        /// </summary>
+        event EventHandler<DataReceiveContract> DataIntervalEvent;
 
         /// <summary>
         /// 当订阅数据发生变动时触发
@@ -149,7 +153,7 @@ namespace iml6yu.DataReceive.Core
         /// 停止轮询读取操作
         /// </summary>
         /// <returns></returns>
-        Task StopWorkAsync(); 
+        Task StopWorkAsync();
 
         /// <summary>
         /// 设置转换气

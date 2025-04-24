@@ -1,3 +1,4 @@
+using iml6yu.DataCenter.ReBalance.Services;
 using iml6yu.DataReceive.ModbusMasterTCP;
 using iml6yu.DataReceive.ModbusMasterTCP.Configs;
 using System.Text.Json;
@@ -8,8 +9,10 @@ namespace iml6yu.DataReceiverExample.ModbusTCP
     {
         private readonly ILogger<Worker> logger;
         private readonly DataReceiverModbusTCP receiver;
-        public Worker(ILogger<Worker> logger, DataReceiverModbusTCP dataReceiver)
+        private readonly ReBalanceService reBalanceService;
+        public Worker(ILogger<Worker> logger, DataReceiverModbusTCP dataReceiver, iml6yu.DataCenter.ReBalance.Services.ReBalanceService reBalance)
         {
+            reBalanceService = reBalance;
             this.receiver = dataReceiver;
             this.logger = logger;
         }
@@ -20,7 +23,7 @@ namespace iml6yu.DataReceiverExample.ModbusTCP
             {
                 if (e.IsConntion)
                 {
-                    logger.LogInformation("Connected to deiver {0}",((DataReceiverModbusOption)sender).ReceiverName);
+                    logger.LogInformation("Connected to deiver {0}", ((DataReceiverModbusOption)sender).ReceiverName);
                 }
                 else
                 {
@@ -43,14 +46,20 @@ namespace iml6yu.DataReceiverExample.ModbusTCP
                 logger.LogInformation("Data changed: at {TagName} \r\n {Value}", DateTimeOffset.FromUnixTimeMilliseconds(e.Timestamp).ToString("yyyy-MM-dd HH:mm:ss.fff"),
                     JsonSerializer.Serialize(e.Datas));
             };
-            receiver.StartWorkAsync(cancellationToken);
+            receiver.DataIntervalEvent += async (sender, e) =>
+            {
+                await reBalanceService.AddReBalance(e);
+            };
+            _ = reBalanceService.StartInsertReBalanceService();
+            _ = receiver.StartWorkAsync(cancellationToken);
             await base.StartAsync(cancellationToken);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            await base.StopAsync(cancellationToken);
+            reBalanceService.StopInsertReBalanceService();
             await receiver.StopWorkAsync();
+            await base.StopAsync(cancellationToken); 
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

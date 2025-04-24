@@ -1,4 +1,304 @@
 ﻿[
+  {
+    "fullAddress": "1.ReadInputRegisters2.0",
+    "address": "CheckResults",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.2",
+    "address": "CheckResults1",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.4",
+    "address": "CheckResults2",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.6",
+    "address": "CheckResults3",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.8",
+    "address": "CheckResults4",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.10",
+    "address": "TotalWeight",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.12",
+    "address": "TotalWeight1",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.14",
+    "address": "TotalWeight2",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.16",
+    "address": "TotalWeight3",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.18",
+    "address": "TotalWeight4",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.20",
+    "address": "TotalBags",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.22",
+    "address": "TotalBags1",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.24",
+    "address": "TotalBags2",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.26",
+    "address": "TotalBags3",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.28",
+    "address": "TotalBags4",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.30",
+    "address": "OKBags",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.32",
+    "address": "OKBags1",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.34",
+    "address": "OKBags2",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.36",
+    "address": "OKBags3",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.38",
+    "address": "OKBags4",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.40",
+    "address": "OverBags",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.42",
+    "address": "OverBags1",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.44",
+    "address": "OverBags2",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.46",
+    "address": "OverBags3",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.48",
+    "address": "OverBags4",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.50",
+    "address": "UnderBags",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.52",
+    "address": "UnderBags1",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.54",
+    "address": "UnderBags2",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.56",
+    "address": "UnderBags3",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2.58",
+    "address": "UnderBags4",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  }
   //{
   //  "fullAddress": "1.Coils.0",
   //  "address": "1.Coils.0",
@@ -59,16 +359,7 @@
   //  "descript": "",
   //  "alisa": ""
   //},
-  {
-    "fullAddress": "1.HoldingRegistersLittleEndian2.0",
-    "address": "1.HoldingRegisters.1",
-    "valueType": "UInt32",
-    "isSubscribe": true,
-    "interval": 10000,
-    "groupName": "产线1",
-    "descript": "",
-    "alisa": ""
-  },
+
   //{
   //  "fullAddress": "1.HoldingRegisters2.2",
   //  "address": "1.HoldingRegisters.2",
@@ -79,14 +370,14 @@
   //  "descript": "",
   //  "alisa": ""
   //},
-  {
-    "fullAddress": "1.HoldingRegisters.4",
-    "address": "1.HoldingRegisters.4",
-    "valueType": "UInt16",
-    "isSubscribe": true,
-    "interval": 10000,
-    "groupName": "产线1",
-    "descript": "",
-    "alisa": ""
-  }
+  //{
+  //  "fullAddress": "1.HoldingRegisters.4",
+  //  "address": "1.HoldingRegisters.4",
+  //  "valueType": "UInt16",
+  //  "isSubscribe": true,
+  //  "interval": 10000,
+  //  "groupName": "产线1",
+  //  "descript": "",
+  //  "alisa": ""
+  //}
 ]
