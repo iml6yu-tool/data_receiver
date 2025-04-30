@@ -13,7 +13,7 @@ using System.Xml.Linq;
 
 namespace iml6yu.DataReceive.ModbusMasterRTU
 {
-    public class DataReceiverModbusRTU : DataReceiver<NModbus.IModbusMaster, DataReceiverModbusOption, string>
+    public class DataReceiverModbusRTU : DataReceiver<NModbus.IModbusMaster, DataReceiverModbusOption>
     {
         private SerialPort serial;
         /// <summary>

@@ -6,7 +6,6 @@ using iml6yu.DataReceive.Core.Models;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Reflection;
 using System.Text;
 using System.Threading.Channels;
 
@@ -18,7 +17,7 @@ namespace iml6yu.DataReceive.Core
     /// <typeparam name="TClient">客户端类型</typeparam>
     /// <typeparam name="TOption">客户端配置参数</typeparam>
     /// <typeparam name="TReceiveContent">接收文件内容</typeparam>
-    public abstract class DataReceiver<TClient, TOption, TReceiveContent> : IDataReceiver<TClient, TOption, TReceiveContent>
+    public abstract class DataReceiver<TClient, TOption> : IDataReceiver<TClient, TOption>
         where TClient : class
         where TOption : DataReceiverOption
     {
@@ -29,6 +28,10 @@ namespace iml6yu.DataReceive.Core
         {
             get
             {
+                //如果没有连接，直接返回错误状态
+                if (!IsConnected)
+                    return ReceiverState.Error;
+
                 if (DoTask == null)
                     return ReceiverState.Reading;
                 if (DoTask.Status == TaskStatus.Created)
@@ -79,9 +82,8 @@ namespace iml6yu.DataReceive.Core
         /// </summary> 
         protected Channel<KeyValuePair<string, Dictionary<string, ReceiverTempDataValue>>> MessageChannel { get; }
 
-        //protected CancellationToken StopToken { get; }
 
-        protected Func<TReceiveContent, Dictionary<string, ReceiverTempDataValue>> DataParse { get; set; }
+        protected Func<string, Dictionary<string, ReceiverTempDataValue>> DataParse { get; set; }
 
 
         private static readonly int maxMessageCount = 5000;
@@ -161,11 +163,13 @@ namespace iml6yu.DataReceive.Core
             }
         }
 
-        public DataReceiver(TOption option, ILogger logger, Func<TReceiveContent, Dictionary<string, ReceiverTempDataValue>> dataParse, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : this(option, logger, isAutoLoadNodeConfig, nodes)
+        public DataReceiver(TOption option, ILogger logger, Func<string, Dictionary<string, ReceiverTempDataValue>> dataParse, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : this(option, logger, isAutoLoadNodeConfig, nodes)
         {
-            DataParse = dataParse;
+            SetDataParse(dataParse);
         }
-        public void SetDataParse(Func<TReceiveContent, Dictionary<string, ReceiverTempDataValue>> dataParse)
+
+
+        public void SetDataParse(Func<string, Dictionary<string, ReceiverTempDataValue>> dataParse)
         {
             DataParse = dataParse;
         }
@@ -328,7 +332,6 @@ namespace iml6yu.DataReceive.Core
                 return false;
             return IsConnected;
         }
-
         /// <summary>
         /// 收到数据后进行的逻辑处理
         /// </summary>
@@ -441,7 +444,7 @@ namespace iml6yu.DataReceive.Core
                 CacheDataDic[key].Timestamp = now;
 #warning 这里有可能会发生当数据多线程时的变动
                 data.Datas.Add(CacheDataDic[key].Data);
-            } 
+            }
             return data;
         }
 

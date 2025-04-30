@@ -11,7 +11,7 @@ using S7.Net.Types;
 
 namespace iml6yu.DataReceive.PLCSiemens
 {
-    public class DataReceiverPlcS7 : DataReceiver<S7.Net.Plc, DataReceiverPlcS7Option, string>
+    public class DataReceiverPlcS7 : DataReceiver<S7.Net.Plc, DataReceiverPlcS7Option>
     {
         /// <summary>
         ///分组读取节点

@@ -14,7 +14,7 @@ using System.Text.Json;
 
 namespace iml6yu.DataReceive.Mqtt
 {
-    public class DataReceiverMqtt : DataReceiver<IMqttClient, DataReceiverMqttOption, string>
+    public class DataReceiverMqtt : DataReceiver<IMqttClient, DataReceiverMqttOption>
     {
         /// <summary>
         /// 地址对应Groupname

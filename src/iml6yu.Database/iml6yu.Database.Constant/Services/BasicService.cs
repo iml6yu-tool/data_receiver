@@ -26,7 +26,7 @@ namespace iml6yu.Database.Constant.Services
         {
         }
 
-        public virtual async Task<DataResult<TEntity>> GetAsync(int id)
+        public virtual async Task<DataResult<TEntity>> GetAsync(long id)
         {
             try
             {
@@ -110,8 +110,20 @@ namespace iml6yu.Database.Constant.Services
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
+        public virtual async Task<MessageResult> DeleteAsync(params long[] ids)
+        {
+            try
+            {
+                var entity = await FindAsync(ids);
+                return await DeleteAsync(entity);
+            }
+            catch (Exception ex)
+            {
 
-        public virtual async Task<MessageResult> DeleteAsync(int id)
+                return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+            }
+        }
+        public virtual async Task<MessageResult> DeleteAsync(long id)
         {
             try
             {
@@ -154,14 +166,17 @@ namespace iml6yu.Database.Constant.Services
             }
         }
 
-        public virtual async Task<TEntity> FindAsync(int id)
+        public virtual async Task<TEntity> FindAsync(long id)
         {
             return await Db.Queryable<TEntity>().FirstAsync(t => t.Id == id);
         }
-
-        public virtual async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> expression)
+        public virtual async Task<TEntity> FindAsync(params long[] ids)
         {
-            return await Db.Queryable<TEntity>().FirstAsync(expression);
+            return await Db.Queryable<TEntity>().FirstAsync(t => ids.Contains(t.Id));
+        }
+        public virtual async Task<List<TEntity>> FindAsync(Expression<Func<TEntity, bool>> expression)
+        {
+            return await Db.Queryable<TEntity>().Where(expression).ToListAsync();
         }
 
         public virtual async Task<(List<TEntity>, int)> FindAsync(ParSearch search)
@@ -192,7 +207,7 @@ namespace iml6yu.Database.Constant.Services
         /// <returns></returns>
         public virtual bool ExistTable(string tableName)
         {
-            return Db.DbMaintenance.IsAnyTable(tableName, false); 
+            return Db.DbMaintenance.IsAnyTable(tableName, false);
         }
     }
 }

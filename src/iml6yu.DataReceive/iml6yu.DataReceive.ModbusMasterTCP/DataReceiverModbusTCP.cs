@@ -11,7 +11,7 @@ using System.Net.Sockets;
 
 namespace iml6yu.DataReceive.ModbusMasterTCP
 {
-    public class DataReceiverModbusTCP : DataReceiver<NModbus.IModbusMaster, DataReceiverModbusOption, string>
+    public class DataReceiverModbusTCP : DataReceiver<NModbus.IModbusMaster, DataReceiverModbusOption>
     {
         private TcpClient tcp;
         /// <summary>

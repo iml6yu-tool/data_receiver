@@ -19,6 +19,8 @@ namespace iml6yu.DataReceiverExample.ModbusTCP
 
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
+            
+
             receiver.ConnectionEvent += (sender, e) =>
             {
                 if (e.IsConntion)

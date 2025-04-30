@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>0.0.0.3-beta250403001</Version>
+    <Version>0.0.0.3-beta250424001</Version>
     <Authors>iml6yu</Authors>
     <Copyright>@iml6yu</Copyright>
     <PackageIcon>logo_128.jpg</PackageIcon>

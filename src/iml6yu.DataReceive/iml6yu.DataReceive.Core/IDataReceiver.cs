@@ -3,28 +3,13 @@ using iml6yu.Data.Core.Models;
 using iml6yu.DataReceive.Core.Configs;
 using iml6yu.DataReceive.Core.Models;
 using iml6yu.Result;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace iml6yu.DataReceive.Core
 {
-    /// <summary>
-    /// 数据采集
-    /// </summary>
-    /// <typeparam name="TClient">客户端</typeparam>
-    /// <typeparam name="TOption">参数</typeparam>
-    public interface IDataReceiver<TClient, TOption, TReceiveContent> : IDisposable
-        where TClient : class
-        where TOption : DataReceiverOption
-    {
-        /// <summary>
-        /// 客户端
-        /// </summary>
-        TClient Client { get; set; }
-
-        /// <summary>
-        /// 客户端配置
-        /// </summary>
-        TOption Option { get; set; }
-
+    public interface IDataReceiver : IDisposable
+    { 
         ReceiverState State { get; }
         /// <summary>
         /// 连接事件，当连接状态发生变化时触发
@@ -58,11 +43,7 @@ namespace iml6yu.DataReceive.Core
 
         event EventHandler<DataReceiveContract> DataSubscribeEvent;
 
-        /// <summary>
-        /// 加载配置
-        /// </summary>
-        /// <returns></returns>
-        Task<MessageResult> LoadConfigAsync(TOption option);
+
         /// <summary>
         /// 加载配置
         /// </summary>
@@ -156,9 +137,39 @@ namespace iml6yu.DataReceive.Core
         Task StopWorkAsync();
 
         /// <summary>
-        /// 设置转换气
+        /// 设置转换器
         /// </summary>
         /// <param name="dataParse"></param>
-        void SetDataParse(Func<TReceiveContent, Dictionary<string, ReceiverTempDataValue>> dataParse);
+        void SetDataParse(Func<string, Dictionary<string, ReceiverTempDataValue>> dataParse);
+    }
+    /// <summary>
+    /// 数据采集
+    /// </summary>
+    /// <typeparam name="TClient">客户端</typeparam>
+    /// <typeparam name="TOption">参数</typeparam>
+    public interface IDataReceiver<TClient, TOption> : IDataReceiver
+        where TClient : class
+        where TOption : DataReceiverOption
+    {
+        /// <summary>
+        /// 客户端
+        /// </summary>
+        TClient Client { get; set; }
+
+        /// <summary>
+        /// 客户端配置
+        /// </summary>
+        TOption Option { get; set; }
+        /// <summary>
+        /// 加载配置
+        /// </summary>
+        /// <returns></returns>
+        Task<MessageResult> LoadConfigAsync(TOption option);
+        ///// <summary>
+        ///// 设置转换器
+        ///// </summary>
+        ///// <param name="dataParse"></param>
+        //void SetDataParse(Func<TReceiveContent, Dictionary<string, ReceiverTempDataValue>> dataParse);
+
     }
 }
