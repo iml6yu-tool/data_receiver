@@ -25,16 +25,24 @@
 - ReadType：读取类型 一共有以下几种
 	+ Coils *<span style="color:blue">用于读取和控制远程设备的开关状态，通常用于控制继电器等开关设备,Reads from 1 to 2000 contiguous coils status.</span>"*,**读取到的数据类型都是bool**
 	+ HoldingRegisters *<span style="color:blue">用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息,Reads contiguous block of holding registers.</span>"*,**读取到的数据类型都是ushort**
-	+ HoldingRegisters2 大端32位 Int32
-    + HoldingRegisters2 大端64位 Int64
-    + HoldingRegistersLittleEndian2 小端32位 Int32
-    + HoldingRegistersLittleEndian4 小端64位 Int64
+	+ HoldingRegisters2 大端32位(ABCD) Int32
+    + HoldingRegisters2ByteSwap 大端32位(BADC) Int32
+    + HoldingRegisters4 大端64位(ABCD EFGH) Int64
+    + HoldingRegisters4ByteSwap 大端64位(BADC FEHG) Int64
+    + HoldingRegistersLittleEndian2 小端32位(DCBA) Int32
+    + HoldingRegistersLittleEndian2ByteSwap 小端32位(CDAB) Int32
+    + HoldingRegistersLittleEndian4 小端64位(HGFE DCBA) Int64
+    + HoldingRegistersLittleEndian4ByteSwap 小端64位(GHEF CDAB) Int64
     + Inputs *<span style="color:blue">用于读取远程设备的输入状态，通常用于读取传感器等输入设备的状态, Reads from 1 to 2000 contiguous discrete input status.</span>"*,**读取到的数据类型都是bool**
 	+ ReadInputRegisters *<span style="color:blue">用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据,Reads contiguous block of input registers.</span>"*,**读取到的数据类型都是ushort**
-    + ReadInputRegisters2 大端32位 Int32
-    + ReadInputRegisters2 大端64位 Int64
-    + ReadInputRegistersLittleEndian2 小端32位 Int32
-    + ReadInputRegistersLittleEndian4 小端64位 Int64
+    + ReadInputRegisters2 大端32位(ABCD) Int32
+    + ReadInputRegisters2ByteSwap 大端32位(BADC) Int32
+    + ReadInputRegisters4 大端64位(ABCD EFGH) Int64
+    + ReadInputRegisters4ByteSwap 大端64位(BADC FEHG) Int64
+    + ReadInputRegistersLittleEndian2 小端32位(DCBA) Int32
+    + ReadInputRegistersLittleEndian2ByteSwap 小端32位(CDAB) Int32
+    + ReadInputRegistersLittleEndian4 小端64位(HGFE DCBA) Int64
+    + ReadInputRegistersLittleEndian4ByteSwap 小端64位(GHEF CDAB) Int64
 - Bit:点位，数字
 
 **例子**

@@ -104,7 +104,7 @@ namespace S7.Net.Types
         public override int GetHashCode()
         {
             //所有属性组成字符串后获取HashCode
-            return $"{DataType}{VarType}{DB}{StartByteAdr}{BitAdr}{Count}".GetHashCode();
+            return $"{DataType}{VarType}{DB}{StartByteAdr}{BitAdr}".GetHashCode();
         }
 
         public override bool Equals(object? obj)

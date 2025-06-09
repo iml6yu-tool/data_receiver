@@ -1,0 +1,42 @@
+﻿[
+  {
+    "fullAddress": "1.ReadInputRegistersLittleEndian2ByteSwap.0",
+    "address": "CheckResults",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegistersLittleEndian4ByteSwap.2",
+    "address": "CheckResults1",
+    "valueType": "Int64",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters2ByteSwap.6",
+    "address": "CheckResults2",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.ReadInputRegisters4ByteSwap.8",
+    "address": "CheckResults3",
+    "valueType": "Int64",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  } 
+]

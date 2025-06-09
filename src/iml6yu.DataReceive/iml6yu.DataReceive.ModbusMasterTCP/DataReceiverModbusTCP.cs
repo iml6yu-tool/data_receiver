@@ -159,22 +159,30 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
                                             }
                                             else if (node.ReadType == ModbusReadWriteType.HoldingRegisters
                                             || node.ReadType == ModbusReadWriteType.HoldingRegisters2
+                                            || node.ReadType == ModbusReadWriteType.HoldingRegisters2ByteSwap
                                             || node.ReadType == ModbusReadWriteType.HoldingRegisters4
+                                            || node.ReadType == ModbusReadWriteType.HoldingRegisters4ByteSwap
                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2
-                                            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4)
+                                            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
+                                            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4
+                                            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap)
                                             {
                                                 tempDatas = ReadHoldingRegisters(readConfig, node, tempDatas);
                                             }
                                             else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters
                                             || node.ReadType == ModbusReadWriteType.ReadInputRegisters2
+                                            || node.ReadType == ModbusReadWriteType.ReadInputRegisters2ByteSwap
                                             || node.ReadType == ModbusReadWriteType.ReadInputRegisters4
+                                            || node.ReadType == ModbusReadWriteType.ReadInputRegisters4ByteSwap
                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
-                                            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4)
+                                            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap
+                                            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4
+                                            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap)
                                             {
                                                 tempDatas = ReadInputRegisters(readConfig, node, tempDatas);
                                             }
                                         });
-                                        await ReceiveDataToMessageChannelAsync(readNode.Key, tempDatas);
+                                        await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
                                     });
                             }
                             Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource).Wait();
@@ -258,10 +266,30 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
 
         private object GetNodeItemCurrentValue(ModbusReadWriteType readType, TypeCode valueTypeCode, params ushort[] values)
         {
+
             if (readType == ModbusReadWriteType.HoldingRegistersLittleEndian2
                 || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2)
             {
                 var bytes = values.SelectMany(t => BitConverter.GetBytes(t).Reverse()).ToArray();
+                if (!BitConverter.IsLittleEndian)
+                    Array.Reverse(bytes);
+                if (valueTypeCode == TypeCode.Int32)
+                    return BitConverter.ToInt32(bytes, 0);
+                return BitConverter.ToUInt32(bytes, 0);
+            }
+            if (readType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
+               || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap)
+            {
+                //CD AB 32bit 小端byte交换
+                var bytes = new byte[4]
+                {
+                    (byte)values[0],
+                    (byte)(values[0]>>8),
+                    (byte)values[1],
+                    (byte)(values[1]>>8)
+                };
+                if (!BitConverter.IsLittleEndian)
+                    Array.Reverse(bytes);
                 if (valueTypeCode == TypeCode.Int32)
                     return BitConverter.ToInt32(bytes, 0);
                 return BitConverter.ToUInt32(bytes, 0);
@@ -270,6 +298,30 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
                || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian4)
             {
                 var bytes = values.SelectMany(t => BitConverter.GetBytes(t).Reverse()).ToArray();
+                if (!BitConverter.IsLittleEndian)
+                    Array.Reverse(bytes);
+                if (valueTypeCode == TypeCode.Int64)
+                    return BitConverter.ToInt64(bytes, 0);
+                return BitConverter.ToUInt64(bytes, 0);
+            }
+
+            else if (readType == ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap
+              || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap)
+            {
+                //GH EF  CD AB 64bit 小端byte交换 
+                var bytes = new byte[8]
+                {
+                    (byte)values[0],
+                    (byte)(values[0]>>8),
+                    (byte)values[1],
+                    (byte)(values[1]>>8),
+                    (byte)values[2],
+                    (byte)(values[2]>>8),
+                    (byte)values[3],
+                    (byte)(values[3]>>8)
+                };
+                if (!BitConverter.IsLittleEndian)
+                    Array.Reverse(bytes);
                 if (valueTypeCode == TypeCode.Int64)
                     return BitConverter.ToInt64(bytes, 0);
                 return BitConverter.ToUInt64(bytes, 0);
@@ -279,6 +331,26 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
                 || readType == ModbusReadWriteType.ReadInputRegisters2)
             {
                 var bytes = values.Reverse().SelectMany(t => BitConverter.GetBytes(t)).ToArray();
+                if (!BitConverter.IsLittleEndian)
+                    Array.Reverse(bytes);
+                if (valueTypeCode == TypeCode.Int32)
+                    return BitConverter.ToInt32(bytes, 0);
+                return BitConverter.ToUInt32(bytes, 0);
+            }
+
+            else if (readType == ModbusReadWriteType.HoldingRegisters2ByteSwap
+               || readType == ModbusReadWriteType.ReadInputRegisters2ByteSwap)
+            {
+                //BA DC 32bit 大端byte交换 
+                var bytes = new byte[4]
+                {
+                    (byte)(values[1]>>8),
+                    (byte)values[1],
+                    (byte)(values[0]>>8),
+                    (byte)values[0] 
+                };
+                if (!BitConverter.IsLittleEndian)
+                    Array.Reverse(bytes);
                 if (valueTypeCode == TypeCode.Int32)
                     return BitConverter.ToInt32(bytes, 0);
                 return BitConverter.ToUInt32(bytes, 0);
@@ -287,10 +359,34 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
                 || readType == ModbusReadWriteType.ReadInputRegisters4)
             {
                 var bytes = values.Reverse().SelectMany(t => BitConverter.GetBytes(t)).ToArray();
+                if (!BitConverter.IsLittleEndian)
+                    Array.Reverse(bytes);
                 if (valueTypeCode == TypeCode.Int64)
                     return BitConverter.ToInt64(bytes, 0);
                 return BitConverter.ToUInt64(bytes, 0);
             }
+            else if (readType == ModbusReadWriteType.HoldingRegisters4ByteSwap
+                    || readType == ModbusReadWriteType.ReadInputRegisters4ByteSwap)
+            {
+                //BA DC FE HG 64bit 大端byte交换
+                var bytes = new byte[8]
+                {   
+                    (byte)(values[3]>>8),
+                    (byte)values[3],
+                    (byte)(values[2]>>8),
+                    (byte)values[2],
+                    (byte)(values[1]>>8),
+                    (byte)values[1],
+                    (byte)(values[0]>>8),
+                    (byte)values[0] 
+                };
+                if (!BitConverter.IsLittleEndian)
+                    Array.Reverse(bytes);
+                if (valueTypeCode == TypeCode.Int64)
+                    return BitConverter.ToInt64(bytes, 0);
+                return BitConverter.ToUInt64(bytes, 0);
+            }
+
             else
                 return 0;
         }
@@ -326,7 +422,7 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
                         }
                         if (!Enum.TryParse(array[1], out ModbusReadWriteType readType))
                         {
-                            Logger.LogError($"node({item.FullAddress}) readType config error.the second bit must ModbusReadType type(Coils,Inputs,HoldingRegisters,ReadInputRegisters)");
+                            Logger.LogError($"node({item.FullAddress}) readType config error.the second bit not in MudbusReadType enmu");
                             continue;
                         }
                         if (!ushort.TryParse(array[2], out ushort bits))
@@ -417,8 +513,6 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
             return MessageResult.Success();
         }
 
-
-
         public override async Task<MessageResult> WriteAsync<T>(string address, T data)
         {
             if (!IsConnected)
@@ -497,9 +591,13 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
                 return 1;
 
             if (readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
+                || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap
                 || readType == ModbusReadWriteType.ReadInputRegisters2
+                || readType == ModbusReadWriteType.ReadInputRegisters2ByteSwap
                 || readType == ModbusReadWriteType.HoldingRegisters2
-                || readType == ModbusReadWriteType.HoldingRegistersLittleEndian2)
+                || readType == ModbusReadWriteType.HoldingRegisters2ByteSwap
+                || readType == ModbusReadWriteType.HoldingRegistersLittleEndian2
+                || readType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap)
                 return 2;
             else
                 return 4;
@@ -552,41 +650,73 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
             /// </summary>
             HoldingRegisters,
             /// <summary>
-            /// 32bit （默认大端） 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// 32bit （默认大端 ABCD） 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
             /// </summary>
             HoldingRegisters2,
             /// <summary>
-            /// 64bit （默认大端） 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// 32bit （默认大端 BADC） 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// </summary>
+            HoldingRegisters2ByteSwap,
+            /// <summary>
+            /// 64bit （默认大端 ABCD EFGH） 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
             /// </summary>
             HoldingRegisters4,
             /// <summary>
-            /// 32bit 小端 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// 64bit （默认大端 BADC FEHG） 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// </summary>
+            HoldingRegisters4ByteSwap,
+            /// <summary>
+            /// 32bit 小端(DCBA) 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
             /// </summary>
             HoldingRegistersLittleEndian2,
             /// <summary>
-            /// 64bit  小端 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// 32bit 小端(CDAB) 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// </summary>
+            HoldingRegistersLittleEndian2ByteSwap,
+            /// <summary>
+            /// 64bit  小端(HGFE DCBA) 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
             /// </summary>
             HoldingRegistersLittleEndian4,
+            /// <summary>
+            /// 64bit  小端(FEHG CDAB) 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+            /// </summary>
+            HoldingRegistersLittleEndian4ByteSwap,
             /// <summary>
             /// 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
             /// </summary>
             ReadInputRegisters,
             /// <summary>
-            ///32bit 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            ///32bit(ABCD) 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
             /// </summary>
             ReadInputRegisters2,
             /// <summary>
-            /// 64bit 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            ///32bit(BADC) 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            /// </summary> 
+            ReadInputRegisters2ByteSwap,
+            /// <summary>
+            /// 64bit(ABCD EFGH) 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
             /// </summary>
             ReadInputRegisters4,
             /// <summary>
-            ///32bit 小端 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            /// 64bit(BADC FEHG) 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            /// </summary>
+            ReadInputRegisters4ByteSwap,
+            /// <summary>
+            ///32bit(DCBA) 小端 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
             /// </summary>
             ReadInputRegistersLittleEndian2,
             /// <summary>
-            /// 64bit 小端 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            ///32bit(CDAB) 小端 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
             /// </summary>
-            ReadInputRegistersLittleEndian4
+            ReadInputRegistersLittleEndian2ByteSwap,
+            /// <summary>
+            /// 64bit(HGFE DCBA) 小端 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            /// </summary>
+            ReadInputRegistersLittleEndian4,
+            /// <summary>
+            /// 64bit(GHEF CDAB) 小端 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
+            /// </summary>
+            ReadInputRegistersLittleEndian4ByteSwap
 
         }
     }

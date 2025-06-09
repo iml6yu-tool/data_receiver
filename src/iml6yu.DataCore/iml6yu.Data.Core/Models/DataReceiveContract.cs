@@ -20,7 +20,7 @@
         /// </summary>
         public long Id { get; set; }
         /// <summary>
-        /// 关键字，业务使用
+        /// 产线名称
         /// </summary>
         public string Key { get; set; }
         /// <summary>

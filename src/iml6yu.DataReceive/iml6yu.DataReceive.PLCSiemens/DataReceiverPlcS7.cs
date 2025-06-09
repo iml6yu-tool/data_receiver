@@ -198,9 +198,9 @@ namespace iml6yu.DataReceive.PLCSiemens
                                         tempDatas.Add(dataItem.Key, new ReceiverTempDataValue(value.Value, timestamp));
                                     }
                                 }
-                                await ReceiveDataToMessageChannelAsync(readNode.Key, tempDatas);
+                                await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
                             });
-                            Task.Delay(item.Key == 0 ? 500 : item.Key * 10, tokenSource).Wait();
+                            Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource).Wait();
                         }
 
                     });

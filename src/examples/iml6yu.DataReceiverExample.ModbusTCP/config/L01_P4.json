@@ -1,0 +1,293 @@
+//装箱机
+[
+  {
+    "fullAddress": "DB16.DBW2",
+    "address": "p4.state",
+    "valueType": "Int16",
+    "isSubscribe": true,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBW4",
+    "address": "p4.bag",
+    "valueType": "Int16",
+    "isSubscribe": true,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBD6",
+    "address": "p4.totalPack",
+    "valueType": "Int32",
+    "isSubscribe": true,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBW10",
+    "address": "p4.speed",
+    "valueType": "Int16",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX12.0",
+    "address": "P4.DB16.DBX12.0",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX12.1",
+    "address": "P4.DB16.DBX12.1",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX12.2",
+    "address": "P4.DB16.DBX12.2",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX12.3",
+    "address": "P4.DB16.DBX12.3",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX12.4",
+    "address": "P4.DB16.DBX12.4",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX12.5",
+    "address": "P4.DB16.DBX12.5",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX12.6",
+    "address": "P4.DB16.DBX12.6",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX12.7",
+    "address": "P4.DB16.DBX12.7",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX13.0",
+    "address": "P4.DB16.DBX13.0",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX13.1",
+    "address": "P4.DB16.DBX13.1",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX13.2",
+    "address": "P4.DB16.DBX13.2",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX13.3",
+    "address": "P4.DB16.DBX13.3",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX13.4",
+    "address": "P4.DB16.DBX13.4",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX13.5",
+    "address": "P4.DB16.DBX13.5",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX13.6",
+    "address": "P4.DB16.DBX13.6",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX13.7",
+    "address": "P4.DB16.DBX13.7",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX14.0",
+    "address": "P4.DB16.DBX14.0",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX14.1",
+    "address": "P4.DB16.DBX14.1",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX14.2",
+    "address": "P4.DB16.DBX14.2",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX14.3",
+    "address": "P4.DB16.DBX14.3",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX14.4",
+    "address": "P4.DB16.DBX14.4",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX14.5",
+    "address": "P4.DB16.DBX14.5",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX14.6",
+    "address": "P4.DB16.DBX14.6",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX14.7",
+    "address": "P4.DB16.DBX14.7",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "DB16.DBX15.0",
+    "address": "P4.DB16.DBX15.0",
+    "valueType": "Boolean",
+    "isSubscribe": false,
+    "interval": 1000,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  }
+]

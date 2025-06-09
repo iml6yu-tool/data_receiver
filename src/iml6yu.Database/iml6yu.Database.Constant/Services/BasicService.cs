@@ -183,7 +183,7 @@ namespace iml6yu.Database.Constant.Services
         {
             var q = Db.Queryable<TEntity>();
             if (search.Conditionals != null)
-                q = q.Where(search.Conditionals);
+                q = q.Where(search.Conditionals.Select(t=>(IConditionalModel)t).ToList());
 
             var total = await q.CountAsync();
 

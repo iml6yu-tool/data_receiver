@@ -28,12 +28,12 @@ namespace iml6yu.DataReceive.Core
         {
             get
             {
-                //如果没有连接，直接返回错误状态
+                //如果没有连接，会自动重连，所以属于准备中
                 if (!IsConnected)
-                    return ReceiverState.Error;
+                    return ReceiverState.Reading;
 
                 if (DoTask == null)
-                    return ReceiverState.Reading;
+                    return ReceiverState.Uninitialized;
                 if (DoTask.Status == TaskStatus.Created)
                     return ReceiverState.Ready;
                 if (DoTask.Status == TaskStatus.WaitingForActivation)
@@ -151,7 +151,7 @@ namespace iml6yu.DataReceive.Core
                 }
                 else
                 {
-                    loadResult = LoadConfigAsync(Option).Result;
+                    loadResult = LoadConfigAsync(Option.NodeFile).Result;
                 }
                 if (!loadResult.State)
                     Logger.LogError($"load config error!\r\n{loadResult.Message}");
@@ -173,11 +173,11 @@ namespace iml6yu.DataReceive.Core
         {
             DataParse = dataParse;
         }
-        public async Task<MessageResult> LoadConfigAsync(TOption option)
+        public async Task<MessageResult> LoadConfigAsync(string optionNodeFile)
         {
             try
             {
-                var nodes = await option.NodeFile.ReadJsonContentAsync<List<NodeItem>>(Encoding.UTF8, CancellationToken.None);
+                var nodes = await optionNodeFile.ReadJsonContentAsync<List<NodeItem>>(Encoding.UTF8, CancellationToken.None);
                 return LoadConfig(nodes);
             }
             catch (Exception ex)
@@ -281,7 +281,7 @@ namespace iml6yu.DataReceive.Core
                         if (!VerifyConnect())
                         {
                             await ConnectAsync();
-                            await Task.Delay(TimeSpan.FromSeconds(5));
+                            await Task.Delay(TimeSpan.FromSeconds(15));
                         }
                     }
                 }
@@ -487,14 +487,14 @@ namespace iml6yu.DataReceive.Core
             }
         }
 
-        protected virtual async Task ReceiveDataToMessageChannelAsync(string groupName, Dictionary<string, ReceiverTempDataValue> msg)
+        protected virtual async Task ReceiveDataToMessageChannelAsync(string productLineName, Dictionary<string, ReceiverTempDataValue> msg)
         {
             if (msg == null) await Task.CompletedTask;
             if (MessageChannel.Reader.Count > maxMessageWarningCount)
             {
                 Logger.LogWarning("zh-cn:读取设备点位的缓存数据已经预警，有可能出现数据丢失情况！en-us:The ThreadChannel Cache will full!");
             }
-            await MessageChannel.Writer.WriteAsync(new KeyValuePair<string, Dictionary<string, ReceiverTempDataValue>>(groupName, msg));
+            await MessageChannel.Writer.WriteAsync(new KeyValuePair<string, Dictionary<string, ReceiverTempDataValue>>(productLineName, msg));
         }
 
         #region event on method

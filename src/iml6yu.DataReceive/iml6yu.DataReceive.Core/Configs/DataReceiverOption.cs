@@ -1,10 +1,14 @@
-﻿ namespace iml6yu.DataReceive.Core.Configs
+﻿namespace iml6yu.DataReceive.Core.Configs
 {
     /// <summary>
     /// 接收器Options
     /// </summary>
     public class DataReceiverOption
     {
+        /// <summary>
+        /// 业务关联的产线
+        /// </summary>
+        public string ProductLineName { get; set; }
         /// <summary>
         /// 数据源连接用户名
         /// </summary>
@@ -47,6 +51,6 @@
         /// 是否自动连接
         /// </summary>
         public bool AutoConnect { get; set; } = false;
-     
+
     }
 }

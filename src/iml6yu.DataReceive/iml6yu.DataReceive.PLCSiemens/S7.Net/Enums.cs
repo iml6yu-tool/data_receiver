@@ -189,32 +189,32 @@
         S7WString,
 
         /// <summary>
-        /// Timer variable type
+        /// Timer variable type (32 bits, 4 bytes)
         /// </summary>
         Timer,
 
         /// <summary>
-        /// Counter variable type
+        /// Counter variable type (16 bits, 2 bytes)
         /// </summary>
         Counter,
 
         /// <summary>
-        /// DateTIme variable type
+        /// DateTIme variable type (64 bits, 8 bytes)
         /// </summary>
         DateTime,
-        
+
         /// <summary>
-        /// IEC date (legacy) variable type
+        /// IEC date (legacy) variable type  (16 bits, 2 bytes)
         /// </summary>
         Date,
 
         /// <summary>
-        /// DateTimeLong variable type
+        /// DateTimeLong variable type  (96 bits,12 bytes)
         /// </summary>
         DateTimeLong,
-        
+
         /// <summary>
-        /// S7 TIME variable type - serialized as S7 DInt and deserialized as C# TimeSpan 
+        /// S7 TIME variable type - serialized as S7 DInt and deserialized as C# TimeSpan   (32 bits, 4 bytes)
         /// </summary>
         Time
     }

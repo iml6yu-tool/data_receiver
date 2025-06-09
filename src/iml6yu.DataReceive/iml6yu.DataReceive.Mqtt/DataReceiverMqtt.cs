@@ -214,7 +214,7 @@ namespace iml6yu.DataReceive.Mqtt
                     if (list != null)
                         foreach (var key in list.Keys)
                         {
-                            await ReceiveDataToMessageChannelAsync(key, list[key]);
+                            await ReceiveDataToMessageChannelAsync(Option.ProductLineName, list[key]);
                         }
                 });
             }

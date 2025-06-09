@@ -27,6 +27,11 @@ namespace iml6yu.DataReceive.Core.Models
         /// <summary>
         /// 发生错误
         /// </summary>
-        Error = 4
+        Error = 4,
+
+        /// <summary>
+        /// 未初始化
+        /// </summary>
+        Uninitialized=9999,
     }
 }

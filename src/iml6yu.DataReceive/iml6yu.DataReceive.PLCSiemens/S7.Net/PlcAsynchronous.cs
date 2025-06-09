@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using S7.Net.Protocol;
 using System.Threading;
 using S7.Net.Protocol.S7;
+using System.Collections;
 
 namespace S7.Net
 {
@@ -286,8 +287,54 @@ namespace S7.Net
         {
             //Snap7 seems to choke on PDU sizes above 256 even if snap7
             //replies with bigger PDU size in connection setup.
-            AssertPduSizeForRead(dataItems);
 
+            if (!AssertPduSizeForReadNotException(dataItems))
+            {
+                //验证pdu数据过多后进行重新整理变量尝试读取
+                var reDataItems = ReBuilderDataItems(dataItems);
+                //foreach (var dic in reDataItems)
+                //{
+                //    foreach (var item in dic.Value.Keys)
+                //    {
+                //        if (item == null) continue;
+                //        var values = await ReadAsync(item.DataType, item.DB, item.StartByteAdr, item.VarType, item.Count, item.BitAdr, cancellationToken);
+                //        if (item.Count == 1)
+                //            dic.Value[item][0].Item1.Value = values;
+                //        else
+                //        {
+                //            for (var i = 0; i < dic.Value[item].Count; i++)
+                //            {
+                //                dic.Value[item][i].Item1.Value = GetValues(dic.Key, values, dic.Value[item][i].Item2, dic.Value[item][i].Item1.Count);
+                //            }
+                //        }
+                //    }
+                //}
+                await Parallel.ForEachAsync(reDataItems, async (dic, token) =>
+                {
+                    foreach (var item in dic.Value.Keys)
+                    {
+                        if (item == null) continue;
+                        var values = await ReadAsync(item.DataType, item.DB, item.StartByteAdr, item.VarType, item.Count, item.BitAdr, cancellationToken);
+                        if (item.Count == 1)
+                            dic.Value[item][0].Item1.Value = values;
+                        else
+                        {
+                            for (var i = 0; i < dic.Value[item].Count; i++)
+                            {
+                                dic.Value[item][i].Item1.Value = GetValues(dic.Key, values, dic.Value[item][i].Item2, dic.Value[item][i].Item1.Count);
+                            }
+                        }
+                    }
+                });
+#if DEBUG
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dataItems.Select(t => new { Address = $"{t.DataType.ToString()}{t.DB}.{t.VarType.ToString()}{t.StartByteAdr}.{t.BitAdr}", Value = t.Value })));
+                Console.ForegroundColor = ConsoleColor.White;
+#endif
+                return dataItems;
+            }
+
+            //pdu验证通过，正常读取
             try
             {
                 var dataToSend = BuildReadRequestPackage(dataItems.Select(d => DataItem.GetDataItemAddress(d)).ToList());
@@ -309,7 +356,243 @@ namespace S7.Net
             {
                 throw new PlcException(ErrorCode.ReadData, exc);
             }
+
+#if DEBUG
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dataItems.Select(t => new { Address = $"{t.DataType.ToString()}{t.DB}.{t.VarType.ToString()}{t.StartByteAdr}.{t.BitAdr}", Value = t.Value })));
+            Console.ForegroundColor = ConsoleColor.White;
+#endif
             return dataItems;
+        }
+
+        private object? GetValues(VarType dataType, object? values, int startIndex, int count)
+        {
+            switch (dataType)
+            {
+                case VarType.Byte:
+                    if (values is byte byteValue)
+                        return byteValue;
+                    else if (values is byte[] byteArr)
+                    {
+                        if (count == 1)
+                            return byteArr.Skip(startIndex + 1).Take(count).FirstOrDefault();
+                        else
+                            return byteArr.Skip(startIndex + 1).Take(count).ToArray();
+                    }
+                    return null;
+                case VarType.Word:
+                case VarType.Counter:
+                    if (values is ushort usValue)
+                        return usValue;
+                    else if (values is ushort[] usArr)
+                    {
+                        if (count == 1)
+                            return usArr.Skip(startIndex).Take(count).FirstOrDefault();
+                        else
+                            return usArr.Skip(startIndex).Take(count).ToArray();
+                    }
+                    return null;
+                case VarType.Int:
+                    if (values is short sValue)
+                        return sValue;
+                    else if (values is short[] sArr)
+                    {
+                        if (count == 1)
+                            return sArr.Skip(startIndex).Take(count).FirstOrDefault();
+                        else
+                            return sArr.Skip(startIndex).Take(count).ToArray();
+                    }
+                    return null;
+                case VarType.DWord:
+                    if (values is uint uiValue)
+                        return uiValue;
+                    else if (values is uint[] uiArr)
+                    {
+                        if (count == 1)
+                            return uiArr.Skip(startIndex).Take(count).FirstOrDefault();
+                        else
+                            return uiArr.Skip(startIndex).Take(count).ToArray();
+                    }
+                    return null;
+                case VarType.DInt:
+                    if (values is int iValue)
+                        return iValue;
+                    else if (values is int[] iArr)
+                    {
+                        if (count == 1)
+                            return iArr.Skip(startIndex).Take(count).FirstOrDefault();
+                        else
+                            return iArr.Skip(startIndex).Take(count).ToArray();
+                    }
+                    return null;
+                case VarType.Real:
+                    if (values is float fValue)
+                        return fValue;
+                    else if (values is float[] fArr)
+                    {
+                        if (count == 1)
+                            return fArr.Skip(startIndex).Take(count).FirstOrDefault();
+                        else
+                            return fArr.Skip(startIndex).Take(count).ToArray();
+                    }
+                    return null;
+                case VarType.LReal:
+                case VarType.Timer:
+                    if (values is double dValue)
+                        return dValue;
+                    else if (values is double[] dArr)
+                    {
+                        if (count == 1)
+                            return dArr.Skip(startIndex).Take(count).FirstOrDefault();
+                        else
+                            return dArr.Skip(startIndex).Take(count).ToArray();
+                    }
+                    return null;
+                case VarType.String:
+                case VarType.S7String:
+                case VarType.S7WString:
+                    if (values is string stringValue)
+                        return stringValue;
+                    return null;
+                case VarType.Bit:
+                    if (values is bool bValue)
+                        return bValue;
+                    else if (values is bool[] bArr)
+                    {
+                        if (count == 1)
+                            return bArr.Skip(startIndex).Take(count).FirstOrDefault();
+                        else
+                            return bArr.Skip(startIndex).Take(count).ToArray();
+                    }
+                    else if (values is BitArray bitArr)
+                    {
+                        if (count == 1)
+                        {
+                            //超出界限了
+                            if (bitArr.Length > startIndex)
+                                return bitArr.Get(startIndex);
+                            else return null;
+                        }
+                        else
+                        {
+                            //超出界限了
+                            if (bitArr.Length > startIndex + count)
+                                return bitArr.Cast<bool>().Skip(startIndex).Take(count).ToArray();
+                            else return null;
+                        }
+
+                    }
+                    return null;
+                case VarType.DateTime:
+                case VarType.DateTimeLong:
+                case VarType.Date:
+                    if (values is System.DateTime dtValue)
+                        return dtValue;
+                    else if (values is System.DateTime[] dtArr)
+                    {
+                        if (count == 1)
+                            return dtArr.Skip(startIndex).Take(count).FirstOrDefault();
+                        else
+                            return dtArr.Skip(startIndex).Take(count).ToArray();
+                    }
+                    return null;
+                case VarType.Time:
+                    if (values is System.TimeSpan tsValue)
+                        return tsValue;
+                    else if (values is System.TimeSpan[] tsArr)
+                    {
+                        if (count == 1)
+                            return tsArr.Skip(startIndex).Take(count).FirstOrDefault();
+                        else
+                            return tsArr.Skip(startIndex).Take(count).ToArray();
+                    }
+                    return null;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// 按照数据类型进行重新组合参数 
+        /// <list type="bullet">
+        /// <item>Key(VarType):数据类型</item>
+        /// <item>Value (Dictionary《DataItem, List《(DataItem, int)》》) 新的参数和源参数的对应关系</item>
+        /// </list>
+        /// <list type="number">
+        /// <item>Key(DataItem) 新的读取参数</item>
+        /// <item>Value( List《(DataItem, int)》) 原参数，以及在新参数中的Count值</item>
+        /// </list>
+        /// </summary>
+        /// <param name="dataItems">读取参数</param>
+        /// <returns></returns>
+        private Dictionary<VarType, Dictionary<DataItem, List<(DataItem, int)>>> ReBuilderDataItems(List<DataItem> dataItems)
+        {
+            Dictionary<VarType, Dictionary<DataItem, List<(DataItem, int)>>> resultDataItem = new Dictionary<VarType, Dictionary<DataItem, List<(DataItem, int)>>>();
+            var varTypeRefDataItemDic = dataItems.GroupBy(t => t.VarType).ToDictionary(t => t.Key, t => t.OrderBy(x => x.StartByteAdr).ThenBy(x => x.BitAdr));
+            foreach (var key in varTypeRefDataItemDic.Keys)
+            {
+                //新的DataItem， （原来的DataItem,在新的里面的Count值）
+                Dictionary<DataItem, List<(DataItem, int)>> currentDataItems = new Dictionary<DataItem, List<(DataItem, int)>>();
+                var lenght = 0;
+                if (key == VarType.Bit)
+                    lenght = 1;
+                else if (key == VarType.Byte)
+                    lenght = 8;
+                else if (key == VarType.Real || key == VarType.DInt || key == VarType.DWord || key == VarType.Timer || key == VarType.Time)
+                    lenght = 32;
+                else if (key == VarType.LReal || key == VarType.DateTime)
+                    lenght = 64;
+                else if (key == VarType.Word || key == VarType.Int || key == VarType.Counter || key == VarType.Date)
+                    lenght = 16;
+                else if (key == VarType.DateTimeLong)
+                    lenght = 96;
+                else
+                    lenght = 1;
+                var list = varTypeRefDataItemDic[key];
+                foreach (var item in list)
+                {
+                    if (currentDataItems.Count == 0)
+                    {   //当前还没有数据，直接添加后进入下一次循环
+                        currentDataItems.Add(new DataItem()
+                        {
+                            DB = item.DB,
+                            BitAdr = item.BitAdr,
+                            Count = item.Count,
+                            DataType = item.DataType,
+                            StartByteAdr = item.StartByteAdr,
+                            VarType = item.VarType
+                        }, new List<(DataItem, int)>() { (item, 0) });
+                        continue;
+                    }
+                    DataItem lastKey = currentDataItems.Keys.Last();
+                    //上一个参数数据  
+                    DataItem? lastItem = currentDataItems[lastKey].Last().Item1;
+                    var expected = item.Count * lenght;
+                    var actual = (item.StartByteAdr * 8 + item.BitAdr) - (lastItem.StartByteAdr * 8 + lastItem.BitAdr);
+
+                    if (expected == actual)
+                    {
+                        //先add后++的原因是index从0开始，Count是从1开始
+                        currentDataItems[lastKey].Add((item, lastKey.Count));
+                        lastKey.Count += 1;
+                    }
+                    else
+                    {
+                        currentDataItems.Add(new DataItem()
+                        {
+                            DB = item.DB,
+                            BitAdr = item.BitAdr,
+                            Count = item.Count,
+                            DataType = item.DataType,
+                            StartByteAdr = item.StartByteAdr,
+                            VarType = item.VarType
+                        }, new List<(DataItem, int)>() { (item, 0) });
+                    }
+
+                }
+                resultDataItem.Add(key, currentDataItems);
+            }
+            return resultDataItem;
         }
 
         /// <summary>
@@ -352,7 +635,7 @@ namespace S7.Net
             var dataToSend = BuildSzlReadRequestPackage(0x0424, 0);
             var s7data = await RequestTsduAsync(dataToSend, cancellationToken);
 
-            return (byte) (s7data[37] & 0x0f);
+            return (byte)(s7data[37] & 0x0f);
         }
 
         /// <summary>

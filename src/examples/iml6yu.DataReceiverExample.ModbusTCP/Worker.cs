@@ -48,10 +48,10 @@ namespace iml6yu.DataReceiverExample.ModbusTCP
                 logger.LogInformation("Data changed: at {TagName} \r\n {Value}", DateTimeOffset.FromUnixTimeMilliseconds(e.Timestamp).ToString("yyyy-MM-dd HH:mm:ss.fff"),
                     JsonSerializer.Serialize(e.Datas));
             };
-            receiver.DataIntervalEvent += async (sender, e) =>
-            {
-                await reBalanceService.AddReBalance(e);
-            };
+            //receiver.DataIntervalEvent += async (sender, e) =>
+            //{
+            //    await reBalanceService.AddReBalance(e);
+            //};
             _ = reBalanceService.StartInsertReBalanceService();
             _ = receiver.StartWorkAsync(cancellationToken);
             await base.StartAsync(cancellationToken);

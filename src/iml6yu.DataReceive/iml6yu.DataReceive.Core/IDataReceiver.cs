@@ -49,7 +49,11 @@ namespace iml6yu.DataReceive.Core
         /// </summary>
         /// <returns></returns>
         MessageResult LoadConfig(List<NodeItem> nodes);
-
+        /// <summary>
+        /// 加载配置
+        /// </summary>
+        /// <returns></returns>
+        Task<MessageResult> LoadConfigAsync(string optionNodeFile);
         /// <summary>
         /// 验证连接状态
         /// </summary>
@@ -159,17 +163,6 @@ namespace iml6yu.DataReceive.Core
         /// <summary>
         /// 客户端配置
         /// </summary>
-        TOption Option { get; set; }
-        /// <summary>
-        /// 加载配置
-        /// </summary>
-        /// <returns></returns>
-        Task<MessageResult> LoadConfigAsync(TOption option);
-        ///// <summary>
-        ///// 设置转换器
-        ///// </summary>
-        ///// <param name="dataParse"></param>
-        //void SetDataParse(Func<TReceiveContent, Dictionary<string, ReceiverTempDataValue>> dataParse);
-
+        TOption Option { get; set; } 
     }
 }

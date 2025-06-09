@@ -207,6 +207,25 @@ namespace S7.Net
             if (requiredResponseSize > MaxPDUSize) throw new Exception($"Too much data requested for read. Response size ({requiredResponseSize}) is larger than protocol limit ({MaxPDUSize}).");
         }
 
+        /// <summary>
+        /// 验证pdu不抛出异常
+        /// </summary>
+        /// <param name="dataItems"></param>
+        /// <returns></returns>
+        private bool AssertPduSizeForReadNotException(ICollection<DataItem> dataItems)
+        {
+            try
+            {
+                AssertPduSizeForRead(dataItems);
+                return true;
+            }
+            catch (Exception)
+            {
+
+                return false;
+            }
+        }
+
         private void AssertPduSizeForWrite(ICollection<DataItem> dataItems)
         {
             // 12 bytes of header data, 18 bytes of parameter data for each dataItem
@@ -273,7 +292,7 @@ namespace S7.Net
                 case ReadWriteErrorCode.Success:
                     break;
                 default:
-                    throw new Exception( $"Invalid response from PLC: statusCode={(byte)statusCode}.");
+                    throw new Exception($"Invalid response from PLC: statusCode={(byte)statusCode}.");
             }
         }
 

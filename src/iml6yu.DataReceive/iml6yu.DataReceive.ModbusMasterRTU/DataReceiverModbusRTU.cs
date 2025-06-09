@@ -176,7 +176,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                                         tempDatas = ReadInputRegisters(readConfig, node, tempDatas);
                                     }
                                 });
-                                await ReceiveDataToMessageChannelAsync(readNode.Key, tempDatas);
+                                await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
                             });
                             }
                             Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource).Wait();
