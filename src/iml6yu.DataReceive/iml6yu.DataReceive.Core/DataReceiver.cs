@@ -280,6 +280,7 @@ namespace iml6yu.DataReceive.Core
                     {
                         if (!VerifyConnect())
                         {
+                            Logger.LogWarning($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort})正在尝试重连...");
                             await ConnectAsync();
                             await Task.Delay(TimeSpan.FromSeconds(15));
                         }

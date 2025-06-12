@@ -112,7 +112,7 @@ namespace S7.Net
         /// </para>
         /// </remarks>
         public bool IsConnected => tcpClient?.Connected ?? false;
-
+         
         /// <summary>
         /// Creates a PLC object with all the parameters needed for connections.
         /// For S7-1200 and S7-1500, the default is rack = 0 and slot = 0.

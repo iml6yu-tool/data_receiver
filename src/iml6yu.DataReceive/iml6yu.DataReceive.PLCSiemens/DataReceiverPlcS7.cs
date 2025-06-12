@@ -55,6 +55,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                 return MessageResult.Success();
             try
             {
+                CreateClient(Option);
                 await Client.OpenAsync();
                 OnConnectionEvent(this.Option, new ConnectArgs(true));
                 return MessageResult.Success();
@@ -162,6 +163,8 @@ namespace iml6yu.DataReceive.PLCSiemens
 
         protected override Plc CreateClient(DataReceiverPlcS7Option option)
         {
+            if (IsConnected)
+                return Client;
             Client = new Plc(
                 (S7.Net.CpuType)option.CpuType,
                 option.OriginHost,
@@ -176,31 +179,32 @@ namespace iml6yu.DataReceive.PLCSiemens
             {   //读取数据
                 Parallel.ForEach(readNodes, readNode =>
                 {
-                    Parallel.ForEach(readNode.Value, item =>
+                    Parallel.ForEach(readNode.Value, async item =>
                     {
                         while (!tokenSource.IsCancellationRequested)
                         {
-                            Client.ReadMultipleVarsAsync(item.Value.Values.ToList()).ContinueWith(async t =>
-                            {
-                                if (t.IsFaulted)
-                                {
-                                    Logger.LogError($"read data error. {t.Exception?.Message}");
-                                }
-                                //获取当前时间戳
-                                var timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                                var result = t.Result;
-                                Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
-                                foreach (var value in result)
-                                {
-                                    var dataItem = item.Value.FirstOrDefault(t => t.Value == value);
-                                    if (dataItem.Key != null)
+                            if (IsConnected)
+                                _ = Client.ReadMultipleVarsAsync(item.Value.Values.ToList()).ContinueWith(async t =>
                                     {
-                                        tempDatas.Add(dataItem.Key, new ReceiverTempDataValue(value.Value, timestamp));
-                                    }
-                                }
-                                await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
-                            });
-                            Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource).Wait();
+                                        if (t.IsFaulted)
+                                        {
+                                            Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data error. {t.Exception?.Message}");
+                                        }
+                                        //获取当前时间戳
+                                        var timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                                        var result = t.Result;
+                                        Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
+                                        foreach (var value in result)
+                                        {
+                                            var dataItem = item.Value.FirstOrDefault(t => t.Value == value);
+                                            if (dataItem.Key != null)
+                                            {
+                                                tempDatas.Add(dataItem.Key, new ReceiverTempDataValue(value.Value, timestamp));
+                                            }
+                                        }
+                                        await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
+                                    });
+                            await Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource);
                         }
 
                     });
