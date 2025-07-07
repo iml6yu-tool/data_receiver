@@ -17,7 +17,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
         /// <param name="nodes">node节点，如果isAutoLoadNodeConfig是true,并且nodes不是null，则使用nodes，如果nodes是null,则使用option中的节点路径读取配置json,如果都不存在则抛出异常</param>
         /// <returns>services</returns>
         /// <exception cref="ArgumentNullException">主要是参数isAutoLoadNodeConfig结合nodes的使用，如果isAutoLoadNodeConfig=false,则不涉及到任何nodes的配置</exception>
-        public static IServiceCollection AddReceiver(this IServiceCollection services, DataReceiverModbusOption option, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null)
+        public static IServiceCollection AddReceiver(this IServiceCollection services, DataReceiverModbusRTUOption option, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null)
 
         {
             if (services == null)

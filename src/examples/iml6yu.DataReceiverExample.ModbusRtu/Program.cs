@@ -9,7 +9,7 @@ namespace iml6yu.DataReceiverExample.ModbusRtu
         {
             var builder = Host.CreateApplicationBuilder(args);
 
-            DataReceiverModbusOption option = builder.Configuration.GetSection("DataReceiverOption").Get<DataReceiverModbusOption>();
+            DataReceiverModbusRTUOption option = builder.Configuration.GetSection("DataReceiverOption").Get<DataReceiverModbusRTUOption>();
             builder.Services.AddReceiver(option, true, null);
 
             builder.Services.AddHostedService<Worker>();

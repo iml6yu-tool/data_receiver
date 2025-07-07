@@ -13,6 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\iml6yu.DataReceive.Core\iml6yu.DataReceive.Core.csproj" />
+    <ProjectReference Include="..\iml6yu.DataReceive.ModbusMaster\iml6yu.DataReceive.ModbusMaster.csproj" />
   </ItemGroup>
 
 </Project>

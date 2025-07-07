@@ -26,7 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="iml6yu.Fingerprint" Version="1.0.1" />
-    <PackageReference Include="iml6yu.Results" Version="1.0.4" />
+    <PackageReference Include="iml6yu.Results" Version="1.0.6" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.6.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
     <PackageReference Include="SqlSugarCore" Version="5.1.4.158" /> 

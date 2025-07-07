@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace iml6yu.DataReceive.ModbusMasterTCP.Configs
+namespace iml6yu.DataReceive.ModbusMaster.Configs
 {
     public class DataReceiverModbusOption : DataReceiverOption
     { 

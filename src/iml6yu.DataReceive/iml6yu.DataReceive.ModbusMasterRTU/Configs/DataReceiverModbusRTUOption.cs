@@ -1,4 +1,5 @@
 ﻿using iml6yu.DataReceive.Core.Configs;
+using iml6yu.DataReceive.ModbusMaster.Configs;
 using System;
 using System.Collections.Generic;
 using System.IO.Ports;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace iml6yu.DataReceive.ModbusMasterRTU.Configs
 {
-    public class DataReceiverModbusOption : DataReceiverOption
+    public class DataReceiverModbusRTUOption : DataReceiverModbusOption
     {
 
         /// <summary>

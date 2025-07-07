@@ -30,7 +30,7 @@ namespace iml6yu.DataReceiverExample.ModbusTCP
                     });
                 return sqlSugar;
             });
-            DataReceiverModbusOption option = builder.Configuration.GetSection("DataReceiverOption").Get<DataReceiverModbusOption>();
+            DataReceiverModbusTCPOption option = builder.Configuration.GetSection("DataReceiverOption").Get<DataReceiverModbusTCPOption>();
             builder.Services.AddReceiver(option, true, null);
             builder.Services.AddRebalanceSingleton();
             builder.Services.AddHostedService<Worker>();

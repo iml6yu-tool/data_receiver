@@ -20,7 +20,7 @@ namespace iml6yu.DataReceiverExample.ModbusRtu
             {
                 if (e.IsConntion)
                 {
-                    logger.LogInformation("Connected to deiver {0}",((DataReceiverModbusOption)sender).ReceiverName);
+                    logger.LogInformation("Connected to deiver {0}",((DataReceiverModbusRTUOption)sender).ReceiverName);
                 }
                 else
                 {

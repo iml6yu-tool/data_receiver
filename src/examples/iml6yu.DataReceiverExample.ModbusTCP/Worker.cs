@@ -25,7 +25,7 @@ namespace iml6yu.DataReceiverExample.ModbusTCP
             {
                 if (e.IsConntion)
                 {
-                    logger.LogInformation("Connected to deiver {0}", ((DataReceiverModbusOption)sender).ReceiverName);
+                    logger.LogInformation("Connected to deiver {0}", ((DataReceiverModbusTCPOption)sender).ReceiverName);
                 }
                 else
                 {
