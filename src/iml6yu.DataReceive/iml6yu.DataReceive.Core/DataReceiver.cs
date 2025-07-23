@@ -56,6 +56,7 @@ namespace iml6yu.DataReceive.Core
 
         public abstract bool IsConnected { get; }
 
+        public string Name { get => Option.ReceiverName; }
         protected ILogger Logger { get; }
         protected Task DoTask;
         /// <summary>
@@ -346,17 +347,7 @@ namespace iml6yu.DataReceive.Core
                     await foreach (var data in MessageChannel.Reader.ReadAllAsync())
                     {
                         try
-                        {
-                            if (DataIntervalEvent != null)
-                            {
-                                _ = Task.Run(() =>
-                                  {
-                                      var intervalDatas = GetDataContract(data);
-                                      if (intervalDatas != null && intervalDatas.Datas.Count > 0)
-                                          DataIntervalEvent?.Invoke(Option, intervalDatas);
-                                  });
-                            }
-
+                        { 
                             var changeDatas = UpdateCatch(data);
 
                             if (changeDatas.Datas.Count > 0)
@@ -374,6 +365,16 @@ namespace iml6yu.DataReceive.Core
                                             DataSubscribeEvent?.Invoke(item.Key, new DataReceiveContract(changeDatas.Timestamp) { Datas = subDatas });
                                         }
                                     });
+                            }
+
+                            if (DataIntervalEvent != null)
+                            {
+                                //_ = Task.Run(() =>
+                                //  {
+                                var intervalDatas = GetDataContract(data);
+                                if (intervalDatas != null && intervalDatas.Datas.Count > 0)
+                                    DataIntervalEvent?.Invoke(Option, intervalDatas);
+                                //});
                             }
                         }
                         catch (Exception ex)

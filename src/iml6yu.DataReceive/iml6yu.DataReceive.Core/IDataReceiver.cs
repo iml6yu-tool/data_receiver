@@ -10,7 +10,16 @@ namespace iml6yu.DataReceive.Core
 {
     public interface IDataReceiver : IDisposable
     { 
+        /// <summary>
+        /// 状态
+        /// </summary>
         ReceiverState State { get; }
+        /// <summary>
+        /// 名字
+        /// </summary>
+        string Name { get; }
+
+        bool IsConnected { get; }
         /// <summary>
         /// 连接事件，当连接状态发生变化时触发
         /// </summary>
@@ -43,7 +52,7 @@ namespace iml6yu.DataReceive.Core
 
         event EventHandler<DataReceiveContract> DataSubscribeEvent;
 
-
+     
         /// <summary>
         /// 加载配置
         /// </summary>

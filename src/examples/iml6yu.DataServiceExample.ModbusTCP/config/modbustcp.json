@@ -1,0 +1,48 @@
+﻿{
+  "IPAddress": null,
+  "Port": 5020,
+  "Slaves": [
+    {
+      "Id": 1,
+      "Heart": {
+        "HeartType": "OddAndEven",
+        "HeartAddress": "1.HoldingRegisters.0",
+        "HeartInterval": 10
+      },
+      "Stores": [
+        {
+          "StoreType": "Coils",
+          "NumberOfPoint": 20,
+          "StartAddress": 0,
+          "DefaultValues": [
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false },
+            { "DefaultValue": false }
+          ]
+        },
+        {
+          "StoreType": "HoldingRegisters",
+          "NumberOfPoint": 10,
+          "StartAddress": 0
+        }
+      ]
+    } 
+  ]
+}
