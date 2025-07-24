@@ -37,43 +37,16 @@ namespace iml6yu.DataService.Modbus
                 var slave = Factory.CreateSlave(opt.Id);
                 opt.Stores.ForEach(store =>
                 {
-                    switch (store.StoreType)
+                    if(store.DefaultValues!=null && store.DefaultValues.Length > 0)
                     {
-                        case ModbusReadWriteType.Coils:
-                            slave.DataStore.CoilDiscretes.WritePoints(store.StartAddress, store.DefaultValues.Select(t => (bool)(object)t.DefaultValue).ToArray());
-                            break;
-                        case ModbusReadWriteType.Inputs:
-                            slave.DataStore.CoilInputs.WritePoints(store.StartAddress, store.DefaultValues.Select(t => (bool)(object)t.DefaultValue).ToArray());
-                            break;
-                        case ModbusReadWriteType.HoldingRegisters:
-                            //                        case ModbusReadWriteType.HoldingRegisters2:
-                            //                        case ModbusReadWriteType.HoldingRegisters2ByteSwap:
-                            //                        case ModbusReadWriteType.HoldingRegisters4:
-                            //                        case ModbusReadWriteType.HoldingRegisters4ByteSwap:
-                            //                        case ModbusReadWriteType.HoldingRegistersLittleEndian2:
-                            //                        case ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap:
-                            //                        case ModbusReadWriteType.HoldingRegistersLittleEndian4:
-                            //                        case ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap:
-                            //#warning 这里不对，这些写入数据要做区分的，因为涉及到大小端和byte交换的问题
-                            //slave.DataStore.HoldingRegisters.WritePoints(store.StartAddress,  store.DefaultValues.Select(t => (ushort)t.DefaultValue).ToArray());
-                            slave.DataStore.HoldingRegisters.WritePoints(store.StartAddress, new ushort[store.NumberOfPoint]);
-                            break;
-                        case ModbusReadWriteType.ReadInputRegisters:
-                            //                        case ModbusReadWriteType.ReadInputRegisters2:
-                            //                        case ModbusReadWriteType.ReadInputRegisters2ByteSwap:
-                            //                        case ModbusReadWriteType.ReadInputRegisters4:
-                            //                        case ModbusReadWriteType.ReadInputRegisters4ByteSwap:
-                            //                        case ModbusReadWriteType.ReadInputRegistersLittleEndian2:
-                            //                        case ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap:
-                            //                        case ModbusReadWriteType.ReadInputRegistersLittleEndian4:
-                            //                        case ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap:
-                            //#warning 这里不对，这些写入数据要做区分的，因为涉及到大小端和byte交换的问题
-                            //slave.DataStore.HoldingRegisters.WritePoints(store.StartAddress, store.DefaultValues.Select(t => (ushort)t.DefaultValue).ToArray());
-                            slave.DataStore.HoldingRegisters.WritePoints(store.StartAddress, new ushort[store.NumberOfPoint]);
-                            break;
-                        default:
-                            throw new NotImplementedException($"not support type {store.StoreType}");
-                    }
+                        DataWriteContract defaultValues = new DataWriteContract();
+                        defaultValues.Datas = store.DefaultValues.Select(t => new DataWriteContractItem()
+                        {
+                            Address = t.Address,
+                            Value = t.DefaultValue
+                        });
+                        WriteAsync(defaultValues).Wait();
+                    } 
                 });
 
                 //添加从站
@@ -245,12 +218,12 @@ namespace iml6yu.DataService.Modbus
                         break;
                     case ModbusReadWriteType.HoldingRegisters:
                     case ModbusReadWriteType.HoldingRegisters2:
-                    case ModbusReadWriteType.HoldingRegisters4: 
-                            slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortValues());
+                    case ModbusReadWriteType.HoldingRegisters4:
+                        slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortValues());
                         break;
                     case ModbusReadWriteType.HoldingRegisters2ByteSwap:
-                    case ModbusReadWriteType.HoldingRegisters4ByteSwap: 
-                            slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortBSValues());
+                    case ModbusReadWriteType.HoldingRegisters4ByteSwap:
+                        slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortBSValues());
                         break;
                     case ModbusReadWriteType.HoldingRegistersLittleEndian2:
                     case ModbusReadWriteType.HoldingRegistersLittleEndian4:
@@ -262,12 +235,12 @@ namespace iml6yu.DataService.Modbus
                         break;
                     case ModbusReadWriteType.ReadInputRegisters:
                     case ModbusReadWriteType.ReadInputRegisters2:
-                    case ModbusReadWriteType.ReadInputRegisters4: 
-                            slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortValues());
+                    case ModbusReadWriteType.ReadInputRegisters4:
+                        slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortValues());
                         break;
                     case ModbusReadWriteType.ReadInputRegisters2ByteSwap:
-                    case ModbusReadWriteType.ReadInputRegisters4ByteSwap: 
-                            slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortBSValues());
+                    case ModbusReadWriteType.ReadInputRegisters4ByteSwap:
+                        slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortBSValues());
                         break;
                     case ModbusReadWriteType.ReadInputRegistersLittleEndian2:
                     case ModbusReadWriteType.ReadInputRegistersLittleEndian4:
