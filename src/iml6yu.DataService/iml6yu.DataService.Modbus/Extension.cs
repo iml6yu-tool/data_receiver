@@ -85,88 +85,46 @@ namespace iml6yu.DataService.Modbus
                 return [ul == 1];
             return [source.ToString() == "1"];
         }
+
         /// <summary>
         /// 数据转ushort数组（大端：AB CD）
         /// </summary>
         /// <param name="source"></param>
+        /// <param name="byteArrLenght"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="NotSupportedException"></exception>
-        public static ushort[] ToModbusUShortValues(this object source)
+        public static ushort[] ToModbusUShortValues(this object source, int? byteArrLenght = null)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-
-            return source switch
-            {
-                float f => BitConverter.GetBytes(f).ProcessWithEndian(false, false),  
-                double d => BitConverter.GetBytes(d).ProcessWithEndian(false, false), 
-                int i => BitConverter.GetBytes(i).ProcessWithEndian(false, false), 
-                uint ui => BitConverter.GetBytes(ui).ProcessWithEndian(false, false),  
-                long l => BitConverter.GetBytes(l).ProcessWithEndian(false, false),  
-                ulong ul => BitConverter.GetBytes(ul).ProcessWithEndian(false, false),
-                ushort[] usArr => usArr,
-                _ => throw new NotSupportedException($"Unsupported type: {source.GetType()}")
-            };
+            byte[] byteArray = source.ConvertToByteArray(byteArrLenght); 
+            return byteArray.ProcessWithEndian(false, false);
         }
 
         /// <summary>
         /// 数据转ushort数组（大端交换：BA DC）
         /// </summary>
-        public static ushort[] ToModbusUShortBSValues(this object source)
+        public static ushort[] ToModbusUShortBSValues(this object source, int? byteArrLenght = null)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-
-            return source switch
-            {
-                float f => BitConverter.GetBytes(f).ProcessWithEndian(false, true), // ToUShortArray(BitConverter.IsLittleEndian),
-                double d => BitConverter.GetBytes(d).ProcessWithEndian(false, true), //.ToUShortArray(BitConverter.IsLittleEndian),
-                int i => BitConverter.GetBytes(i).ProcessWithEndian(false, true), //.ToUShortArray(BitConverter.IsLittleEndian),
-                uint ui => BitConverter.GetBytes(ui).ProcessWithEndian(false, true), //.ToUShortArray(BitConverter.IsLittleEndian),
-                long l => BitConverter.GetBytes(l).ProcessWithEndian(false, true),
-                ulong ul => BitConverter.GetBytes(ul).ProcessWithEndian(false, true),
-                ushort[] usArr => usArr,
-                _ => throw new NotSupportedException($"Unsupported type: {source.GetType()}")
-            };
+            byte[] byteArray = source.ConvertToByteArray(byteArrLenght);
+            return byteArray.ProcessWithEndian(false, true); 
         }
 
         /// <summary>
         /// 数据转ushort数组（小端：DC BA）
         /// </summary>
-        public static ushort[] ToModbusUShortLEValues(this object source)
+        public static ushort[] ToModbusUShortLEValues(this object source, int? byteArrLenght = null)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-
-            return source switch
-            {
-                float f => BitConverter.GetBytes(f).ProcessWithEndian(true, false), // ToUShortArray(BitConverter.IsLittleEndian),
-                double d => BitConverter.GetBytes(d).ProcessWithEndian(true, false), //.ToUShortArray(BitConverter.IsLittleEndian),
-                int i => BitConverter.GetBytes(i).ProcessWithEndian(true, false), //.ToUShortArray(BitConverter.IsLittleEndian),
-                uint ui => BitConverter.GetBytes(ui).ProcessWithEndian(true, false), //.ToUShortArray(BitConverter.IsLittleEndian),
-                long l => BitConverter.GetBytes(l).ProcessWithEndian(true, false),
-                ulong ul => BitConverter.GetBytes(ul).ProcessWithEndian(true, false),
-                ushort[] usArr => usArr,
-                _ => throw new NotSupportedException($"Unsupported type: {source.GetType()}")
-            };
+            byte[] byteArray = source.ConvertToByteArray(byteArrLenght);
+            return byteArray.ProcessWithEndian(true, false);
         }
 
         /// <summary>
         /// 数据转ushort数组（小端交换：CD AB）
         /// </summary>
-        public static ushort[] ToModbusUShortLEBSValues(this object source)
+        public static ushort[] ToModbusUShortLEBSValues(this object source, int? byteArrLenght = null)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-
-            return source switch
-            {
-                float f => BitConverter.GetBytes(f).ProcessWithEndian(true, true), // ToUShortArray(BitConverter.IsLittleEndian),
-                double d => BitConverter.GetBytes(d).ProcessWithEndian(true, true), //.ToUShortArray(BitConverter.IsLittleEndian),
-                int i => BitConverter.GetBytes(i).ProcessWithEndian(true, true), //.ToUShortArray(BitConverter.IsLittleEndian),
-                uint ui => BitConverter.GetBytes(ui).ProcessWithEndian(true, true), //.ToUShortArray(BitConverter.IsLittleEndian),
-                long l => BitConverter.GetBytes(l).ProcessWithEndian(true, true),
-                ulong ul => BitConverter.GetBytes(ul).ProcessWithEndian(true, true),
-                ushort[] usArr => usArr,
-                _ => throw new NotSupportedException($"Unsupported type: {source.GetType()}")
-            };
+            byte[] byteArray = source.ConvertToByteArray(byteArrLenght);
+            return byteArray.ProcessWithEndian(true, true); 
         }
 
         /// <summary>
@@ -220,6 +178,26 @@ namespace iml6yu.DataService.Modbus
                 result[i] = BitConverter.ToUInt16(bytes, offset);
             }
             return result;
+        }
+
+        private static byte[] ConvertToByteArray(this object source, int? byteArrLenght)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+
+            var byteArray = source switch
+            {
+                float f => BitConverter.GetBytes(f),
+                double d => BitConverter.GetBytes(d),
+                int i => BitConverter.GetBytes(i),
+                uint ui => BitConverter.GetBytes(ui),
+                long l => BitConverter.GetBytes(l),
+                ulong ul => BitConverter.GetBytes(ul),
+                _ => throw new NotSupportedException($"Unsupported type: {source.GetType()}")
+            };
+
+            if (byteArrLenght.HasValue && byteArray.Length != byteArrLenght)
+                Array.Resize(ref byteArray, byteArrLenght.Value);
+            return byteArray;
         }
     }
 }

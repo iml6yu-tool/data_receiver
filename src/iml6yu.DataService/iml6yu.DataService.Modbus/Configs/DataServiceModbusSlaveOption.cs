@@ -10,7 +10,9 @@ namespace iml6yu.DataService.Modbus.Configs
     {
         public byte Id { get; set; }
         public HeartOption Heart { get; set; }
-
-        public List<ModbusSlaveStore> Stores { get; set; }
-    } 
+        /// <summary>
+        /// 默认值
+        /// </summary>
+        public List<DataServiceStoreDefaultObjectItem> DefaultValues { get; set; }
+    }
 }

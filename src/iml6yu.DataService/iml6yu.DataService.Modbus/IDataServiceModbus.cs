@@ -28,7 +28,7 @@ namespace iml6yu.DataService.Modbus
         /// 停止服务
         /// </summary>
         public void StopServicer();
-        public Dictionary<DataServiceModbusSlaveOption, Dictionary<ModbusSlaveStore, Array>> GetDatas();
+        //public Dictionary<DataServiceModbusSlaveOption, Dictionary<ModbusSlaveStore, Array>> GetDatas();
 
         public Task<List<MessageResult>> WriteAsync(DataWriteContract data);
 
