@@ -10,6 +10,13 @@ namespace iml6yu.DataService.ModbusTCP
     {
         private System.Net.Sockets.TcpListener? listener;
 
+        public DataServiceModbusTCP() : base(null, null)
+        {
+        }
+        public DataServiceModbusTCP(DataServiceModbusOption option) : base(option, null)
+        {
+        }
+
         public DataServiceModbusTCP(DataServiceModbusOption option, ILogger logger) : base(option, logger)
         {
         }
@@ -20,6 +27,7 @@ namespace iml6yu.DataService.ModbusTCP
             if (!string.IsNullOrEmpty(option.IPAddress))
                 iPAddress = IPAddress.Parse(option.IPAddress);
             int port = option.Port.HasValue ? option.Port.Value : 502;
+            listener?.Dispose();
             listener = new System.Net.Sockets.TcpListener(iPAddress, port);
             IModbusSlaveNetwork network = Factory.CreateSlaveNetwork(listener);
             listener.Start();

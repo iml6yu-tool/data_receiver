@@ -14,12 +14,13 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
 {
     public class DataReceiverModbusTCP : DataReceiverModbus<DataReceiverModbusTCPOption>
     {
-        private TcpClient tcp; 
+        private TcpClient tcp;
         public override bool IsConnected => tcp != null && Client != null && tcp.Connected;
+          
         public DataReceiverModbusTCP(DataReceiverModbusTCPOption option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : base(option, logger, isAutoLoadNodeConfig, nodes)
         {
         }
-         
+
         public override async Task<MessageResult> ConnectAsync()
         {
             if (IsConnected)
@@ -69,6 +70,6 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
                 factory = new ModbusFactory();
             Client = factory.CreateMaster(tcp);
             return Client;
-        } 
+        }
     }
 }

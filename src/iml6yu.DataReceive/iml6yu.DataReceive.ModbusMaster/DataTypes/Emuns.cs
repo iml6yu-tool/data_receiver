@@ -1,5 +1,8 @@
-﻿namespace iml6yu.DataReceive.ModbusMaster
+﻿using System.Text.Json.Serialization;
+
+namespace iml6yu.DataReceive.ModbusMaster
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ModbusReadWriteType
     {
         /// <summary>

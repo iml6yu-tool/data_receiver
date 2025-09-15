@@ -21,7 +21,7 @@ namespace iml6yu.DataService.Modbus
         /// 构造函数
         /// </summary>
         /// <param name="option">配置</param>
-        protected DataServiceModbus(DataServiceModbusOption option, ILogger logger)
+        public DataServiceModbus(DataServiceModbusOption option, ILogger logger)
         {
             Logger = logger;
             Option = option;

@@ -28,12 +28,16 @@ namespace iml6yu.DataReceive.Core
         {
             get
             {
-                //如果没有连接，会自动重连，所以属于准备中
-                if (!IsConnected)
-                    return ReceiverState.Reading;
-
                 if (DoTask == null)
                     return ReceiverState.Uninitialized;
+
+                //客户端没有实例化，就是未实例化
+                if (!IsConnected && Client == null)
+                    return ReceiverState.Uninitialized;
+
+                //如果没有连接，会自动重连，所以属于准备中
+                if (!IsConnected && Client != null)
+                    return ReceiverState.Reading;
                 if (DoTask.Status == TaskStatus.Created)
                     return ReceiverState.Ready;
                 if (DoTask.Status == TaskStatus.WaitingForActivation)
@@ -117,7 +121,7 @@ namespace iml6yu.DataReceive.Core
         /// 当订阅数据发生变动时触发
         /// </summary> 
         public event EventHandler<DataReceiveContract> DataSubscribeEvent;
-        #endregion
+        #endregion 
 
         /// <summary>
         /// 
@@ -127,6 +131,7 @@ namespace iml6yu.DataReceive.Core
         /// <param name="nodes">配置的节点信息，当NodeFile有内容时，此参数可以是null</param>
         /// <param name="tokenSource"></param>
         /// <exception cref="ArgumentException"></exception>
+
         public DataReceiver(TOption option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null)
         {
             if (isAutoLoadNodeConfig && string.IsNullOrEmpty(option.NodeFile) && nodes == null)
@@ -347,7 +352,7 @@ namespace iml6yu.DataReceive.Core
                     await foreach (var data in MessageChannel.Reader.ReadAllAsync())
                     {
                         try
-                        { 
+                        {
                             var changeDatas = UpdateCatch(data);
 
                             if (changeDatas.Datas.Count > 0)

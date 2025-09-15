@@ -51,7 +51,7 @@ namespace iml6yu.DataReceive.ModbusMaster
             }
         }
 
-        protected override Task WhileDoAsync(CancellationToken tokenSource)
+        protected override Task WhileDoAsync(CancellationToken token)
         {
             return Task.Run(() =>
             {  //按照分组进行多线程并行
@@ -59,7 +59,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                 {
                     Parallel.ForEach(readNode.Value, item =>
                     {
-                        while (!tokenSource.IsCancellationRequested)
+                        while (!token.IsCancellationRequested)
                         {
                             if (IsConnected)
                             {
@@ -129,14 +129,11 @@ namespace iml6yu.DataReceive.ModbusMaster
                                         await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
                                     });
                             }
-                            Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource).Wait();
+                            Task.Delay(item.Key == 0 ? 500 : item.Key, token).Wait(token);
                         }
                     });
-                });
-
-
-
-            }, tokenSource);
+                });  
+            }, token);
         }
 
         private Dictionary<string, ReceiverTempDataValue> ReadInputRegisters(ModbusReadConfig readConfig, ModbusReadItem node, Dictionary<string, ReceiverTempDataValue> tempDatas)

@@ -20,7 +20,7 @@ namespace iml6yu.Database.Constant.Entities
         [SugarColumn(IsPrimaryKey = true)]
         public long Id { get; set; } 
         public DateTime CreateTime { get; set; } = DateTime.Now;
-        [SugarColumn(IsNullable = true)]
+        [SugarColumn(IsNullable = true)] 
         public long? CreatorId { get; set; } = 0;
         public bool Deleted { get; set; }
         [SugarColumn(IsNullable = true)]
