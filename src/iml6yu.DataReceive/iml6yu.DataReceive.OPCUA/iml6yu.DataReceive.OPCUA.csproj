@@ -6,4 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="OpcUaHelper" Version="2.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\iml6yu.DataReceive.Core\iml6yu.DataReceive.Core.csproj" />
+  </ItemGroup>
+
 </Project>

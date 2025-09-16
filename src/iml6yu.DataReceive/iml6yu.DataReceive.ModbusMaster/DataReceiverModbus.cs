@@ -36,7 +36,7 @@ namespace iml6yu.DataReceive.ModbusMaster
         {
             var r = base.LoadConfig(nodes);
             if (!r.State)
-                Logger.LogError(r.Message);
+                return r;
 
             if (ConfigNodes == null)
                 return MessageResult.Failed(ResultType.ParameterError, "", new ArgumentNullException(nameof(ConfigNodes)));
@@ -54,85 +54,86 @@ namespace iml6yu.DataReceive.ModbusMaster
         protected override Task WhileDoAsync(CancellationToken token)
         {
             return Task.Run(() =>
-            {  //按照分组进行多线程并行
+            {
+                //按照分组进行多线程并行
                 Parallel.ForEach(readNodes, readNode =>
                 {
                     Parallel.ForEach(readNode.Value, item =>
                     {
                         while (!token.IsCancellationRequested)
                         {
-                            if (IsConnected)
+                            if (VerifyConnect())
                             {
-                                Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
                                 //按照modbus slaveaddress进行分组便利读取
                                 Parallel.ForEach(item.Value, async readConfig =>
-                                    {
-                                        readConfig.ReadItems.ForEach(node =>
-                                        {
-                                            if (node.ReadType == ModbusReadWriteType.Coils)
-                                            {
-                                                try
-                                                {
-                                                    var values = Client.ReadCoils(readConfig.SlaveId, node.StartPoint, node.NumberOfPoint);
-                                                    if (values != null && values.Length > 0)
-                                                    {
-                                                        AddReceiveValue(readConfig, node, values, ref tempDatas);
-                                                    }
-                                                }
-                                                catch (Exception ex)
-                                                {
+                                {
+                                    Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
+                                    readConfig.ReadItems.ForEach(node =>
+                                                                         {
+                                                                             if (node.ReadType == ModbusReadWriteType.Coils)
+                                                                             {
+                                                                                 try
+                                                                                 {
+                                                                                     var values = Client.ReadCoils(readConfig.SlaveId, node.StartPoint, node.NumberOfPoint);
+                                                                                     if (values != null && values.Length > 0)
+                                                                                     {
+                                                                                         AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                                                                     }
+                                                                                 }
+                                                                                 catch (Exception ex)
+                                                                                 {
 
-                                                    Logger.LogError("read coils error.\r\n{0}", ex.Message);
-                                                }
-                                            }
-                                            else if (node.ReadType == ModbusReadWriteType.Inputs)
-                                            {
-                                                try
-                                                {
-                                                    var values = Client.ReadInputs(readConfig.SlaveId, node.StartPoint, node.NumberOfPoint);
-                                                    if (values != null && values.Length > 0)
-                                                    {
-                                                        AddReceiveValue(readConfig, node, values, ref tempDatas);
-                                                    }
-                                                }
-                                                catch (Exception ex)
-                                                {
+                                                                                     Logger.LogError("read coils error.\r\n{0}", ex.Message);
+                                                                                 }
+                                                                             }
+                                                                             else if (node.ReadType == ModbusReadWriteType.Inputs)
+                                                                             {
+                                                                                 try
+                                                                                 {
+                                                                                     var values = Client.ReadInputs(readConfig.SlaveId, node.StartPoint, node.NumberOfPoint);
+                                                                                     if (values != null && values.Length > 0)
+                                                                                     {
+                                                                                         AddReceiveValue(readConfig, node, values, ref tempDatas);
+                                                                                     }
+                                                                                 }
+                                                                                 catch (Exception ex)
+                                                                                 {
 
-                                                    Logger.LogError("read inputs error.\r\n{0}", ex.Message);
-                                                }
-                                            }
-                                            else if (node.ReadType == ModbusReadWriteType.HoldingRegisters
-                                            || node.ReadType == ModbusReadWriteType.HoldingRegisters2
-                                            || node.ReadType == ModbusReadWriteType.HoldingRegisters2ByteSwap
-                                            || node.ReadType == ModbusReadWriteType.HoldingRegisters4
-                                            || node.ReadType == ModbusReadWriteType.HoldingRegisters4ByteSwap
-                                            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2
-                                            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
-                                            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4
-                                            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap)
-                                            {
-                                                tempDatas = ReadHoldingRegisters(readConfig, node, tempDatas);
-                                            }
-                                            else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters
-                                            || node.ReadType == ModbusReadWriteType.ReadInputRegisters2
-                                            || node.ReadType == ModbusReadWriteType.ReadInputRegisters2ByteSwap
-                                            || node.ReadType == ModbusReadWriteType.ReadInputRegisters4
-                                            || node.ReadType == ModbusReadWriteType.ReadInputRegisters4ByteSwap
-                                            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
-                                            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap
-                                            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4
-                                            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap)
-                                            {
-                                                tempDatas = ReadInputRegisters(readConfig, node, tempDatas);
-                                            }
-                                        });
-                                        await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
-                                    });
+                                                                                     Logger.LogError("read inputs error.\r\n{0}", ex.Message);
+                                                                                 }
+                                                                             }
+                                                                             else if (node.ReadType == ModbusReadWriteType.HoldingRegisters
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegisters2
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegisters2ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegisters4
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegisters4ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap)
+                                                                             {
+                                                                                 tempDatas = ReadHoldingRegisters(readConfig, node, tempDatas);
+                                                                             }
+                                                                             else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegisters2
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegisters2ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegisters4
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegisters4ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap)
+                                                                             {
+                                                                                 tempDatas = ReadInputRegisters(readConfig, node, tempDatas);
+                                                                             }
+                                                                         });
+                                    await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
+                                });
                             }
                             Task.Delay(item.Key == 0 ? 500 : item.Key, token).Wait(token);
                         }
                     });
-                });  
+                });
             }, token);
         }
 
@@ -542,6 +543,6 @@ namespace iml6yu.DataReceive.ModbusMaster
                 return 2;
             else
                 return 4;
-        } 
+        }
     }
 }
