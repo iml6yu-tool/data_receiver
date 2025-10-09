@@ -54,6 +54,18 @@ namespace iml6yu.Database.Constant.Services
 
         }
 
+        public virtual async Task<CollectionResult<TEntity>> GetAsync()
+        {
+            try
+            {
+                var datas = Db.Queryable<TEntity>().Where(t => !t.Deleted).ToList();
+                return CollectionResult<TEntity>.Success(1, datas.Count(), datas, datas.Count());
+            }
+            catch (Exception ex)
+            {
+                return CollectionResult<TEntity>.Failed(ResultType.Failed, ex.Message, ex);
+            }
+        }
         public virtual async Task<MessageResult> SaveAsync(TEntity entity)
         {
             try
@@ -183,7 +195,7 @@ namespace iml6yu.Database.Constant.Services
         {
             var q = Db.Queryable<TEntity>();
             if (search.Conditionals != null)
-                q = q.Where(search.Conditionals.Select(t=>(IConditionalModel)t).ToList());
+                q = q.Where(search.Conditionals.Select(t => (IConditionalModel)t).ToList());
 
             var total = await q.CountAsync();
 

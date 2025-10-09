@@ -36,9 +36,9 @@
         /// </summary>
         public int Interval { get; set; }
 
-        /// <summary>
-        /// 是否订阅opc数据(opc专用）
-        /// </summary>
-        public bool IsSubscribe { get; set; }
+        ///// <summary>
+        ///// 是否订阅opc数据(opc专用）
+        ///// </summary>
+        //public bool IsSubscribe { get; set; }
     }
 }
