@@ -8,7 +8,6 @@ using iml6yu.DataReceive.Mqtt.Configs;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
-using MQTTnet.Client;
 using System.Net.Http;
 using System.Text.Json;
 
@@ -117,7 +116,7 @@ namespace iml6yu.DataReceive.Mqtt
 
         protected override IMqttClient CreateClient(DataReceiverMqttOption option)
         {
-            Client = new MqttFactory().CreateMqttClient();
+            Client = new  MqttClientFactory().CreateMqttClient();
             Client.ConnectedAsync += args =>
             {
                 if (option.DataInputTopics?.Count > 0)
@@ -240,7 +239,7 @@ namespace iml6yu.DataReceive.Mqtt
 
         private MqttClientSubscribeOptions CreateSubscribeOptions(List<string> topics)
         {
-            var mqttSubscribeOptionsBuilder = new MqttFactory().CreateSubscribeOptionsBuilder();
+            var mqttSubscribeOptionsBuilder = new MqttClientFactory().CreateSubscribeOptionsBuilder();
             topics.ForEach(topic =>
             {
                 mqttSubscribeOptionsBuilder = mqttSubscribeOptionsBuilder.WithTopicFilter(topic);
@@ -252,7 +251,7 @@ namespace iml6yu.DataReceive.Mqtt
 
         private MqttClientUnsubscribeOptions CreateUnSubscribeOptions(List<string> topics)
         {
-            var mqttUnsubscribeOptionsBuilder = new MqttFactory().CreateUnsubscribeOptionsBuilder();
+            var mqttUnsubscribeOptionsBuilder = new MqttClientFactory().CreateUnsubscribeOptionsBuilder();
             topics.ForEach(topic =>
             {
                 mqttUnsubscribeOptionsBuilder = mqttUnsubscribeOptionsBuilder.WithTopicFilter(topic);
