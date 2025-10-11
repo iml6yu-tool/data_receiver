@@ -493,7 +493,12 @@ namespace iml6yu.DataReceive.Core
                 }
             }
         }
-
+        /// <summary>
+        /// 将消息加入线程channel中
+        /// </summary>
+        /// <param name="productLineName">产线名称</param>
+        /// <param name="msg">字典：数据地址 ref 数据临时值（值和时间戳）</param>
+        /// <returns></returns>
         protected virtual async Task ReceiveDataToMessageChannelAsync(string productLineName, Dictionary<string, ReceiverTempDataValue> msg)
         {
             if (msg == null) await Task.CompletedTask;

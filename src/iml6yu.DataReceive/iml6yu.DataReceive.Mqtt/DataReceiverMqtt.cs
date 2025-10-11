@@ -23,9 +23,26 @@ namespace iml6yu.DataReceive.Mqtt
         /// </list>
         /// </summary>
         protected Dictionary<string, (string, string)> AddressRefGroupName = new Dictionary<string, (string, string)>();
-        public DataReceiverMqtt(DataReceiverMqttOption option, ILogger logger, Func<string, Dictionary<string, ReceiverTempDataValue>> dataParse, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : base(option, logger, dataParse, isAutoLoadNodeConfig, nodes)
-        {
 
+        /// <summary>
+        /// 将接收到的json字符串转成 字典形式
+        /// <![CDATA[
+        /// 数据格式：
+        /// Key：  地址
+        /// Value：临时值（值和时间戳）
+        /// ]]>
+        /// </summary>
+        protected virtual Func<string, Dictionary<string, ReceiverTempDataValue>> DefaultDataParse { get; set; }
+
+        /// <summary>
+        /// Object转Value的json转换器
+        /// </summary>
+        protected JsonSerializerOptions ObjectToValueJsonConverter = new JsonSerializerOptions();
+
+        public DataReceiverMqtt(DataReceiverMqttOption option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : base(option, logger, isAutoLoadNodeConfig, nodes)
+        {
+            ObjectToValueJsonConverter.Converters.Add(new JsonToObjectValueConvert());
+            SetDataParse(JsonDataPrase);
         }
 
         public override MessageResult LoadConfig(List<NodeItem> nodes)
@@ -116,7 +133,7 @@ namespace iml6yu.DataReceive.Mqtt
 
         protected override IMqttClient CreateClient(DataReceiverMqttOption option)
         {
-            Client = new  MqttClientFactory().CreateMqttClient();
+            Client = new MqttClientFactory().CreateMqttClient();
             Client.ConnectedAsync += args =>
             {
                 if (option.DataInputTopics?.Count > 0)
@@ -259,6 +276,31 @@ namespace iml6yu.DataReceive.Mqtt
 
             var mqttSubscribeOptions = mqttUnsubscribeOptionsBuilder.Build();
             return mqttSubscribeOptions;
+        }
+
+        private Dictionary<string, ReceiverTempDataValue> JsonDataPrase(string json)
+        {
+
+            try
+            {
+                var data = JsonSerializer.Deserialize<DataReceiveContract>(json, ObjectToValueJsonConverter);
+                if (data != null && data.Datas != null && data.Datas.Count > 0)
+                {
+                    return data.Datas.GroupBy(t => t.Address).ToDictionary(t => t.Key, t => new ReceiverTempDataValue(t.FirstOrDefault().Value, data.Timestamp));
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "接收mqtt数据转json发生异常");
+                OnErrorEvent(Option, new ExceptionArgs()
+                {
+                    Code = ResultType.ServerUnKonwError.ToString(),
+                    Ex = ex,
+                    Message = ex.Message
+                });
+                return null;
+            }
         }
 
         public override async Task<MessageResult> WriteAsync(DataWriteContract data)

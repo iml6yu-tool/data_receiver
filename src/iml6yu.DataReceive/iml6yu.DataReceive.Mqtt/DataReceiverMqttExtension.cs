@@ -28,7 +28,9 @@ namespace iml6yu.DataReceive.Mqtt
             {
                 var logFactory = provider.GetService<ILoggerFactory>();
                 var log = logFactory.CreateLogger<DataReceiverMqtt>();
-                return new DataReceiverMqtt(option, log, dataParse, isAutoLoadNodeConfig, nodes);
+                var instance = new DataReceiverMqtt(option, log, isAutoLoadNodeConfig, nodes);
+                instance.SetDataParse(dataParse);
+                return instance;
             });
             return services;
         }
@@ -54,7 +56,9 @@ namespace iml6yu.DataReceive.Mqtt
             {
                 var logFactory = provider.GetService<ILoggerFactory>();
                 var log = logFactory.CreateLogger<DataReceiverMqtt>();
-                return new DataReceiverMqtt(option, log, dataParse, isAutoLoadNodeConfig, nodes);
+                var instance = new DataReceiverMqtt(option, log, isAutoLoadNodeConfig, nodes);
+                instance.SetDataParse(dataParse);
+                return instance;
             });
             return services;
         }
