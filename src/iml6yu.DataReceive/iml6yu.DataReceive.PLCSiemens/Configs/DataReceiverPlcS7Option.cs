@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace iml6yu.DataReceive.PLCSiemens.Configs
@@ -13,6 +14,7 @@ namespace iml6yu.DataReceive.PLCSiemens.Configs
         /// <summary>
         /// PLC类型 默认S7-1200
         /// </summary>
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public CpuType CpuType { get;   set; } = CpuType.S71200;
 
         /// <summary>

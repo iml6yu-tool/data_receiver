@@ -253,7 +253,7 @@ namespace iml6yu.DataService.Modbus
             }
             catch (Exception ex)
             {
-                Logger.LogError($"写数据错误{0}", ex.Message);
+                Logger.LogError($"写数据错误{ex.Message}");
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
 
