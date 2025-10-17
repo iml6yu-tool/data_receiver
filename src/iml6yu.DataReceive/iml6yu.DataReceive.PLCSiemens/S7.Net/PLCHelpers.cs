@@ -11,7 +11,7 @@ namespace S7.Net
         private static void WriteTpktHeader(System.IO.MemoryStream stream, int length)
         {
             stream.Write(new byte[] { 0x03, 0x00 });
-            stream.Write(Word.ToByteArray((ushort) length));
+            stream.Write(Word.ToByteArray((ushort)length));
         }
 
         private static void WriteDataHeader(System.IO.MemoryStream stream)
@@ -25,8 +25,8 @@ namespace S7.Net
             stream.WriteByte(messageType); // Message type
             stream.Write(new byte[] { 0x00, 0x00 }); // Reserved
             stream.Write(new byte[] { 0x00, 0x00 }); // PDU ref
-            stream.Write(Word.ToByteArray((ushort) parameterLength));
-            stream.Write(Word.ToByteArray((ushort) dataLength));
+            stream.Write(Word.ToByteArray((ushort)parameterLength));
+            stream.Write(Word.ToByteArray((ushort)dataLength));
         }
 
         /// <summary>
@@ -221,7 +221,7 @@ namespace S7.Net
                     }
                     else
                     {
-                        return Bit.ToBitArray(bytes, varCount);
+                        return Bit.ToBitArray(bytes, bytes.Length * 8).RightShift(bitAdr);
                     }
                 case VarType.DateTime:
                     if (varCount == 1)

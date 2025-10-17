@@ -96,7 +96,7 @@ namespace iml6yu.DataService.Modbus
         /// <exception cref="NotSupportedException"></exception>
         public static ushort[] ToModbusUShortValues(this object source, int? byteArrLenght = null)
         {
-            byte[] byteArray = source.ConvertToByteArray(byteArrLenght); 
+            byte[] byteArray = source.ConvertToByteArray(byteArrLenght);
             return byteArray.ProcessWithEndian(false, false);
         }
 
@@ -106,7 +106,7 @@ namespace iml6yu.DataService.Modbus
         public static ushort[] ToModbusUShortBSValues(this object source, int? byteArrLenght = null)
         {
             byte[] byteArray = source.ConvertToByteArray(byteArrLenght);
-            return byteArray.ProcessWithEndian(false, true); 
+            return byteArray.ProcessWithEndian(false, true);
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace iml6yu.DataService.Modbus
         public static ushort[] ToModbusUShortLEBSValues(this object source, int? byteArrLenght = null)
         {
             byte[] byteArray = source.ConvertToByteArray(byteArrLenght);
-            return byteArray.ProcessWithEndian(true, true); 
+            return byteArray.ProcessWithEndian(true, true);
         }
 
         /// <summary>
@@ -192,6 +192,9 @@ namespace iml6yu.DataService.Modbus
                 uint ui => BitConverter.GetBytes(ui),
                 long l => BitConverter.GetBytes(l),
                 ulong ul => BitConverter.GetBytes(ul),
+                ushort us => BitConverter.GetBytes(us),
+                short s => BitConverter.GetBytes(s),
+                byte b => BitConverter.GetBytes((short)b), 
                 _ => throw new NotSupportedException($"Unsupported type: {source.GetType()}")
             };
 

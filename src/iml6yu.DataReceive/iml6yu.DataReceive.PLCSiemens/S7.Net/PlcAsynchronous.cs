@@ -155,7 +155,7 @@ namespace S7.Net
         /// Please note that cancellation is advisory/cooperative and will not lead to immediate cancellation in all cases.</param>
         public async Task<object?> ReadAsync(DataType dataType, int db, int startByteAdr, VarType varType, int varCount, byte bitAdr = 0, CancellationToken cancellationToken = default)
         {
-            int cntBytes = VarTypeToByteLength(varType, varCount);
+            int cntBytes = VarTypeToByteLength(varType, varCount + bitAdr % 8);
             byte[] bytes = await ReadBytesAsync(dataType, db, startByteAdr, cntBytes, cancellationToken).ConfigureAwait(false);
             return ParseBytes(varType, bytes, varCount, bitAdr);
         }
@@ -292,23 +292,6 @@ namespace S7.Net
             {
                 //验证pdu数据过多后进行重新整理变量尝试读取
                 var reDataItems = ReBuilderDataItems(dataItems);
-                //foreach (var dic in reDataItems)
-                //{
-                //    foreach (var item in dic.Value.Keys)
-                //    {
-                //        if (item == null) continue;
-                //        var values = await ReadAsync(item.DataType, item.DB, item.StartByteAdr, item.VarType, item.Count, item.BitAdr, cancellationToken);
-                //        if (item.Count == 1)
-                //            dic.Value[item][0].Item1.Value = values;
-                //        else
-                //        {
-                //            for (var i = 0; i < dic.Value[item].Count; i++)
-                //            {
-                //                dic.Value[item][i].Item1.Value = GetValues(dic.Key, values, dic.Value[item][i].Item2, dic.Value[item][i].Item1.Count);
-                //            }
-                //        }
-                //    }
-                //}
                 await Parallel.ForEachAsync(reDataItems, async (dic, token) =>
                 {
                     foreach (var item in dic.Value.Keys)
