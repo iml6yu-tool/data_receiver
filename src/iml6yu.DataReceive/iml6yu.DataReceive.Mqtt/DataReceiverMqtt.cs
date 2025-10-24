@@ -222,18 +222,15 @@ namespace iml6yu.DataReceive.Mqtt
         /// <exception cref="NotImplementedException"></exception>
         private async Task Client_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs arg)
         {
-            if (State == ReceiverState.Working)
+            await Task.Run(async () =>
             {
-                await Task.Run(async () =>
-                {
-                    var list = await MessageReceivedAsync(arg);
-                    if (list != null)
-                        foreach (var key in list.Keys)
-                        {
-                            await ReceiveDataToMessageChannelAsync(Option.ProductLineName, list[key]);
-                        }
-                });
-            }
+                var list = await MessageReceivedAsync(arg);
+                if (list != null)
+                    foreach (var key in list.Keys)
+                    {
+                        await ReceiveDataToMessageChannelAsync(Option.ProductLineName, list[key]);
+                    }
+            });
         }
 
         private async void SubscribeMqtt(List<string> topics)

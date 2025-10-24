@@ -1,6 +1,5 @@
 using iml6yu.DataService.Modbus.Configs;
-using iml6yu.DataService.ModbusTCP;
-using iml6yu.DataService.ModbusTCP.Configs;
+using iml6yu.DataService.ModbusTCP; 
 using System.Configuration;
 using System.Data;
 using System.Windows.Forms;
@@ -27,8 +26,8 @@ namespace iml6yu.DataServiceExample.ModbusTCP
                 Application.Exit();
                 return;
             }
-            DataServiceModbusTCPOption? option =
-              Newtonsoft.Json.JsonConvert.DeserializeObject<DataServiceModbusTCPOption>(File.ReadAllText(optionFile));
+            DataServiceModbusOption? option =
+              Newtonsoft.Json.JsonConvert.DeserializeObject<DataServiceModbusOption>(File.ReadAllText(optionFile));
 
             dataService =
                  new DataServiceModbusTCP(option);
@@ -42,46 +41,44 @@ namespace iml6yu.DataServiceExample.ModbusTCP
             {
                 while (!CancellationTokenSource.IsCancellationRequested)
                 {
-                    var datas = dataService.GetDatas();
-                    //dataTable.Clear();
-                    //for (var i = 0; i < dataTable.Rows.Count; i++)
-                    //    dataTable.Rows.RemoveAt(i);
-                    foreach (var slave in datas.Keys)
-                    {
-                        int rowsCount = 0;
-                        foreach (var store in datas[slave].Keys)
-                        {
-                            var index = 0;
-                            foreach (var item in datas[slave][store])
-                            {
-                                DataRow dr;
-                                if (dataTable.Rows.Count < index + rowsCount + 1)
-                                    dr = dataTable.NewRow();
-                                else
-                                    dr = dataTable.Rows[index + rowsCount];
-                                dr[$"slave_{slave.Id}_address"] = $"{slave.Id}.{store.StoreType.ToString()}.{store.StartAddress + index}";
-                                dr[$"slave_{slave.Id}_value"] = item.ToString();
-                                if (dataTable.Rows.Count < index + rowsCount + 1)
-                                    dataTable.Rows.Add(dr);
-                                index++;
-                            }
-                            rowsCount += index;
-                        } 
-                    }
-                    if (dataGridView1.InvokeRequired)
-                    {
-                        // 异步切换到UI线程
-                        dataGridView1.BeginInvoke(new Action(() =>
-                        {
-                            //bindingSource1.DataSource = dataTable; // 更新BindingSource
-                            dataGridView1.Refresh(); // 可选：强制刷新界面 
-                        }));
-                    }
-                    else
-                    {
-                        bindingSource1.DataSource = dataTable; // 更新BindingSource
-                        //dataGridView1.DataSource = dataTable;
-                    }
+                    //var datas = dataService.GetDatas();
+                   
+                    //foreach (var slave in datas.Keys)
+                    //{
+                    //    int rowsCount = 0;
+                    //    foreach (var store in datas[slave].Keys)
+                    //    {
+                    //        var index = 0;
+                    //        foreach (var item in datas[slave][store])
+                    //        {
+                    //            DataRow dr;
+                    //            if (dataTable.Rows.Count < index + rowsCount + 1)
+                    //                dr = dataTable.NewRow();
+                    //            else
+                    //                dr = dataTable.Rows[index + rowsCount];
+                    //            dr[$"slave_{slave.Id}_address"] = $"{slave.Id}.{store.StoreType.ToString()}.{store.StartAddress + index}";
+                    //            dr[$"slave_{slave.Id}_value"] = item.ToString();
+                    //            if (dataTable.Rows.Count < index + rowsCount + 1)
+                    //                dataTable.Rows.Add(dr);
+                    //            index++;
+                    //        }
+                    //        rowsCount += index;
+                    //    } 
+                    //}
+                    //if (dataGridView1.InvokeRequired)
+                    //{
+                    //    // 异步切换到UI线程
+                    //    dataGridView1.BeginInvoke(new Action(() =>
+                    //    {
+                    //        //bindingSource1.DataSource = dataTable; // 更新BindingSource
+                    //        dataGridView1.Refresh(); // 可选：强制刷新界面 
+                    //    }));
+                    //}
+                    //else
+                    //{
+                    //    bindingSource1.DataSource = dataTable; // 更新BindingSource
+                    //    //dataGridView1.DataSource = dataTable;
+                    //}
 
                     await Task.Delay(1000);
                 }

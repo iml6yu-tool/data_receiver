@@ -288,8 +288,8 @@ namespace iml6yu.DataReceive.Core
                         {
                             Logger.LogWarning($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort})正在尝试重连...");
                             await ConnectAsync();
-                            await Task.Delay(TimeSpan.FromSeconds(15));
                         }
+                        await Task.Delay(TimeSpan.FromSeconds(30));
                     }
                 }
                 catch (Exception ex)
@@ -479,6 +479,10 @@ namespace iml6yu.DataReceive.Core
             else if (typeCode == 4 || typeCode == 16) //TypeCode.Char TypeCode.String
             {
                 return value is char || value is string;
+            }
+            else if (typeCode == 7 || typeCode == 8) //TypeCode.Char TypeCode.String
+            {
+                return value is Int16 || value is UInt16;
             }
             else
             {

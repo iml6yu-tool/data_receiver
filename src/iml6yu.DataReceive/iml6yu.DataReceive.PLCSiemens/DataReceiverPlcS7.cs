@@ -26,7 +26,7 @@ namespace iml6yu.DataReceive.PLCSiemens
         /// </summary>
         private Dictionary<string, Dictionary<int, Dictionary<string, DataItem>>> readNodes;
 
-        public override bool IsConnected => Client is not null && Client.IsConnected;
+        public override bool IsConnected => Client != null && Client.IsConnected;
         public DataReceiverPlcS7(DataReceiverPlcS7Option option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : base(option, logger, isAutoLoadNodeConfig, nodes)
         {
         }

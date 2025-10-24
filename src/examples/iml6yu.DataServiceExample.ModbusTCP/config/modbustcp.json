@@ -1,6 +1,6 @@
 ﻿{
   "IPAddress": null,
-  "Port": 5020,
+  "Port": 5022,
   "Slaves": [
     {
       "Id": 1,

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace iml6yu.DataService.Modbus.Configs
@@ -36,6 +37,7 @@ namespace iml6yu.DataService.Modbus.Configs
         /// <summary>
         /// 校验位
         /// </summary>
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public Parity? Parity { get; set; }
         /// <summary>
         /// 数据位
