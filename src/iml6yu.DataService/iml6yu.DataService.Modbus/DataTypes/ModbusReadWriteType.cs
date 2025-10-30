@@ -25,19 +25,51 @@ namespace iml6yu.DataService.Modbus
         /// <summary>
         /// 32bit （默认大端 ABCD） 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
         /// </summary>
-        HoldingRegisters2,
+        HoldingRegisters2, 
         /// <summary>
         /// 32bit （默认大端 BADC） 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
         /// </summary>
         HoldingRegisters2ByteSwap,
         /// <summary>
-        /// 64bit （默认大端 ABCD EFGH） 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+        /// float  32bit （默认大端 ABCD）
+        /// </summary>
+        HoldingRegistersFloat,
+        /// <summary>
+        /// float  32bit 小端(DCBA)
+        /// </summary>
+        HoldingRegistersFloatLittleEndian,
+        /// <summary>
+        /// float  32bit 大端交换 (BADC)
+        /// </summary>
+        HoldingRegistersFloatByteSwap,
+        /// <summary>
+        /// float  32bit 小端交换 (CDAB)
+        /// </summary>
+        HoldingRegistersFloatLittleEndianByteSwap,
+        /// <summary>
+        /// 64bit  大端 （ABCD EFGH） 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
         /// </summary>
         HoldingRegisters4,
         /// <summary>
-        /// 64bit （默认大端 BADC FEHG） 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+        /// 64bit 大端交换 （BADC FEHG） 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
         /// </summary>
-        HoldingRegisters4ByteSwap,
+        HoldingRegisters4ByteSwap, 
+        /// <summary>
+        /// double  64bit （默认大端 ABCD EFGH）
+        /// </summary>
+        HoldingRegistersDouble,
+        /// <summary>
+        /// double  64bit  小端(HGFE DCBA)
+        /// </summary>
+        HoldingRegistersDoubleLittleEndian,
+        /// <summary>
+        /// double  64bit   大端交换 （BADC FEHG）
+        /// </summary>
+        HoldingRegistersDoubleByteSwap,
+        /// <summary>
+        /// double  64bit  小端交换(FEHG CDAB)
+        /// </summary>
+        HoldingRegistersDoubleLittleEndianByteSwap, 
         /// <summary>
         /// 32bit 小端(DCBA) 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
         /// </summary>
@@ -51,7 +83,7 @@ namespace iml6yu.DataService.Modbus
         /// </summary>
         HoldingRegistersLittleEndian4,
         /// <summary>
-        /// 64bit  小端(FEHG CDAB) 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
+        /// 64bit  小端交换(FEHG CDAB) 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.
         /// </summary>
         HoldingRegistersLittleEndian4ByteSwap,
         /// <summary>
@@ -66,6 +98,22 @@ namespace iml6yu.DataService.Modbus
         ///32bit(BADC) 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
         /// </summary> 
         ReadInputRegisters2ByteSwap,
+        /// <summary>
+        /// float  32bit （默认大端 ABCD）
+        /// </summary>
+        ReadInputRegistersFloat,
+        /// <summary>
+        /// float  32bit 小端(DCBA)
+        /// </summary>
+        ReadInputRegistersFloatLittleEndian,
+        /// <summary>
+        /// float  32bit 大端交换 (BADC)
+        /// </summary>
+        ReadInputRegistersFloatByteSwap,
+        /// <summary>
+        /// float  32bit 小端交换 (CDAB)
+        /// </summary>
+        ReadInputRegistersFloatLittleEndianByteSwap,
         /// <summary>
         /// 64bit(ABCD EFGH) 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
         /// </summary>
@@ -89,7 +137,23 @@ namespace iml6yu.DataService.Modbus
         /// <summary>
         /// 64bit(GHEF CDAB) 小端 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.
         /// </summary>
-        ReadInputRegistersLittleEndian4ByteSwap
+        ReadInputRegistersLittleEndian4ByteSwap,
+        /// <summary>
+        /// double  64bit （默认大端 ABCD EFGH）
+        /// </summary>
+        ReadInputRegistersDouble,
+        /// <summary>
+        /// double  64bit  小端(HGFE DCBA)
+        /// </summary>
+        ReadInputRegistersDoubleLittleEndian,
+        /// <summary>
+        /// double  64bit   大端交换 （BADC FEHG）
+        /// </summary>
+        ReadInputRegistersDoubleByteSwap,
+        /// <summary>
+        /// double  64bit  小端交换(FEHG CDAB)
+        /// </summary>
+        ReadInputRegistersDoubleLittleEndianByteSwap,
 
     }
 }

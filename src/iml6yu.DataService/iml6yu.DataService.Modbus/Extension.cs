@@ -26,7 +26,15 @@ namespace iml6yu.DataService.Modbus
                 || readType == ModbusReadWriteType.HoldingRegisters2
                 || readType == ModbusReadWriteType.HoldingRegisters2ByteSwap
                 || readType == ModbusReadWriteType.HoldingRegistersLittleEndian2
-                || readType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap)
+                || readType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
+                || readType == ModbusReadWriteType.HoldingRegistersFloat
+                || readType == ModbusReadWriteType.HoldingRegistersFloatLittleEndian
+                || readType == ModbusReadWriteType.HoldingRegistersFloatByteSwap
+                || readType == ModbusReadWriteType.HoldingRegistersFloatLittleEndianByteSwap
+                || readType == ModbusReadWriteType.ReadInputRegistersFloat
+                || readType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndian
+                || readType == ModbusReadWriteType.ReadInputRegistersFloatByteSwap
+                || readType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndianByteSwap)
                 return 2;
             else
                 return 4;

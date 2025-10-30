@@ -120,46 +120,7 @@ namespace iml6yu.DataService.Modbus
                     throw new Exception("心跳地址配置错误，无法进行心跳处理！");
                 }
             }
-            ;
         }
-
-        //public Dictionary<DataServiceModbusSlaveOption, Dictionary<ModbusSlaveStore, Array>> GetDatas()
-        //{
-
-        //    Dictionary<DataServiceModbusSlaveOption, Dictionary<ModbusSlaveStore, Array>> values = new Dictionary<DataServiceModbusSlaveOption, Dictionary<ModbusSlaveStore, Array>>();
-        //    //if (Network == null)
-        //    //    return values;
-        //    //foreach (var item in Option.Slaves)
-        //    //{
-        //    //    values.Add(item, new Dictionary<ModbusSlaveStore, Array>());
-        //    //    var slave = Network.GetSlave(item.Id);
-        //    //    foreach (var store in item.Stores)
-        //    //    {
-        //    //        if (store.StoreType == ModbusReadWriteType.HoldingRegisters)
-        //    //        {
-        //    //            var datas = slave.DataStore.HoldingRegisters.ReadPoints(store.StartAddress, store.NumberOfPoint);
-        //    //            values[item].Add(store, datas);
-        //    //        }
-        //    //        else if (store.StoreType == ModbusReadWriteType.ReadInputRegisters)
-        //    //        {
-        //    //            var datas = slave.DataStore.InputRegisters.ReadPoints(store.StartAddress, store.NumberOfPoint);
-        //    //            values[item].Add(store, datas);
-        //    //        }
-        //    //        else if (store.StoreType == ModbusReadWriteType.Coils)
-        //    //        {
-        //    //            var datas = slave.DataStore.CoilDiscretes.ReadPoints(store.StartAddress, store.NumberOfPoint);
-        //    //            values[item].Add(store, datas);
-        //    //        }
-        //    //        else if (store.StoreType == ModbusReadWriteType.Inputs)
-        //    //        {
-        //    //            var datas = slave.DataStore.CoilInputs.ReadPoints(store.StartAddress, store.NumberOfPoint);
-        //    //            values[item].Add(store, datas);
-        //    //        }
-
-        //    //    }
-        //    //}
-        //    return values;
-        //}
         protected virtual void WriteHeartData(IModbusSlave? slave, ModbusReadWriteType writeType, ushort startAddress, ushort value, TimeSpan interval, Func<ushort, ushort> funcValue)
         {
             if (slave == null) return;
@@ -188,6 +149,79 @@ namespace iml6yu.DataService.Modbus
 
         public async Task<MessageResult> WriteAsync(DataWriteContractItem data)
         {
+            return await WriteAsync(data.Address, data.Value);
+            //try
+            //{
+            //    if (Network == null)
+            //        return MessageResult.Failed(ResultType.DeviceWriteError, $"数据服务还未初始化(DataService not init)");
+
+            //    byte slaveId;
+            //    ModbusReadWriteType writeType;
+            //    ushort startAddress;
+            //    string msg = string.Empty;
+            //    if (!data.Address.VerifyWriteAddress(out slaveId, out writeType, out startAddress, ref msg))
+            //        return MessageResult.Failed(ResultType.DeviceWriteError, msg);
+
+            //    var slave = Network.GetSlave(slaveId);
+            //    if (slave == null)
+            //        return MessageResult.Failed(ResultType.DeviceWriteError, $"地址{data.Address}对应的SlaveID({slaveId})不存在！");
+            //    if (data.Value == null)
+            //        return MessageResult.Failed(ResultType.DeviceWriteError, $"当前需要写入的数值内容是null(current value is null)");
+
+            //    switch (writeType)
+            //    {
+            //        case ModbusReadWriteType.Coils:
+            //            slave.DataStore.CoilDiscretes.WritePoints(startAddress, data.Value.ToModbusBooleanValues());
+            //            break;
+            //        case ModbusReadWriteType.Inputs:
+            //            slave.DataStore.CoilInputs.WritePoints(startAddress, data.Value.ToModbusBooleanValues());
+            //            break;
+            //        case ModbusReadWriteType.HoldingRegisters:
+            //        case ModbusReadWriteType.HoldingRegisters2:
+            //        case ModbusReadWriteType.HoldingRegisters4:
+            //            slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortValues(writeType.GetNumberOfPoint() * 2));
+            //            break;
+            //        case ModbusReadWriteType.HoldingRegisters2ByteSwap:
+            //        case ModbusReadWriteType.HoldingRegisters4ByteSwap:
+            //            slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortBSValues(writeType.GetNumberOfPoint() * 2));
+            //            break;
+            //        case ModbusReadWriteType.HoldingRegistersLittleEndian2:
+            //        case ModbusReadWriteType.HoldingRegistersLittleEndian4:
+            //            slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEValues(writeType.GetNumberOfPoint() * 2));
+            //            break;
+            //        case ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap:
+            //        case ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap:
+            //            slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEBSValues(writeType.GetNumberOfPoint() * 2));
+            //            break;
+            //        case ModbusReadWriteType.ReadInputRegisters:
+            //        case ModbusReadWriteType.ReadInputRegisters2:
+            //        case ModbusReadWriteType.ReadInputRegisters4:
+            //            slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortValues(writeType.GetNumberOfPoint() * 2));
+            //            break;
+            //        case ModbusReadWriteType.ReadInputRegisters2ByteSwap:
+            //        case ModbusReadWriteType.ReadInputRegisters4ByteSwap:
+            //            slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortBSValues(writeType.GetNumberOfPoint() * 2));
+            //            break;
+            //        case ModbusReadWriteType.ReadInputRegistersLittleEndian2:
+            //        case ModbusReadWriteType.ReadInputRegistersLittleEndian4:
+            //            slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEValues(writeType.GetNumberOfPoint() * 2));
+            //            break;
+            //        case ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap:
+            //        case ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap:
+            //            slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEBSValues(writeType.GetNumberOfPoint() * 2));
+            //            break;
+            //    }
+            //    return MessageResult.Success();
+            //}
+            //catch (Exception ex)
+            //{
+            //    Logger.LogError($"写数据错误{ex.Message}");
+            //    return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+            //} 
+        }
+
+        public async Task<MessageResult> WriteAsync<T>(string address, T data)
+        {
             try
             {
                 if (Network == null)
@@ -197,56 +231,72 @@ namespace iml6yu.DataService.Modbus
                 ModbusReadWriteType writeType;
                 ushort startAddress;
                 string msg = string.Empty;
-                if (!data.Address.VerifyWriteAddress(out slaveId, out writeType, out startAddress, ref msg))
+                if (!address.VerifyWriteAddress(out slaveId, out writeType, out startAddress, ref msg))
                     return MessageResult.Failed(ResultType.DeviceWriteError, msg);
 
                 var slave = Network.GetSlave(slaveId);
                 if (slave == null)
-                    return MessageResult.Failed(ResultType.DeviceWriteError, $"地址{data.Address}对应的SlaveID({slaveId})不存在！");
-                if (data.Value == null)
+                    return MessageResult.Failed(ResultType.DeviceWriteError, $"地址{address}对应的SlaveID({slaveId})不存在！");
+                if (data == null)
                     return MessageResult.Failed(ResultType.DeviceWriteError, $"当前需要写入的数值内容是null(current value is null)");
 
                 switch (writeType)
                 {
                     case ModbusReadWriteType.Coils:
-                        slave.DataStore.CoilDiscretes.WritePoints(startAddress, data.Value.ToModbusBooleanValues());
+                        slave.DataStore.CoilDiscretes.WritePoints(startAddress, data.ToModbusBooleanValues());
                         break;
                     case ModbusReadWriteType.Inputs:
-                        slave.DataStore.CoilInputs.WritePoints(startAddress, data.Value.ToModbusBooleanValues());
+                        slave.DataStore.CoilInputs.WritePoints(startAddress, data.ToModbusBooleanValues());
                         break;
                     case ModbusReadWriteType.HoldingRegisters:
                     case ModbusReadWriteType.HoldingRegisters2:
+                    case ModbusReadWriteType.HoldingRegistersFloat:
                     case ModbusReadWriteType.HoldingRegisters4:
-                        slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortValues(writeType.GetNumberOfPoint() * 2));
+                    case ModbusReadWriteType.HoldingRegistersDouble:
+                        slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.ToModbusUShortValues(writeType.GetNumberOfPoint() * 2));
                         break;
                     case ModbusReadWriteType.HoldingRegisters2ByteSwap:
+                    case ModbusReadWriteType.HoldingRegistersFloatByteSwap:
                     case ModbusReadWriteType.HoldingRegisters4ByteSwap:
-                        slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortBSValues(writeType.GetNumberOfPoint() * 2));
+                    case ModbusReadWriteType.HoldingRegistersDoubleByteSwap:
+                        slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.ToModbusUShortBSValues(writeType.GetNumberOfPoint() * 2));
                         break;
                     case ModbusReadWriteType.HoldingRegistersLittleEndian2:
+                    case ModbusReadWriteType.HoldingRegistersFloatLittleEndian:
                     case ModbusReadWriteType.HoldingRegistersLittleEndian4:
-                        slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEValues(writeType.GetNumberOfPoint() * 2));
+                    case ModbusReadWriteType.HoldingRegistersDoubleLittleEndian:
+                        slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.ToModbusUShortLEValues(writeType.GetNumberOfPoint() * 2));
                         break;
                     case ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap:
+                    case ModbusReadWriteType.HoldingRegistersFloatLittleEndianByteSwap:
                     case ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap:
-                        slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEBSValues(writeType.GetNumberOfPoint() * 2));
+                    case ModbusReadWriteType.HoldingRegistersDoubleLittleEndianByteSwap:
+                        slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.ToModbusUShortLEBSValues(writeType.GetNumberOfPoint() * 2));
                         break;
                     case ModbusReadWriteType.ReadInputRegisters:
                     case ModbusReadWriteType.ReadInputRegisters2:
+                    case ModbusReadWriteType.ReadInputRegistersFloat:
                     case ModbusReadWriteType.ReadInputRegisters4:
-                        slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortValues(writeType.GetNumberOfPoint() * 2));
+                    case ModbusReadWriteType.ReadInputRegistersDouble:
+                        slave.DataStore.InputRegisters.WritePoints(startAddress, data.ToModbusUShortValues(writeType.GetNumberOfPoint() * 2));
                         break;
                     case ModbusReadWriteType.ReadInputRegisters2ByteSwap:
+                    case ModbusReadWriteType.ReadInputRegistersFloatByteSwap:
                     case ModbusReadWriteType.ReadInputRegisters4ByteSwap:
-                        slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortBSValues(writeType.GetNumberOfPoint() * 2));
+                    case ModbusReadWriteType.ReadInputRegistersDoubleByteSwap:
+                        slave.DataStore.InputRegisters.WritePoints(startAddress, data.ToModbusUShortBSValues(writeType.GetNumberOfPoint() * 2));
                         break;
                     case ModbusReadWriteType.ReadInputRegistersLittleEndian2:
+                    case ModbusReadWriteType.ReadInputRegistersFloatLittleEndian:
                     case ModbusReadWriteType.ReadInputRegistersLittleEndian4:
-                        slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEValues(writeType.GetNumberOfPoint() * 2));
+                    case ModbusReadWriteType.ReadInputRegistersDoubleLittleEndian:
+                        slave.DataStore.InputRegisters.WritePoints(startAddress, data.ToModbusUShortLEValues(writeType.GetNumberOfPoint() * 2));
                         break;
                     case ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap:
+                    case ModbusReadWriteType.ReadInputRegistersFloatLittleEndianByteSwap:
                     case ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap:
-                        slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEBSValues(writeType.GetNumberOfPoint() * 2));
+                    case ModbusReadWriteType.ReadInputRegistersDoubleLittleEndianByteSwap:
+                        slave.DataStore.InputRegisters.WritePoints(startAddress, data.ToModbusUShortLEBSValues(writeType.GetNumberOfPoint() * 2));
                         break;
                 }
                 return MessageResult.Success();
@@ -256,13 +306,6 @@ namespace iml6yu.DataService.Modbus
                 Logger.LogError($"写数据错误{ex.Message}");
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
-
-
-        }
-
-        public async Task<MessageResult> WriteAsync<T>(string address, T data)
-        {
-            return await WriteAsync(new DataWriteContractItem() { Address = address, Value = data });
         }
     }
 }
