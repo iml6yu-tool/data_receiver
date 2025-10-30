@@ -45,8 +45,6 @@ namespace iml6yu.DataService.Modbus
                     });
                     WriteAsync(defaultValues).Wait();
                 }
-                ;
-
                 //添加从站
                 Network.AddSlave(slave);
             });

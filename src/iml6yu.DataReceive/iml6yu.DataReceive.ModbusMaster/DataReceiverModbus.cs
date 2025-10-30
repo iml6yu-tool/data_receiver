@@ -6,6 +6,8 @@ using iml6yu.DataReceive.ModbusMaster.Configs;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
 using NModbus;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace iml6yu.DataReceive.ModbusMaster
 {
@@ -105,24 +107,40 @@ namespace iml6yu.DataReceive.ModbusMaster
                                                                              else if (node.ReadType == ModbusReadWriteType.HoldingRegisters
                                                                              || node.ReadType == ModbusReadWriteType.HoldingRegisters2
                                                                              || node.ReadType == ModbusReadWriteType.HoldingRegisters2ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersFloat
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersFloatByteSwap
                                                                              || node.ReadType == ModbusReadWriteType.HoldingRegisters4
                                                                              || node.ReadType == ModbusReadWriteType.HoldingRegisters4ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersDouble
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersDoubleByteSwap
                                                                              || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersFloatLittleEndian
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersFloatLittleEndianByteSwap
                                                                              || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
                                                                              || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap)
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersDoubleLittleEndian
+                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersDoubleLittleEndianByteSwap)
                                                                              {
                                                                                  tempDatas = ReadHoldingRegisters(readConfig, node, tempDatas);
                                                                              }
                                                                              else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters
                                                                              || node.ReadType == ModbusReadWriteType.ReadInputRegisters2
                                                                              || node.ReadType == ModbusReadWriteType.ReadInputRegisters2ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloat
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloatByteSwap
                                                                              || node.ReadType == ModbusReadWriteType.ReadInputRegisters4
                                                                              || node.ReadType == ModbusReadWriteType.ReadInputRegisters4ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersDouble
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersDoubleByteSwap
                                                                              || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
                                                                              || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndian
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndianByteSwap
                                                                              || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap)
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersDoubleLittleEndian
+                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersDoubleLittleEndianByteSwap)
                                                                              {
                                                                                  tempDatas = ReadInputRegisters(readConfig, node, tempDatas);
                                                                              }
@@ -186,7 +204,7 @@ namespace iml6yu.DataReceive.ModbusMaster
              * 可以将这两个放在外面的原因是每次读取的类型长度都是一样的。不一样长度会分开读取，
              * 所以在循环外面声明可以减少内存的申请频率
              */
-            var numberOfPoint = GetNodeItemNumberOfPoint(node.ReadType);
+            var numberOfPoint = node.ReadType.GetNumberOfPoint();
             ushort[] arr = new ushort[numberOfPoint];
             for (var i = 0; i < node.ReadNodes.Count; i++)
             {
@@ -210,17 +228,17 @@ namespace iml6yu.DataReceive.ModbusMaster
         {
 
             if (readType == ModbusReadWriteType.HoldingRegistersLittleEndian2
-                || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2)
+                || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
+                || readType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndian
+                || readType == ModbusReadWriteType.HoldingRegistersFloatLittleEndian)
             {
                 var bytes = values.SelectMany(t => BitConverter.GetBytes(t).Reverse()).ToArray();
-                if (!BitConverter.IsLittleEndian)
-                    Array.Reverse(bytes);
-                if (valueTypeCode == TypeCode.Int32)
-                    return BitConverter.ToInt32(bytes, 0);
-                return BitConverter.ToUInt32(bytes, 0);
+                return Get32BitValue(valueTypeCode, bytes);
             }
             if (readType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
-               || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap)
+               || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap
+               || readType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndianByteSwap
+               || readType == ModbusReadWriteType.HoldingRegistersFloatLittleEndianByteSwap)
             {
                 //CD AB 32bit 小端byte交换
                 var bytes = new byte[4]
@@ -230,25 +248,21 @@ namespace iml6yu.DataReceive.ModbusMaster
                     (byte)values[1],
                     (byte)(values[1]>>8)
                 };
-                if (!BitConverter.IsLittleEndian)
-                    Array.Reverse(bytes);
-                if (valueTypeCode == TypeCode.Int32)
-                    return BitConverter.ToInt32(bytes, 0);
-                return BitConverter.ToUInt32(bytes, 0);
+                return Get32BitValue(valueTypeCode, bytes);
             }
             else if (readType == ModbusReadWriteType.HoldingRegistersLittleEndian4
-               || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian4)
+               || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian4
+               || readType == ModbusReadWriteType.ReadInputRegistersDoubleLittleEndian
+               || readType == ModbusReadWriteType.HoldingRegistersDoubleLittleEndian)
             {
                 var bytes = values.SelectMany(t => BitConverter.GetBytes(t).Reverse()).ToArray();
-                if (!BitConverter.IsLittleEndian)
-                    Array.Reverse(bytes);
-                if (valueTypeCode == TypeCode.Int64)
-                    return BitConverter.ToInt64(bytes, 0);
-                return BitConverter.ToUInt64(bytes, 0);
+                return Get64BitValue(valueTypeCode, bytes);
             }
 
             else if (readType == ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap
-              || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap)
+              || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap
+              || readType == ModbusReadWriteType.ReadInputRegistersDoubleLittleEndianByteSwap
+              || readType == ModbusReadWriteType.HoldingRegistersDoubleLittleEndianByteSwap)
             {
                 //GH EF  CD AB 64bit 小端byte交换 
                 var bytes = new byte[8]
@@ -262,26 +276,22 @@ namespace iml6yu.DataReceive.ModbusMaster
                     (byte)values[3],
                     (byte)(values[3]>>8)
                 };
-                if (!BitConverter.IsLittleEndian)
-                    Array.Reverse(bytes);
-                if (valueTypeCode == TypeCode.Int64)
-                    return BitConverter.ToInt64(bytes, 0);
-                return BitConverter.ToUInt64(bytes, 0);
+                return Get64BitValue(valueTypeCode, bytes);
             }
 
             else if (readType == ModbusReadWriteType.HoldingRegisters2
-                || readType == ModbusReadWriteType.ReadInputRegisters2)
+                || readType == ModbusReadWriteType.ReadInputRegisters2
+                || readType == ModbusReadWriteType.ReadInputRegistersFloat
+                || readType == ModbusReadWriteType.HoldingRegistersFloat)
             {
                 var bytes = values.Reverse().SelectMany(t => BitConverter.GetBytes(t)).ToArray();
-                if (!BitConverter.IsLittleEndian)
-                    Array.Reverse(bytes);
-                if (valueTypeCode == TypeCode.Int32)
-                    return BitConverter.ToInt32(bytes, 0);
-                return BitConverter.ToUInt32(bytes, 0);
+                return Get32BitValue(valueTypeCode, bytes);
             }
 
             else if (readType == ModbusReadWriteType.HoldingRegisters2ByteSwap
-               || readType == ModbusReadWriteType.ReadInputRegisters2ByteSwap)
+               || readType == ModbusReadWriteType.ReadInputRegisters2ByteSwap
+               || readType == ModbusReadWriteType.ReadInputRegistersFloatByteSwap
+               || readType == ModbusReadWriteType.HoldingRegistersFloatByteSwap)
             {
                 //BA DC 32bit 大端byte交换 
                 var bytes = new byte[4]
@@ -291,24 +301,20 @@ namespace iml6yu.DataReceive.ModbusMaster
                     (byte)(values[0]>>8),
                     (byte)values[0]
                 };
-                if (!BitConverter.IsLittleEndian)
-                    Array.Reverse(bytes);
-                if (valueTypeCode == TypeCode.Int32)
-                    return BitConverter.ToInt32(bytes, 0);
-                return BitConverter.ToUInt32(bytes, 0);
+                return Get32BitValue(valueTypeCode, bytes);
             }
             else if (readType == ModbusReadWriteType.HoldingRegisters4
-                || readType == ModbusReadWriteType.ReadInputRegisters4)
+                || readType == ModbusReadWriteType.ReadInputRegisters4
+                || readType == ModbusReadWriteType.ReadInputRegistersDouble
+                || readType == ModbusReadWriteType.HoldingRegistersDouble)
             {
                 var bytes = values.Reverse().SelectMany(t => BitConverter.GetBytes(t)).ToArray();
-                if (!BitConverter.IsLittleEndian)
-                    Array.Reverse(bytes);
-                if (valueTypeCode == TypeCode.Int64)
-                    return BitConverter.ToInt64(bytes, 0);
-                return BitConverter.ToUInt64(bytes, 0);
+                return Get64BitValue(valueTypeCode, bytes);
             }
             else if (readType == ModbusReadWriteType.HoldingRegisters4ByteSwap
-                    || readType == ModbusReadWriteType.ReadInputRegisters4ByteSwap)
+                || readType == ModbusReadWriteType.ReadInputRegisters4ByteSwap
+                || readType == ModbusReadWriteType.ReadInputRegistersDoubleByteSwap
+                || readType == ModbusReadWriteType.HoldingRegistersDoubleByteSwap)
             {
                 //BA DC FE HG 64bit 大端byte交换
                 var bytes = new byte[8]
@@ -322,15 +328,50 @@ namespace iml6yu.DataReceive.ModbusMaster
                     (byte)(values[0]>>8),
                     (byte)values[0]
                 };
-                if (!BitConverter.IsLittleEndian)
-                    Array.Reverse(bytes);
-                if (valueTypeCode == TypeCode.Int64)
-                    return BitConverter.ToInt64(bytes, 0);
-                return BitConverter.ToUInt64(bytes, 0);
+                return Get64BitValue(valueTypeCode, bytes);
             }
 
             else
                 return 0;
+        }
+
+        /// <summary>
+        /// 通过数组获取当前32bit值
+        /// </summary>
+        /// <param name="valueTypeCode"></param>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private object Get32BitValue(TypeCode valueTypeCode, byte[] bytes)
+        {
+            if (!BitConverter.IsLittleEndian)
+                Array.Reverse(bytes);
+            if (valueTypeCode == TypeCode.Int32)
+                return BitConverter.ToInt32(bytes, 0);
+            else if (valueTypeCode == TypeCode.UInt32)
+                return BitConverter.ToUInt32(bytes, 0);
+            else if (valueTypeCode == TypeCode.Single)
+                return BitConverter.ToSingle(bytes, 0);
+            return 0;
+        }
+        /// <summary>
+        /// 通过数组获取当前值
+        /// </summary>
+        /// <param name="valueTypeCode"></param>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private object Get64BitValue(TypeCode valueTypeCode, byte[] bytes)
+        {
+            if (!BitConverter.IsLittleEndian)
+                Array.Reverse(bytes);
+            if (valueTypeCode == TypeCode.Int64)
+                return BitConverter.ToInt64(bytes, 0);
+            else if (valueTypeCode == TypeCode.UInt64)
+                return BitConverter.ToUInt64(bytes, 0);
+            else if (valueTypeCode == TypeCode.Double)
+                return BitConverter.ToDouble(bytes, 0);
+            return 0;
         }
 
         protected Dictionary<string, Dictionary<int, List<ModbusReadConfig>>> ConvertConfigNodeToModbusReadConfig(Dictionary<string, List<NodeItem>> nodes)
@@ -403,7 +444,7 @@ namespace iml6yu.DataReceive.ModbusMaster
             List<ModbusReadItem> list = new List<ModbusReadItem>();
             if (items == null || items.Count == 0)
                 return list;
-            var numberOfPoint = GetNodeItemNumberOfPoint(readType);
+            var numberOfPoint = readType.GetNumberOfPoint();
             if (items.Count == 1)
             {
                 list.Add(new ModbusReadItem() { ReadType = readType, StartPoint = items.Keys.First(), NumberOfPoint = numberOfPoint, ReadNodes = items.Values.ToList() });
@@ -437,10 +478,14 @@ namespace iml6yu.DataReceive.ModbusMaster
             if (!IsConnected)
                 return MessageResult.Failed(ResultType.ServerDoApiError, $"the dirver({Option.OriginHost}) not connect");
 
-            await Parallel.ForEachAsync(data.Datas, async (item, token) =>
+            List<string> errorAddresses = new List<string>();
+            foreach (var item in data.Datas)
             {
-                await WriteAsync(item);
-            });
+                if (!(await WriteAsync(item)).State)
+                    errorAddresses.Add(item.Address);
+            } 
+            if (errorAddresses.Count > 0)
+                return MessageResult.Failed(ResultType.DeviceWriteError, $"write some address error:{string.Join(",", errorAddresses)}");
             return MessageResult.Success();
         }
 
@@ -451,8 +496,8 @@ namespace iml6yu.DataReceive.ModbusMaster
 
             if (!VerifyWriteAddress(data.Address, out byte slaveAddress, out ModbusReadWriteType writeType, out ushort bits))
                 return MessageResult.Failed(ResultType.ParameterError, $"write address({data.Address}) is error.the right format is “slaveAddress.ReadWriteType.Bit”", null);
-            await WriteAsync(slaveAddress, writeType, bits, data.Value);
-            return MessageResult.Success();
+            return await WriteAsync(slaveAddress, writeType, bits, data.Value);
+
         }
 
         public override async Task<MessageResult> WriteAsync<T>(string address, T data)
@@ -462,23 +507,82 @@ namespace iml6yu.DataReceive.ModbusMaster
 
             if (!VerifyWriteAddress(address, out byte slaveAddress, out ModbusReadWriteType writeType, out ushort bits))
                 return MessageResult.Failed(ResultType.ParameterError, $"write address({address}) is error.the right format is “slaveAddress.ReadWriteType.Bit”", null);
-            if (data is bool || data is ushort)
+
+            return await WriteAsync(slaveAddress, writeType, bits, data);
+        }
+        private async Task<MessageResult> WriteAsync(byte slaveAddress, ModbusReadWriteType writeType, ushort bits, object value)
+        {
+            try
             {
-                await WriteAsync(slaveAddress, writeType, bits, data);
+                if (writeType == ModbusReadWriteType.Coils)
+                    await Client.WriteSingleCoilAsync(slaveAddress, bits, (bool)value);
+                else
+                    await Client.WriteSingleRegisterAsync(slaveAddress, bits, (ushort)value);
+                switch (writeType)
+                {
+                    case ModbusReadWriteType.Coils:
+                        if (value is bool b)
+                            await Client.WriteSingleCoilAsync(slaveAddress, bits, b);
+                        else
+                            await Client.WriteMultipleCoilsAsync(slaveAddress, bits, value.ToModbusBooleanValues());
+                        break;
+                    case ModbusReadWriteType.Inputs:
+                        return MessageResult.Failed(ResultType.ParameterError, "Inputs read-only, cannot write.", null);
+                    case ModbusReadWriteType.HoldingRegisters:
+                        if (value is ushort us)
+                            await Client.WriteSingleRegisterAsync(slaveAddress, bits, us);
+                        else
+                            await Client.WriteMultipleRegistersAsync(slaveAddress, bits, value.ToModbusUShortValues());
+                        break;
+                    case ModbusReadWriteType.HoldingRegisters2:
+                    case ModbusReadWriteType.HoldingRegistersFloat:
+                    case ModbusReadWriteType.HoldingRegisters4:
+                    case ModbusReadWriteType.HoldingRegistersDouble:
+                        await Client.WriteMultipleRegistersAsync(slaveAddress, bits, value.ToModbusUShortValues(writeType.GetNumberOfPoint() * 2));
+                        break;
+                    case ModbusReadWriteType.HoldingRegisters2ByteSwap:
+                    case ModbusReadWriteType.HoldingRegistersFloatByteSwap:
+                    case ModbusReadWriteType.HoldingRegisters4ByteSwap:
+                    case ModbusReadWriteType.HoldingRegistersDoubleByteSwap:
+                        await Client.WriteMultipleRegistersAsync(slaveAddress, bits, value.ToModbusUShortBSValues(writeType.GetNumberOfPoint() * 2));
+                        break;
+                    case ModbusReadWriteType.HoldingRegistersLittleEndian2:
+                    case ModbusReadWriteType.HoldingRegistersFloatLittleEndian:
+                    case ModbusReadWriteType.HoldingRegistersLittleEndian4:
+                    case ModbusReadWriteType.HoldingRegistersDoubleLittleEndian:
+                        await Client.WriteMultipleRegistersAsync(slaveAddress, bits, value.ToModbusUShortLEValues(writeType.GetNumberOfPoint() * 2));
+                        break;
+                    case ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap:
+                    case ModbusReadWriteType.HoldingRegistersFloatLittleEndianByteSwap:
+                    case ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap:
+                    case ModbusReadWriteType.HoldingRegistersDoubleLittleEndianByteSwap:
+                        await Client.WriteMultipleRegistersAsync(slaveAddress, bits, value.ToModbusUShortLEBSValues(writeType.GetNumberOfPoint() * 2));
+                        break;
+                    case ModbusReadWriteType.ReadInputRegisters:
+                    case ModbusReadWriteType.ReadInputRegisters2:
+                    case ModbusReadWriteType.ReadInputRegistersFloat:
+                    case ModbusReadWriteType.ReadInputRegisters4:
+                    case ModbusReadWriteType.ReadInputRegistersDouble:
+                    case ModbusReadWriteType.ReadInputRegisters2ByteSwap:
+                    case ModbusReadWriteType.ReadInputRegistersFloatByteSwap:
+                    case ModbusReadWriteType.ReadInputRegisters4ByteSwap:
+                    case ModbusReadWriteType.ReadInputRegistersDoubleByteSwap:
+                    case ModbusReadWriteType.ReadInputRegistersLittleEndian2:
+                    case ModbusReadWriteType.ReadInputRegistersFloatLittleEndian:
+                    case ModbusReadWriteType.ReadInputRegistersLittleEndian4:
+                    case ModbusReadWriteType.ReadInputRegistersDoubleLittleEndian:
+                    case ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap:
+                    case ModbusReadWriteType.ReadInputRegistersFloatLittleEndianByteSwap:
+                    case ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap:
+                    case ModbusReadWriteType.ReadInputRegistersDoubleLittleEndianByteSwap:
+                        return MessageResult.Failed(ResultType.ParameterError, "ReadInputRegisters read-only, cannot write.", null);
+                }
                 return MessageResult.Success();
             }
-            else
+            catch (Exception ex)
             {
-                return MessageResult.Failed(ResultType.ParameterError, $"write data({data.GetType().Name})must be bool or ushort", null);
+                return MessageResult.Failed(ResultType.DeviceWriteError, $"write modbus data error.\r\n{ex.Message}", null);
             }
-
-        }
-        private async Task WriteAsync(byte slaveAddress, ModbusReadWriteType writeType, ushort bits, object value)
-        {
-            if (writeType == ModbusReadWriteType.Coils)
-                await Client.WriteSingleCoilAsync(slaveAddress, bits, (bool)value);
-            else
-                await Client.WriteSingleRegisterAsync(slaveAddress, bits, (ushort)value);
         }
 
         private bool VerifyWriteAddress(string address, out byte slaveAddress, out ModbusReadWriteType writeType, out ushort bits)
@@ -518,31 +622,6 @@ namespace iml6yu.DataReceive.ModbusMaster
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// 获取当前节点的点位长度
-        /// </summary>
-        /// <param name="readType"></param>
-        /// <returns></returns>
-        private ushort GetNodeItemNumberOfPoint(ModbusReadWriteType readType)
-        {
-            if (readType == ModbusReadWriteType.Coils || readType == ModbusReadWriteType.Inputs)
-                return 1;
-            if (readType == ModbusReadWriteType.HoldingRegisters || readType == ModbusReadWriteType.ReadInputRegisters)
-                return 1;
-
-            if (readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
-                || readType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap
-                || readType == ModbusReadWriteType.ReadInputRegisters2
-                || readType == ModbusReadWriteType.ReadInputRegisters2ByteSwap
-                || readType == ModbusReadWriteType.HoldingRegisters2
-                || readType == ModbusReadWriteType.HoldingRegisters2ByteSwap
-                || readType == ModbusReadWriteType.HoldingRegistersLittleEndian2
-                || readType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap)
-                return 2;
-            else
-                return 4;
         }
     }
 }
