@@ -5,9 +5,9 @@
     {
       "Id": 1,
       "Heart": {
-        "HeartType": "OddAndEven",
+        "HeartType": "Number",
         "HeartAddress": "1.HoldingRegisters.0",
-        "HeartInterval": 10
+        "HeartInterval": 1
       },
       "Stores": [
         {

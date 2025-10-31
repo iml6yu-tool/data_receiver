@@ -100,7 +100,7 @@ namespace iml6yu.DataService.Modbus
                         case HeartType.Number:
                             Task.Run(() =>
                             {
-                                WriteHeartData(Network?.GetSlave(slave.Id), writetype, startAddress, 1, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { if (v == ushort.MaxValue) v = 0; return v++; });
+                                WriteHeartData(Network?.GetSlave(slave.Id), writetype, startAddress, 1, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { if (v == ushort.MaxValue) v = 0; return ++v; });
                             });
                             break;
                         case HeartType.Time:
