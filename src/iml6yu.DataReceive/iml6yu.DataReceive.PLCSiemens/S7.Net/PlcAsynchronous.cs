@@ -294,17 +294,17 @@ namespace S7.Net
                 var reDataItems = ReBuilderDataItems(dataItems);
                 await Parallel.ForEachAsync(reDataItems, async (dic, token) =>
                 {
-                    foreach (var item in dic.Value.Keys)
+                    foreach (var item in dic.Keys)
                     {
                         if (item == null) continue;
                         var values = await ReadAsync(item.DataType, item.DB, item.StartByteAdr, item.VarType, item.Count, item.BitAdr, cancellationToken);
                         if (item.Count == 1)
-                            dic.Value[item][0].Item1.Value = values;
+                            dic[item][0].Item1.Value = values;
                         else
                         {
-                            for (var i = 0; i < dic.Value[item].Count; i++)
+                            for (var i = 0; i < dic[item].Count; i++)
                             {
-                                dic.Value[item][i].Item1.Value = GetValues(dic.Key, values, dic.Value[item][i].Item2, dic.Value[item][i].Item1.Count);
+                                dic[item][i].Item1.Value = GetValues(item.VarType, values, dic[item][i].Item2, dic[item][i].Item1.Count);
                             }
                         }
                     }
@@ -508,72 +508,75 @@ namespace S7.Net
         /// </summary>
         /// <param name="dataItems">读取参数</param>
         /// <returns></returns>
-        private Dictionary<VarType, Dictionary<DataItem, List<(DataItem, int)>>> ReBuilderDataItems(List<DataItem> dataItems)
+        private List<Dictionary<DataItem, List<(DataItem, int)>>> ReBuilderDataItems(List<DataItem> dataItems)
         {
-            Dictionary<VarType, Dictionary<DataItem, List<(DataItem, int)>>> resultDataItem = new Dictionary<VarType, Dictionary<DataItem, List<(DataItem, int)>>>();
-            var varTypeRefDataItemDic = dataItems.GroupBy(t => t.VarType).ToDictionary(t => t.Key, t => t.OrderBy(x => x.StartByteAdr).ThenBy(x => x.BitAdr));
-            foreach (var key in varTypeRefDataItemDic.Keys)
+            List<Dictionary<DataItem, List<(DataItem, int)>>> resultDataItem = new List<Dictionary<DataItem, List<(DataItem, int)>>>();
+            var dbTypeDic = dataItems.GroupBy(t => t.DB).ToDictionary(t => t.Key, t => t.ToList());
+            foreach (var dbkey in dbTypeDic.Keys)
             {
-                //新的DataItem， （原来的DataItem,在新的里面的Count值）
-                Dictionary<DataItem, List<(DataItem, int)>> currentDataItems = new Dictionary<DataItem, List<(DataItem, int)>>();
-                var lenght = 0;
-                if (key == VarType.Bit)
-                    lenght = 1;
-                else if (key == VarType.Byte)
-                    lenght = 8;
-                else if (key == VarType.Real || key == VarType.DInt || key == VarType.DWord || key == VarType.Timer || key == VarType.Time)
-                    lenght = 32;
-                else if (key == VarType.LReal || key == VarType.DateTime)
-                    lenght = 64;
-                else if (key == VarType.Word || key == VarType.Int || key == VarType.Counter || key == VarType.Date)
-                    lenght = 16;
-                else if (key == VarType.DateTimeLong)
-                    lenght = 96;
-                else
-                    lenght = 1;
-                var list = varTypeRefDataItemDic[key];
-                foreach (var item in list)
+                var varTypeRefDataItemDic = dbTypeDic[dbkey].GroupBy(t => t.VarType).ToDictionary(t => t.Key, t => t.OrderBy(x => x.StartByteAdr).ThenBy(x => x.BitAdr));
+                foreach (var key in varTypeRefDataItemDic.Keys)
                 {
-                    if (currentDataItems.Count == 0)
-                    {   //当前还没有数据，直接添加后进入下一次循环
-                        currentDataItems.Add(new DataItem()
-                        {
-                            DB = item.DB,
-                            BitAdr = item.BitAdr,
-                            Count = item.Count,
-                            DataType = item.DataType,
-                            StartByteAdr = item.StartByteAdr,
-                            VarType = item.VarType
-                        }, new List<(DataItem, int)>() { (item, 0) });
-                        continue;
-                    }
-                    DataItem lastKey = currentDataItems.Keys.Last();
-                    //上一个参数数据  
-                    DataItem? lastItem = currentDataItems[lastKey].Last().Item1;
-                    var expected = item.Count * lenght;
-                    var actual = (item.StartByteAdr * 8 + item.BitAdr) - (lastItem.StartByteAdr * 8 + lastItem.BitAdr);
-
-                    if (expected == actual)
-                    {
-                        //先add后++的原因是index从0开始，Count是从1开始
-                        currentDataItems[lastKey].Add((item, lastKey.Count));
-                        lastKey.Count += 1;
-                    }
+                    //新的DataItem， （原来的DataItem,在新的里面的Count值）
+                    Dictionary<DataItem, List<(DataItem, int)>> currentDataItems = new Dictionary<DataItem, List<(DataItem, int)>>();
+                    var lenght = 0;
+                    if (key == VarType.Bit)
+                        lenght = 1;
+                    else if (key == VarType.Byte)
+                        lenght = 8;
+                    else if (key == VarType.Real || key == VarType.DInt || key == VarType.DWord || key == VarType.Timer || key == VarType.Time)
+                        lenght = 32;
+                    else if (key == VarType.LReal || key == VarType.DateTime)
+                        lenght = 64;
+                    else if (key == VarType.Word || key == VarType.Int || key == VarType.Counter || key == VarType.Date)
+                        lenght = 16;
+                    else if (key == VarType.DateTimeLong)
+                        lenght = 96;
                     else
+                        lenght = 1;
+                    var list = varTypeRefDataItemDic[key];
+                    foreach (var item in list)
                     {
-                        currentDataItems.Add(new DataItem()
-                        {
-                            DB = item.DB,
-                            BitAdr = item.BitAdr,
-                            Count = item.Count,
-                            DataType = item.DataType,
-                            StartByteAdr = item.StartByteAdr,
-                            VarType = item.VarType
-                        }, new List<(DataItem, int)>() { (item, 0) });
-                    }
+                        if (currentDataItems.Count == 0)
+                        {   //当前还没有数据，直接添加后进入下一次循环
+                            currentDataItems.Add(new DataItem()
+                            {
+                                DB = item.DB,
+                                BitAdr = item.BitAdr,
+                                Count = item.Count,
+                                DataType = item.DataType,
+                                StartByteAdr = item.StartByteAdr,
+                                VarType = item.VarType
+                            }, new List<(DataItem, int)>() { (item, 0) });
+                            continue;
+                        }
+                        DataItem lastKey = currentDataItems.Keys.Last();
+                        //上一个参数数据  
+                        DataItem? lastItem = currentDataItems[lastKey].Last().Item1;
+                        var expected = item.Count * lenght;
+                        var actual = (item.StartByteAdr * 8 + item.BitAdr) - (lastItem.StartByteAdr * 8 + lastItem.BitAdr);
 
+                        if (expected == actual)
+                        {
+                            //先add后++的原因是index从0开始，Count是从1开始
+                            currentDataItems[lastKey].Add((item, lastKey.Count));
+                            lastKey.Count += 1;
+                        }
+                        else
+                        {
+                            currentDataItems.Add(new DataItem()
+                            {
+                                DB = item.DB,
+                                BitAdr = item.BitAdr,
+                                Count = item.Count,
+                                DataType = item.DataType,
+                                StartByteAdr = item.StartByteAdr,
+                                VarType = item.VarType
+                            }, new List<(DataItem, int)>() { (item, 0) });
+                        }
+                    }
+                    resultDataItem.Add(currentDataItems);
                 }
-                resultDataItem.Add(key, currentDataItems);
             }
             return resultDataItem;
         }
