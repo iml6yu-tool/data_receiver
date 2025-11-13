@@ -7,6 +7,7 @@ using iml6yu.Result;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Channels;
 
 namespace iml6yu.DataReceive.Core
@@ -87,9 +88,16 @@ namespace iml6yu.DataReceive.Core
         /// </summary> 
         protected Channel<KeyValuePair<string, Dictionary<string, ReceiverTempDataValue>>> MessageChannel { get; }
 
-
+        /// <summary>
+        /// 字符串数据转换器
+        /// </summary>
         protected Func<string, Dictionary<string, ReceiverTempDataValue>> DataParse { get; set; }
 
+        protected JsonSerializerOptions WriteDataSerializerOptions = new JsonSerializerOptions()
+        {
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
 
         private static readonly int maxMessageCount = 5000;
         private static readonly int maxMessageWarningCount = (int)(maxMessageCount * 0.8);

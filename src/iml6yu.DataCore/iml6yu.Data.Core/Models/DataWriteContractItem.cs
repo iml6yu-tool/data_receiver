@@ -40,5 +40,15 @@ namespace iml6yu.Data.Core.Models
         /// 值
         /// </summary>
         public object? Value { get; set; }
+
+        /// <summary>
+        /// 是否是标志位
+        /// <list type="bullet">
+        /// <item>
+        /// 标志位用于进行批量写入的时候作为最后一个验证位写入，当其他所有数据都写入成功后才最后写入这个数据位，对应的设备逻辑行为需要做适配开发才可以
+        /// </item>
+        /// </list>
+        /// </summary>
+        public bool? IsFlag { get; set; }
     }
 }

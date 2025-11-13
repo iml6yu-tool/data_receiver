@@ -374,12 +374,20 @@ namespace iml6yu.DataReceive.ModbusMaster
             return 0;
         }
 
+        /// <summary>
+        /// 将配置数据转成符合modbus读取的点位配置信息
+        /// </summary>
+        /// <param name="nodes"></param>
+        /// <returns>
+        /// Key：GroupName
+        /// Value：Interval->ModbusReadConfig
+        /// </returns>
         protected Dictionary<string, Dictionary<int, List<ModbusReadConfig>>> ConvertConfigNodeToModbusReadConfig(Dictionary<string, List<NodeItem>> nodes)
         {
             Dictionary<string, Dictionary<int, List<ModbusReadConfig>>> result = new Dictionary<string, Dictionary<int, List<ModbusReadConfig>>>();
             foreach (var key in nodes.Keys)
             {
-                //按照读取间隔进行分组
+                //按照读取间隔进行分组 
                 var nodeDic = nodes[key].Where(t => !string.IsNullOrEmpty(t.FullAddress)).GroupBy(t => t.Interval).ToDictionary(t => t.Key, t => t.ToList());
                 //按照读取间隔拼装modbus读取配置信息
                 var modbusReadConfigDic = new Dictionary<int, List<ModbusReadConfig>>();
@@ -387,7 +395,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                 foreach (var node in nodeDic)
                 {
                     //局部变量，用字典存储方便过滤
-                    //格式 dic<slaveaddress,dic<readtype,sortList<点位，实际配置地址>>>
+                    //格式 dic<slaveid,dic<readtype,sortList<点位，实际配置地址>>>
                     Dictionary<byte, Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>>
                         tempNode = new Dictionary<byte, Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>>();
                     foreach (var item in node.Value)

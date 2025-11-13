@@ -89,7 +89,7 @@ namespace iml6yu.DataReceive.PLCSiemens
         public override async Task<MessageResult> WriteAsync(DataWriteContract data)
         {
             if (!IsConnected)
-                return MessageResult.Failed(ResultType.ServerDoApiError, $"the dirver({Option.OriginHost}) not connect");
+                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
 
             if (data == null || data.Datas == null || data.Datas.Count() == 0 || data.Datas.Any(t => string.IsNullOrEmpty(t.Address)))
                 return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
@@ -120,7 +120,7 @@ namespace iml6yu.DataReceive.PLCSiemens
         public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)
         {
             if (!IsConnected)
-                return MessageResult.Failed(ResultType.ServerDoApiError, $"the dirver({Option.OriginHost}) not connect");
+                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
 
             try
             {
@@ -142,7 +142,7 @@ namespace iml6yu.DataReceive.PLCSiemens
         public override async Task<MessageResult> WriteAsync<T>(string address, T data)
         {
             if (!IsConnected)
-                return MessageResult.Failed(ResultType.ServerDoApiError, $"the dirver({Option.OriginHost}) not connect");
+                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
 
             try
             {

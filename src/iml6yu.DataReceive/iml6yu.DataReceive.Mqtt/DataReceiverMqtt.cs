@@ -302,11 +302,7 @@ namespace iml6yu.DataReceive.Mqtt
 
         public override async Task<MessageResult> WriteAsync(DataWriteContract data)
         {
-            var result = await Client.PublishStringAsync(data.Key, JsonSerializer.Serialize(data));
-
-            if (result.IsSuccess)
-                return MessageResult.Success();
-            return MessageResult.Failed((int)result.ReasonCode, result.ReasonString, null);
+            return await WriteAsync(data.Key, data); 
         }
 
         public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)
@@ -315,18 +311,15 @@ namespace iml6yu.DataReceive.Mqtt
         }
 
         /// <summary>
-        /// address 作为topic的name
+        /// topicname
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="address"></param>
+        /// <param name="topicname"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public override async Task<MessageResult> WriteAsync<T>(string address, T data)
+        public override async Task<MessageResult> WriteAsync<T>(string topicname, T data)
         {
-            if (!(data is string content))
-                return MessageResult.Failed(ResultType.ParameterError, "the data must be type of string, when on mqtt", null);
-
-            var result = await Client.PublishStringAsync(address, content);
+            var result = await Client.PublishStringAsync(topicname, JsonSerializer.Serialize(data, WriteDataSerializerOptions));
 
             if (result.IsSuccess)
                 return MessageResult.Success();
