@@ -44,6 +44,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataReceive.PLCSiemens", "iml6yu.DataReceive\iml6yu.DataReceive.PLCSiemens\iml6yu.DataReceive.PLCSiemens.csproj", "{C391B72B-2EE9-48A2-B209-7692962C25CD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "[98]Examples", "[98]Examples", "{0EB3193F-52FD-4AAE-8499-CB8E4C0697A8}"
+	ProjectSection(SolutionItems) = preProject
+		examples\Directory.Build.props = examples\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataReceiverExample.S7", "examples\iml6yu.DataReceiverExample\iml6yu.DataReceiverExample.S7.csproj", "{19484C4D-B4C7-4A17-B32E-F8418BA1ED4B}"
 EndProject
@@ -64,6 +67,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataService.ModbusTCP", "iml6yu.DataService\iml6yu.DataService.ModbusTCP\iml6yu.DataService.ModbusTCP.csproj", "{927F0590-2282-4497-B7E4-1099A645C638}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataServiceExample.ModbusTCP", "examples\iml6yu.DataServiceExample.ModbusTCP\iml6yu.DataServiceExample.ModbusTCP.csproj", "{C55E95CF-423D-46D8-B265-E5ED552E4B14}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{9FA3D6BD-1EC1-3BA5-80CB-CE02773A58D5}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

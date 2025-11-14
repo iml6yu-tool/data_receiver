@@ -1,12 +1,14 @@
 ﻿using iml6yu.DataPublish.Core;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using MQTTnet.Client;
+using Microsoft.Extensions.Logging;  
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+#if NET6_0
+using MQTTnet.Client;
+#endif
 
 namespace iml6yu.DataPublish.Mqtt
 {

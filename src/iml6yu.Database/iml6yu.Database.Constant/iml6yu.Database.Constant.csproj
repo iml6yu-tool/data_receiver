@@ -1,17 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>0.0.0.3-beta250509001</Version>
+    <Version>1.1.1</Version>
     <Authors>iml6yu</Authors>
     <Copyright>@iml6yu</Copyright>
     <PackageIcon>logo_128.jpg</PackageIcon>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <Description>基于Sqlsugar的curd基础类库</Description>
   </PropertyGroup>
 
   <ItemGroup>

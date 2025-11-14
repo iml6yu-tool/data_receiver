@@ -10,6 +10,9 @@ using Microsoft.Extensions.Logging;
 using MQTTnet;
 using System.Net.Http;
 using System.Text.Json;
+#if NET6_0
+using MQTTnet.Client;
+#endif
 
 namespace iml6yu.DataReceive.Mqtt
 {
@@ -133,7 +136,11 @@ namespace iml6yu.DataReceive.Mqtt
 
         protected override IMqttClient CreateClient(DataReceiverMqttOption option)
         {
+#if NET6_0
+            Client = new MqttFactory().CreateMqttClient();
+#elif NET8_0_OR_GREATER
             Client = new MqttClientFactory().CreateMqttClient();
+#endif
             Client.ConnectedAsync += args =>
             {
                 if (option.DataInputTopics?.Count > 0)
@@ -253,7 +260,12 @@ namespace iml6yu.DataReceive.Mqtt
 
         private MqttClientSubscribeOptions CreateSubscribeOptions(List<string> topics)
         {
+#if NET6_0
+            var mqttSubscribeOptionsBuilder = new MqttFactory().CreateSubscribeOptionsBuilder();
+#elif NET8_0_OR_GREATER
             var mqttSubscribeOptionsBuilder = new MqttClientFactory().CreateSubscribeOptionsBuilder();
+#endif
+
             topics.ForEach(topic =>
             {
                 mqttSubscribeOptionsBuilder = mqttSubscribeOptionsBuilder.WithTopicFilter(topic);
@@ -265,7 +277,11 @@ namespace iml6yu.DataReceive.Mqtt
 
         private MqttClientUnsubscribeOptions CreateUnSubscribeOptions(List<string> topics)
         {
+#if NET6_0
+            var mqttUnsubscribeOptionsBuilder = new MqttFactory().CreateUnsubscribeOptionsBuilder();
+#elif NET8_0_OR_GREATER
             var mqttUnsubscribeOptionsBuilder = new MqttClientFactory().CreateUnsubscribeOptionsBuilder();
+#endif
             topics.ForEach(topic =>
             {
                 mqttUnsubscribeOptionsBuilder = mqttUnsubscribeOptionsBuilder.WithTopicFilter(topic);
@@ -302,7 +318,7 @@ namespace iml6yu.DataReceive.Mqtt
 
         public override async Task<MessageResult> WriteAsync(DataWriteContract data)
         {
-            return await WriteAsync(data.Key, data); 
+            return await WriteAsync(data.Key, data);
         }
 
         public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)

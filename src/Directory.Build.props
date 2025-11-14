@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <!-- 定义多目标框架，用分号分隔 -->
+    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <!-- 使用最新的C#语言特性 -->
+    <LangVersion>latest</LangVersion>
+    <!-- 启用可空引用类型，提升代码健壮性 -->
+    <!--<Nullable>enable</Nullable>-->
+    <!-- 将所有警告视为错误，确保代码质量 -->
+    <!--<TreatWarningsAsErrors>false</TreatWarningsAsErrors>-->
+    <!-- 启用全局using指令，简化代码 -->
+    <!--<ImplicitUsings>enable</ImplicitUsings>-->
+  </PropertyGroup>
+</Project>

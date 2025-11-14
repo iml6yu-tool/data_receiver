@@ -2,13 +2,15 @@
 using iml6yu.DataPublish.Core;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
-using MQTTnet;
-using MQTTnet.Client;
+using MQTTnet; 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+#if NET6_0
+using MQTTnet.Client;
+#endif
 
 namespace iml6yu.DataPublish.Mqtt
 {
@@ -94,7 +96,11 @@ namespace iml6yu.DataPublish.Mqtt
 
         protected override IMqttClient CreateClient(DataPublisherOption option)
         {
+#if NET6_0
             Client = new MqttFactory().CreateMqttClient();
+#elif NET8_0_OR_GREATER
+            Client = new MqttClientFactory().CreateMqttClient();
+#endif
             Client.ConnectedAsync += args =>
             {
                 OnConnectionEvent(option, new ConnectArgs()
