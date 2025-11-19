@@ -3,8 +3,6 @@ using iml6yu.Data.Core.Models;
 using iml6yu.DataReceive.Core.Configs;
 using iml6yu.DataReceive.Core.Models;
 using iml6yu.Result;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace iml6yu.DataReceive.Core
 {
@@ -102,13 +100,25 @@ namespace iml6yu.DataReceive.Core
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task<DataResult<DataReceiveContractItem>> ReadAsync(string address, CancellationToken cancellationToken = default);
-
+        /// <summary>
+        /// 直接读取设备数据，不经过缓存
+        /// </summary>
+        /// <param name="addressArray"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default);
         /// <summary>
         /// 写数据
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
         Task<MessageResult> WriteAsync(DataWriteContract data);
+        /// <summary>
+        /// 写数据并且进行校验(整个写入过程伴随读取数据后的验证，所以此方法的写入会严重影响效率，但是能确保数据的准确性）
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data);
         /// <summary>
         /// 写单条数据
         /// </summary>

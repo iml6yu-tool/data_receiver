@@ -6,6 +6,7 @@ using iml6yu.DataReceive.Core.Models;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
@@ -80,7 +81,7 @@ namespace iml6yu.DataReceive.Core
         protected Dictionary<string, HashSet<string>> Subscribers { get; set; }
 
         /// <summary>
-        /// 消息通道 KeyValue->GroupName:AddressAndValues
+        /// 消息通道 Key：产线名称ProductLineName，Value：对应的是已给字典 Address --> Values
         /// <list type="bullet">
         /// <item>Key:address</item>
         /// <item>Value:value,timestamp</item>
@@ -278,6 +279,13 @@ namespace iml6yu.DataReceive.Core
                 return CollectionResult<DataReceiveContractItem>.Success(1, datas.Count, datas, datas.Count);
             });
         }
+        /// <summary>
+        /// 实时读取数据
+        /// </summary>
+        /// <param name="addressArray"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public abstract Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default);
 
         public Task StartWorkAsync(CancellationToken token)
         {
@@ -403,7 +411,7 @@ namespace iml6yu.DataReceive.Core
         {
             if (datas.Value == null || datas.Value.Count == 0)
                 return null;
-            long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            long now = GetTimestamp();
             DataReceiveContract data = new DataReceiveContract(now) { Key = datas.Key };
 
             foreach (var key in datas.Value.Keys)
@@ -426,6 +434,11 @@ namespace iml6yu.DataReceive.Core
                 });
             }
             return data;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected static long GetTimestamp()
+        {
+            return DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
         /// <summary>
@@ -505,11 +518,30 @@ namespace iml6yu.DataReceive.Core
                 }
             }
         }
+
+        /// <summary>
+        /// 判断是否读取的值是否等于预期值
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="expectation"></param>
+        /// <param name="typeCode"></param>
+        /// <returns></returns>
+        protected virtual bool VerifyValueEqual(object value, object expectation, int typeCode)
+        {
+            // 1. 处理两个均为null的情况
+            if (value == null || expectation == null)
+            {
+                return false;
+            }
+            if (!VerifyValue(value, typeCode))
+                return false;
+            return object.Equals(value, expectation);
+        }
         /// <summary>
         /// 将消息加入线程channel中
         /// </summary>
         /// <param name="productLineName">产线名称</param>
-        /// <param name="msg">字典：数据地址 ref 数据临时值（值和时间戳）</param>
+        /// <param name="msg">字典：数据地址 --> 数据临时值（值和时间戳）</param>
         /// <returns></returns>
         protected virtual async Task ReceiveDataToMessageChannelAsync(string productLineName, Dictionary<string, ReceiverTempDataValue> msg)
         {
@@ -586,9 +618,13 @@ namespace iml6yu.DataReceive.Core
         }
 
         public abstract Task<MessageResult> WriteAsync(DataWriteContract data);
-
+        public virtual async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
+        {
+            return await WriteAsync(data);
+        }
         public abstract Task<MessageResult> WriteAsync(DataWriteContractItem data);
 
         public abstract Task<MessageResult> WriteAsync<T>(string address, T data);
+       
     }
 }

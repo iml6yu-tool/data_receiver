@@ -31,4 +31,8 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\iml6yu.DataCore\iml6yu.Data.Core\iml6yu.Data.Core.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -49,6 +49,28 @@ namespace iml6yu.Data.Core.Models
         /// </item>
         /// </list>
         /// </summary>
-        public bool? IsFlag { get; set; }
+        public bool IsFlag { get; set; } = false;
+
+        //public static implicit operator DataReceiveContractItem(DataWriteContractItem item)
+        //{
+        //    return new DataReceiveContractItem()
+        //    {
+        //        Address = item.Address,
+        //        ValueType = item.ValueType,
+        //        Value = item.Value,
+        //        Timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds()
+        //    };
+        //}
+
+        public static explicit operator DataWriteContractItem(DataReceiveContractItem item)
+        {
+            return new DataWriteContractItem
+            {
+                Address = item.Address,
+                Value = item.Value,
+                ValueType = item.ValueType,
+                IsFlag = false
+            };
+        }
     }
 }

@@ -45,5 +45,27 @@ namespace iml6yu.Data.Core.Models
         /// 时间戳 从设备中读取的时间戳
         /// </summary>
         public long? Timestamp { get; set; }
+
+        //public static implicit operator DataWriteContractItem(DataReceiveContractItem item)
+        //{
+        //    return new DataWriteContractItem
+        //    {
+        //        Address = item.Address,
+        //        Value = item.Value,
+        //        ValueType = item.ValueType,
+        //        IsFlag = false
+        //    };
+        //}
+
+        public static explicit operator DataReceiveContractItem(DataWriteContractItem item)
+        {
+            return new DataReceiveContractItem()
+            {
+                Address = item.Address,
+                ValueType = item.ValueType,
+                Value = item.Value,
+                Timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds()
+            }; 
+        }
     }
 }

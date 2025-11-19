@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using NModbus;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Xml.Linq;
 
 namespace iml6yu.DataReceive.ModbusMaster
 {
@@ -53,109 +54,105 @@ namespace iml6yu.DataReceive.ModbusMaster
             }
         }
 
-        protected override Task WhileDoAsync(CancellationToken token)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected Dictionary<string, ReceiverTempDataValue> ReadModbusNodeItem(ModbusReadConfig readConfig, ModbusReadItem node, Dictionary<string, ReceiverTempDataValue> tempDatas)
         {
-            return Task.Run(() =>
+            if (node.ReadType == ModbusReadWriteType.Coils)
             {
-                //按照分组进行多线程并行
-                Parallel.ForEach(readNodes, readNode =>
-                {
-                    Parallel.ForEach(readNode.Value, item =>
-                    {
-                        while (!token.IsCancellationRequested)
-                        {
-                            if (VerifyConnect())
-                            {
-                                //按照modbus slaveaddress进行分组便利读取
-                                Parallel.ForEach(item.Value, async readConfig =>
-                                {
-                                    Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
-                                    readConfig.ReadItems.ForEach(node =>
-                                                                         {
-                                                                             if (node.ReadType == ModbusReadWriteType.Coils)
-                                                                             {
-                                                                                 try
-                                                                                 {
-                                                                                     var values = Client.ReadCoils(readConfig.SlaveId, node.StartPoint, node.NumberOfPoint);
-                                                                                     if (values != null && values.Length > 0)
-                                                                                     {
-                                                                                         AddReceiveValue(readConfig, node, values, ref tempDatas);
-                                                                                     }
-                                                                                 }
-                                                                                 catch (Exception ex)
-                                                                                 {
+                tempDatas = ReadCoils(readConfig, node, tempDatas);
+            }
+            else if (node.ReadType == ModbusReadWriteType.Inputs)
+            {
+                tempDatas = ReadInputs(readConfig, node, tempDatas);
+            }
+            else if (node.ReadType == ModbusReadWriteType.HoldingRegisters
+            || node.ReadType == ModbusReadWriteType.HoldingRegisters2
+            || node.ReadType == ModbusReadWriteType.HoldingRegisters2ByteSwap
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersFloat
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersFloatByteSwap
+            || node.ReadType == ModbusReadWriteType.HoldingRegisters4
+            || node.ReadType == ModbusReadWriteType.HoldingRegisters4ByteSwap
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersDouble
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersDoubleByteSwap
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersFloatLittleEndian
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersFloatLittleEndianByteSwap
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersDoubleLittleEndian
+            || node.ReadType == ModbusReadWriteType.HoldingRegistersDoubleLittleEndianByteSwap)
+            {
 
-                                                                                     Logger.LogError("read coils error.\r\n{0}", ex.Message);
-                                                                                 }
-                                                                             }
-                                                                             else if (node.ReadType == ModbusReadWriteType.Inputs)
-                                                                             {
-                                                                                 try
-                                                                                 {
-                                                                                     var values = Client.ReadInputs(readConfig.SlaveId, node.StartPoint, node.NumberOfPoint);
-                                                                                     if (values != null && values.Length > 0)
-                                                                                     {
-                                                                                         AddReceiveValue(readConfig, node, values, ref tempDatas);
-                                                                                     }
-                                                                                 }
-                                                                                 catch (Exception ex)
-                                                                                 {
+                tempDatas = ReadHoldingRegisters(readConfig, node, tempDatas);
+            }
+            else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters
+            || node.ReadType == ModbusReadWriteType.ReadInputRegisters2
+            || node.ReadType == ModbusReadWriteType.ReadInputRegisters2ByteSwap
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloat
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloatByteSwap
+            || node.ReadType == ModbusReadWriteType.ReadInputRegisters4
+            || node.ReadType == ModbusReadWriteType.ReadInputRegisters4ByteSwap
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersDouble
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersDoubleByteSwap
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndian
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndianByteSwap
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersDoubleLittleEndian
+            || node.ReadType == ModbusReadWriteType.ReadInputRegistersDoubleLittleEndianByteSwap)
+            {
+                tempDatas = ReadInputRegisters(readConfig, node, tempDatas);
+            }
 
-                                                                                     Logger.LogError("read inputs error.\r\n{0}", ex.Message);
-                                                                                 }
-                                                                             }
-                                                                             else if (node.ReadType == ModbusReadWriteType.HoldingRegisters
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegisters2
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegisters2ByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersFloat
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersFloatByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegisters4
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegisters4ByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersDouble
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersDoubleByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersFloatLittleEndian
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersFloatLittleEndianByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersDoubleLittleEndian
-                                                                             || node.ReadType == ModbusReadWriteType.HoldingRegistersDoubleLittleEndianByteSwap)
-                                                                             {
-                                                                                 tempDatas = ReadHoldingRegisters(readConfig, node, tempDatas);
-                                                                             }
-                                                                             else if (node.ReadType == ModbusReadWriteType.ReadInputRegisters
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegisters2
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegisters2ByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloat
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloatByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegisters4
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegisters4ByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersDouble
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersDoubleByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndian
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndianByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersDoubleLittleEndian
-                                                                             || node.ReadType == ModbusReadWriteType.ReadInputRegistersDoubleLittleEndianByteSwap)
-                                                                             {
-                                                                                 tempDatas = ReadInputRegisters(readConfig, node, tempDatas);
-                                                                             }
-                                                                         });
-                                    await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
-                                });
-                            }
-                            Task.Delay(item.Key == 0 ? 500 : item.Key, token).Wait(token);
-                        }
-                    });
-                });
-            }, token);
+            return tempDatas;
         }
 
-        private Dictionary<string, ReceiverTempDataValue> ReadInputRegisters(ModbusReadConfig readConfig, ModbusReadItem node, Dictionary<string, ReceiverTempDataValue> tempDatas)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected Dictionary<string, ReceiverTempDataValue> ReadCoils(ModbusReadConfig readConfig, ModbusReadItem node, Dictionary<string, ReceiverTempDataValue> tempDatas)
+        {
+            try
+            {
+                var values = Client.ReadCoils(readConfig.SlaveId, node.StartPoint, node.NumberOfPoint);
+                if (values != null && values.Length > 0)
+                {
+                    AddReceiveValue(readConfig, node, values, ref tempDatas);
+                }
+            }
+            catch (Exception ex)
+            {
+
+                Logger.LogError("read coils error.\r\n{0}", ex.Message);
+            }
+
+            return tempDatas;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected Dictionary<string, ReceiverTempDataValue> ReadInputs(ModbusReadConfig readConfig, ModbusReadItem node, Dictionary<string, ReceiverTempDataValue> tempDatas)
+        {
+            try
+            {
+                var values = Client.ReadInputs(readConfig.SlaveId, node.StartPoint, node.NumberOfPoint);
+                if (values != null && values.Length > 0)
+                {
+                    AddReceiveValue(readConfig, node, values, ref tempDatas);
+                }
+            }
+            catch (Exception ex)
+            {
+
+                Logger.LogError("read inputs error.\r\n{0}", ex.Message);
+            }
+
+            return tempDatas;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected Dictionary<string, ReceiverTempDataValue> ReadInputRegisters(ModbusReadConfig readConfig, ModbusReadItem node, Dictionary<string, ReceiverTempDataValue> tempDatas)
         {
             try
             {
@@ -173,7 +170,8 @@ namespace iml6yu.DataReceive.ModbusMaster
             return tempDatas;
         }
 
-        private Dictionary<string, ReceiverTempDataValue> ReadHoldingRegisters(ModbusReadConfig readConfig, ModbusReadItem node, Dictionary<string, ReceiverTempDataValue> tempDatas)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected Dictionary<string, ReceiverTempDataValue> ReadHoldingRegisters(ModbusReadConfig readConfig, ModbusReadItem node, Dictionary<string, ReceiverTempDataValue> tempDatas)
         {
             try
             {
@@ -374,6 +372,57 @@ namespace iml6yu.DataReceive.ModbusMaster
             return 0;
         }
 
+        protected List<ModbusReadConfig> ConvertToModbusReadConfig(List<NodeItem> items)
+        {
+            Dictionary<byte, Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>>
+                        tempNode = new Dictionary<byte, Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>>();
+
+            foreach (var item in items)
+            {
+                var array = item.FullAddress.Split(['.', '。'], StringSplitOptions.RemoveEmptyEntries);
+                if (array.Length != 3)
+                {
+                    Logger.LogError($"node({item.FullAddress}) config error,Must be 2 '.' spilt it");
+                    continue;
+                }
+                if (!byte.TryParse(array[0], out byte slaveAddress))
+                {
+                    Logger.LogError($"node({item.FullAddress}) slaveAddress config error.the first bit must byte type(0~255)");
+                    continue;
+                }
+                if (!Enum.TryParse(array[1], out ModbusReadWriteType readType))
+                {
+                    Logger.LogError($"node({item.FullAddress}) readType config error.the second bit not in MudbusReadType enmu");
+                    continue;
+                }
+                if (!ushort.TryParse(array[2], out ushort bits))
+                {
+                    Logger.LogError($"node({item.FullAddress}) bit config error.the third bit must ushort type");
+                    continue;
+                }
+                if (!tempNode.ContainsKey(slaveAddress))
+                    tempNode.Add(slaveAddress, new Dictionary<ModbusReadWriteType, SortedList<ushort, NodeItem>>());
+                if (!tempNode[slaveAddress].ContainsKey(readType))
+                    tempNode[slaveAddress].Add(readType, new SortedList<ushort, NodeItem>());
+                tempNode[slaveAddress][readType].Add(bits, item);
+            }
+
+            var result = tempNode.Select(t =>
+               {
+                   var readconfig = new ModbusReadConfig()
+                   {
+                       SlaveId = t.Key,
+                       ReadItems = new List<ModbusReadItem>(),
+                   };
+                   foreach (ModbusReadWriteType rt in t.Value.Keys)
+                   {
+                       readconfig.ReadItems.AddRange(GetModbusReadItems(rt, t.Value[rt]));
+                   }
+                   return readconfig;
+               }).ToList();
+            return result;
+        }
+
         /// <summary>
         /// 将配置数据转成符合modbus读取的点位配置信息
         /// </summary>
@@ -491,7 +540,7 @@ namespace iml6yu.DataReceive.ModbusMaster
             {
                 if (!(await WriteAsync(item)).State)
                     errorAddresses.Add(item.Address);
-            } 
+            }
             if (errorAddresses.Count > 0)
                 return MessageResult.Failed(ResultType.DeviceWriteError, $"write some address error:{string.Join(",", errorAddresses)}");
             return MessageResult.Success();
@@ -518,6 +567,15 @@ namespace iml6yu.DataReceive.ModbusMaster
 
             return await WriteAsync(slaveAddress, writeType, bits, data);
         }
+
+        /// <summary>
+        /// 写入数据
+        /// </summary>
+        /// <param name="slaveAddress">slaveid</param>
+        /// <param name="writeType">写入类型</param>
+        /// <param name="bits">起始位置</param>
+        /// <param name="value">值</param>
+        /// <returns></returns>
         private async Task<MessageResult> WriteAsync(byte slaveAddress, ModbusReadWriteType writeType, ushort bits, object value)
         {
             try
@@ -631,5 +689,115 @@ namespace iml6yu.DataReceive.ModbusMaster
 
             return true;
         }
+
+        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (addressArray == null)
+                    return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"参数为null,the addressArray parameter is null.");
+                if (addressArray.Count() == 0)
+                    return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"参数为空,the addressArray length is 0.");
+
+                var readAddress = ConvertToModbusReadConfig(addressArray.Select(t => new NodeItem()
+                {
+                    Address = t.Address,
+                    FullAddress = t.Address,
+                    ValueType = ((TypeCode)t.ValueType).ToString(),
+                }).ToList());
+
+                Dictionary<string, ReceiverTempDataValue> values = new Dictionary<string, ReceiverTempDataValue>();
+                foreach (var read in readAddress)
+                {
+                    foreach (var item in read.ReadItems)
+                    {
+                        values = ReadModbusNodeItem(read, item, values);
+                    }
+                }
+                if (values.Count != addressArray.Count())
+                    return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取数据结果{values.Count}条，预期是{addressArray.Count()}条，摒弃不匹配的结果！");
+                DataReceiveContract data = new DataReceiveContract()
+                {
+                    Id = iml6yu.Fingerprint.GetId(),
+                    Key = Option.ProductLineName,
+                    Timestamp = GetTimestamp(),
+                    Datas = new List<DataReceiveContractItem>()
+                };
+                foreach (var address in addressArray)
+                {
+                    data.Datas.Add(new DataReceiveContractItem()
+                    {
+                        Address = address.Address,
+                        Timestamp = data.Timestamp,
+                        Value = values[address.Address].Value,
+                        ValueType = address.ValueType
+                    });
+                }
+                return DataResult<DataReceiveContract>.Success(data);
+            }
+            catch (Exception ex)
+            {
+                return DataResult<DataReceiveContract>.Failed(ResultType.Failed, ex.Message, ex);
+            }
+        }
+
+
+        public override async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
+        {
+            if (!IsConnected)
+                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
+
+            if (data == null || data.Datas == null || data.Datas.Count() == 0 || data.Datas.Any(t => string.IsNullOrEmpty(t.Address)))
+                return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
+
+            if (data.Datas.Count(t => t.IsFlag) > 1)
+                return MessageResult.Failed(ResultType.ParameterError, "the flag item is more than 1", null);
+
+            try
+            {
+                foreach (var item in data.Datas)
+                {
+                    if (item.IsFlag) continue;
+                    var writeResult = await WriteAsync(item);
+                    if (!writeResult.State)
+                        return MessageResult.Failed(writeResult.Code, writeResult.Message, writeResult.Error);
+                }
+                //读取刚刚写入的结果，确认是否写入成功
+                var readResult = await DirectReadAsync(data.Datas.Select(t => (DataReceiveContractItem)t).ToArray());
+                if (!readResult.State)
+                    return MessageResult.Failed(ResultType.DeviceWriteError, "无法完成校验，未写入标志位，请自行确认后再进行处理。( Verification failed, flag not written. Please confirm manually before proceeding with further operations.)", null);
+
+                if (readResult.Data.Datas.Count() == 0 || readResult.Data.Datas.Count() != data.Datas.Where(t => !t.IsFlag).Count())
+                    return MessageResult.Failed(ResultType.DeviceWriteError, "Write failed", null);
+                foreach (var v in readResult.Data.Datas)
+                {
+                    var expectedValue = data.Datas.First(t => t.Address == v.Address).Value;
+                    if (!VerifyValueEqual(v.Value, expectedValue, v.ValueType))
+                        return MessageResult.Failed(ResultType.DeviceWriteError, $"Write failed,The actual value of  {v.Address}  is {v.Value}, but the expected value should be {expectedValue}.", null);
+                }
+
+                //写入标志位
+                var flagAddress = data.Datas.FirstOrDefault(t => t.IsFlag);
+                if (flagAddress != null)
+                {
+                    var writeResult = await WriteAsync(flagAddress);
+                    if (!writeResult.State)
+                        return MessageResult.Failed(writeResult.Code, $"Wirte flag Address({flagAddress.Address}) failed, detail message:{writeResult.Message}", writeResult.Error);
+                    readResult = await DirectReadAsync([(DataReceiveContractItem)flagAddress]);
+                    if (!readResult.State || readResult.Data.Datas.Count() != 1)
+                        return MessageResult.Failed(ResultType.DeviceWriteError, "无法完成校验，标志位已写入，请自行确认后再进行处理。( Verification failed, flag writted. Please confirm manually before proceeding with further operations.)", null);
+
+                    if (!VerifyValueEqual(readResult.Data.Datas.First().Value, flagAddress.Value, flagAddress.ValueType))
+                        return MessageResult.Failed(ResultType.DeviceWriteError, $"Write failed,The actual value of  {flagAddress.Address}  is {readResult.Data.Datas.First().Value}, but the expected value should be {flagAddress.Value}.", null);
+                }
+
+                return MessageResult.Success();
+            }
+            catch (Exception ex)
+            {
+                return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+            }
+        }
+
     }
 }

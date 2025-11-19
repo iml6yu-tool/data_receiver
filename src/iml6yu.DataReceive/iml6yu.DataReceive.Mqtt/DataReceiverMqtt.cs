@@ -341,6 +341,31 @@ namespace iml6yu.DataReceive.Mqtt
                 return MessageResult.Success();
             return MessageResult.Failed((int)result.ReasonCode, result.ReasonString, null);
         }
+
+        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default)
+        {
+            if (addressArray == null)
+                return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"参数为null,the addressArray parameter is null.");
+            if (addressArray.Count() == 0)
+                return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"参数为空,the addressArray length is 0.");
+
+            var allDatas = await ReadAllAsync(cancellationToken);
+            if (!allDatas.State)
+                return DataResult<DataReceiveContract>.Failed(allDatas.Code, allDatas.Message, allDatas.Error);
+            DataReceiveContract data = new DataReceiveContract()
+            {
+                Id = iml6yu.Fingerprint.GetId(),
+                Key = Option.ProductLineName,
+                Timestamp = GetTimestamp(),
+                Datas = new List<DataReceiveContractItem>()
+            };
+            foreach (var address in addressArray)
+            {
+                var item = allDatas.Data?.FirstOrDefault(t => t.Address == address.Address);
+                data.Datas.Add(item);
+            }
+            return DataResult<DataReceiveContract>.Success(data);
+        }
     }
 
 }

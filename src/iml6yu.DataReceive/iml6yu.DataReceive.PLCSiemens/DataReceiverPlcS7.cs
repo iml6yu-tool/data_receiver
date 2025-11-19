@@ -7,6 +7,7 @@ using iml6yu.DataReceive.PLCSiemens.Configs;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
 using S7.Net;
+using S7.Net.Protocol.S7;
 using S7.Net.Types;
 
 namespace iml6yu.DataReceive.PLCSiemens
@@ -65,7 +66,6 @@ namespace iml6yu.DataReceive.PLCSiemens
                 OnConnectionEvent(this.Option, new ConnectArgs(false, ex.Message));
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
-
         }
 
         public override async Task<MessageResult> DisConnectAsync()
@@ -99,10 +99,9 @@ namespace iml6yu.DataReceive.PLCSiemens
                 List<DataItem> writeNodes = new List<DataItem>();
                 foreach (var t in data.Datas)
                 {
-                    var item = ConvertFullAddressToS7DataItem(t.Address, (TypeCode)t.ValueType);
+                    var item = DataItem.FromAddressAndValue(t.Address, t.Value);
                     if (item == null)
                         return MessageResult.Failed(ResultType.ParameterError, $"the address({t.Address}) is error");
-                    item.Value = t.Value;
                     writeNodes.Add(item);
                 }
 
@@ -114,7 +113,6 @@ namespace iml6yu.DataReceive.PLCSiemens
                 Logger.LogError($"write data error. {ex.Message}");
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
-
         }
 
         public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)
@@ -124,11 +122,9 @@ namespace iml6yu.DataReceive.PLCSiemens
 
             try
             {
-                var item = ConvertFullAddressToS7DataItem(data.Address, (TypeCode)data.ValueType);
+                var item = DataItem.FromAddressAndValue(data.Address, data.Value);
                 if (item == null)
                     return MessageResult.Failed(ResultType.ParameterError, $"the address({data.Address}) is error");
-                item.Value = data.Value;
-
                 await Client.WriteAsync(item);
                 return MessageResult.Success();
             }
@@ -146,10 +142,9 @@ namespace iml6yu.DataReceive.PLCSiemens
 
             try
             {
-                var item = ConvertFullAddressToS7DataItem(address, Convert.GetTypeCode(data));
+                var item = DataItem.FromAddressAndValue(address, data);
                 if (item == null)
                     return MessageResult.Failed(ResultType.ParameterError, $"the address({address}) is error");
-                item.Value = data;
 
                 await Client.WriteAsync(item);
                 return MessageResult.Success();
@@ -236,7 +231,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                 //分组读取节点
                 var s7DataItems = intervalToNodeItem.ToDictionary(t => t.Key, t => t.Value.Select(t =>
                 {
-                    var dataItem = ConvertFullAddressToS7DataItem(t.FullAddress, t.ValueTypeCode);
+                    var dataItem = DataItem.FromAddress(t.FullAddress);
                     return (t.FullAddress, t.Address, dataItem);
                 }).Where(t => t.Item3 != null).ToDictionary(t => t.Item2, t => t.Item3));
                 result.Add(key, s7DataItems);
@@ -244,99 +239,176 @@ namespace iml6yu.DataReceive.PLCSiemens
             return result;
         }
 
-        private DataItem? ConvertFullAddressToS7DataItem(string fullAddress, TypeCode valueType)
+        //private DataItem? ConvertFullAddressToS7DataItem(string fullAddress, TypeCode valueType)
+        //{
+        //    if (string.IsNullOrEmpty(fullAddress))
+        //    {
+        //        Logger.LogError($"node config error. exist [FullAdress] is null or empty");
+        //        return null;
+        //    }
+        //    try
+        //    {
+        //        var item = DataItem.FromAddress(fullAddress);
+        //        var vartype = TypeCodeRefVarType(valueType);
+        //        if (vartype != null)
+        //            item.VarType = vartype.Value;
+
+        //        return item;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Logger.LogError($"FullAddress ({fullAddress}) convert dataitem error,detail:\r\n{ex.Message}");
+        //        return null;
+        //    }
+
+
+        //    //var array = fullAddress.ToUpper().Split(new char[] { '.', '。' }, StringSplitOptions.RemoveEmptyEntries);
+        //    //if (array.Length < 2)
+        //    //{
+        //    //    Logger.LogError($"node({fullAddress}) config error.");
+        //    //    return null;
+        //    //}
+        //    //if (!array[0].StartsWith("DB"))
+        //    //{
+        //    //    Logger.LogError($"only support DataBlock. The block of {fullAddress} is not support");
+        //    //    return null;
+        //    //}
+        //    //if (!int.TryParse(array[0].Replace("DB", ""), out int db))
+        //    //{
+        //    //    Logger.LogError($"node({fullAddress}) config error.the fomat is [DBxx.xxx]");
+        //    //    return null;
+        //    //}
+        //    ////两步验证数据类型，如果通过地址能获取到数据类型，则直接使用地址中的数据类型
+        //    //var varType = AddressToVarType(addressSecond: array[1].Substring(2, 1));
+        //    //varType = varType ?? TypeCodeRefVarType(valueType);
+        //    //if (varType is null)
+        //    //{
+        //    //    Logger.LogError($"node({fullAddress}) config error.the VauleType is not support");
+        //    //    return null;
+        //    //}
+
+        //    //return new DataItem()
+        //    //{
+        //    //    DataType = DataType.DataBlock,
+        //    //    VarType = varType.Value,
+        //    //    DB = db,
+        //    //    StartByteAdr = 0,
+        //    //    BitAdr = 0,
+        //    //    Count = 1,
+        //    //    Value = new object()
+        //    //};
+        //}
+
+        ///// <summary>
+        ///// Typecode 转 vartype
+        ///// </summary>
+        ///// <param name="typeCode"></param>
+        ///// <returns></returns>
+        //private VarType? TypeCodeRefVarType(TypeCode typeCode) => typeCode switch
+        //{
+        //    TypeCode.Boolean => VarType.Bit,
+        //    TypeCode.Byte => VarType.Byte,
+        //    TypeCode.UInt16 => VarType.Word,
+        //    TypeCode.UInt32 => VarType.DWord,
+        //    TypeCode.Int16 => VarType.Int,
+        //    TypeCode.Int32 => VarType.DInt,
+        //    TypeCode.Single => VarType.Real,
+        //    TypeCode.Double => VarType.LReal,
+        //    TypeCode.String => VarType.String,
+        //    TypeCode.DateTime => VarType.DateTime,
+        //    _ => null
+        //};
+
+        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrEmpty(fullAddress))
-            {
-                Logger.LogError($"node config error. exist [FullAdress] is null or empty");
-                return null;
-            }
             try
             {
-                var item = DataItem.FromAddress(fullAddress);
-                var vartype = TypeCodeRefVarType(valueType);
-                if (vartype != null)
-                    item.VarType = vartype.Value;
+                if (addressArray == null)
+                    return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"参数为null,the addressArray parameter is null.");
+                if (addressArray.Count() == 0)
+                    return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"参数为空,the addressArray length is 0.");
 
-                return item;
+                var address = addressArray.Select(t => DataItem.FromAddress(t.Address)).ToList();
+                var values = await Client.ReadMultipleVarsAsync(address, cancellationToken);
+                DataReceiveContract data = new DataReceiveContract()
+                {
+                    Id = iml6yu.Fingerprint.GetId(),
+                    Key = Option.ProductLineName,
+                    Timestamp = GetTimestamp(),
+                    Datas = new List<DataReceiveContractItem>()
+                };
+                for (var i = 0; i < values.Count; i++)
+                {
+                    var item = addressArray.ElementAt(i);
+                    if (!VerifyValue(values[i].Value, item.ValueType))
+                        return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取失败，预期类型是{((TypeCode)item.ValueType).ToString()}，而实际读取到的类型是{item.Value.GetType().Name},类型不匹配！");
+                    data.Datas.Add(new DataReceiveContractItem()
+                    {
+                        Address = item.Address,
+                        Timestamp = data.Timestamp,
+                        Value = values[i].Value,
+                        ValueType = item.ValueType
+                    });
+                }
+                return DataResult<DataReceiveContract>.Success(data);
             }
             catch (Exception ex)
             {
-                Logger.LogError($"FullAddress ({fullAddress}) convert dataitem error,detail:\r\n{ex.Message}");
-                return null;
+                return DataResult<DataReceiveContract>.Failed(ResultType.Failed, ex.Message, ex);
             }
-
-
-            //var array = fullAddress.ToUpper().Split(new char[] { '.', '。' }, StringSplitOptions.RemoveEmptyEntries);
-            //if (array.Length < 2)
-            //{
-            //    Logger.LogError($"node({fullAddress}) config error.");
-            //    return null;
-            //}
-            //if (!array[0].StartsWith("DB"))
-            //{
-            //    Logger.LogError($"only support DataBlock. The block of {fullAddress} is not support");
-            //    return null;
-            //}
-            //if (!int.TryParse(array[0].Replace("DB", ""), out int db))
-            //{
-            //    Logger.LogError($"node({fullAddress}) config error.the fomat is [DBxx.xxx]");
-            //    return null;
-            //}
-            ////两步验证数据类型，如果通过地址能获取到数据类型，则直接使用地址中的数据类型
-            //var varType = AddressToVarType(addressSecond: array[1].Substring(2, 1));
-            //varType = varType ?? TypeCodeRefVarType(valueType);
-            //if (varType is null)
-            //{
-            //    Logger.LogError($"node({fullAddress}) config error.the VauleType is not support");
-            //    return null;
-            //}
-
-            //return new DataItem()
-            //{
-            //    DataType = DataType.DataBlock,
-            //    VarType = varType.Value,
-            //    DB = db,
-            //    StartByteAdr = 0,
-            //    BitAdr = 0,
-            //    Count = 1,
-            //    Value = new object()
-            //};
         }
 
-        /// <summary>
-        /// Typecode 转 vartype
-        /// </summary>
-        /// <param name="typeCode"></param>
-        /// <returns></returns>
-        private VarType? TypeCodeRefVarType(TypeCode typeCode) => typeCode switch
+        public override async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
         {
-            TypeCode.Boolean => VarType.Bit,
-            TypeCode.Byte => VarType.Byte,
-            TypeCode.UInt16 => VarType.Word,
-            TypeCode.UInt32 => VarType.DWord,
-            TypeCode.Int16 => VarType.Int,
-            TypeCode.Int32 => VarType.DInt,
-            TypeCode.Single => VarType.Real,
-            TypeCode.Double => VarType.LReal,
-            TypeCode.String => VarType.String,
-            TypeCode.DateTime => VarType.DateTime,
-            _ => null
-        };
+            if (!IsConnected)
+                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
 
-        ///// <summary>
-        ///// 根据地址的第二个字符来判断数据类型
-        ///// </summary>
-        ///// <param name="addressSecond"></param>
-        ///// <returns></returns>
-        //private VarType? AddressToVarType(string addressSecond) => addressSecond switch
-        //{
-        //    "X" => VarType.Bit,
-        //    "B" => VarType.Byte,
-        //    "W" => VarType.Word,
-        //    "D" => VarType.DWord,
-        //    _ => null
-        //};
+            if (data == null || data.Datas == null || data.Datas.Count() == 0 || data.Datas.Any(t => string.IsNullOrEmpty(t.Address)))
+                return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
+            if (data.Datas.Count(t => t.IsFlag) > 1)
+                return MessageResult.Failed(ResultType.ParameterError, "the flag item is more than 1", null);
+            try
+            {
+                List<DataItem> writeNodes = new List<DataItem>();
+                foreach (var t in data.Datas)
+                {
+                    if (t.IsFlag) continue;
+                    var item = DataItem.FromAddressAndValue(t.Address, t.Value);
+                    if (item == null)
+                        return MessageResult.Failed(ResultType.ParameterError, $"the address({t.Address}) is error");
+                    writeNodes.Add(item);
+                }
+
+                await Client.WriteAsync(writeNodes.ToArray());
+                var writeResult = await Client.ReadMultipleVarsAsync(writeNodes);
+                foreach (var item in writeResult)
+                {
+                    var address = data.Datas.FirstOrDefault(t => DataItem.FromAddress(t.Address) == item);
+                    if (address == null)
+                        return MessageResult.Failed(ResultType.DeviceWriteError, $"数据写入失败");
+                    if (!VerifyValueEqual(item.Value, address.Value, address.ValueType))
+                        return MessageResult.Failed(ResultType.DeviceWriteError, $"数据{address.Address}写入失败,当前值是{item.Value},预期值是{address.Value}");
+                }
+                if (data.Datas.Any(t => t.IsFlag))
+                {
+                    var address = data.Datas.First(t => t.IsFlag);
+                    var item = DataItem.FromAddressAndValue(address.Address, address.Value);
+                    //写入数据
+                    await Client.WriteAsync(item);
+                    //读取当前写入的数据
+                    var v = await Client.ReadAsync(address.Address);
+                    //验证当前读取的值和预期写入的值是否相等
+                    if (!VerifyValueEqual(v, address.Value, address.ValueType))
+                        return MessageResult.Failed(ResultType.DeviceWriteError, $"数据{address.Address}写入失败,当前值是{v},预期值是{address.Value}");
+                } 
+                return MessageResult.Success();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"write data error. {ex.Message}");
+                return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+            }
+        }
 
     }
 }

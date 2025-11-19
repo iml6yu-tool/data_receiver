@@ -31,4 +31,8 @@
     <Folder Include="Configs\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\iml6yu.DataService.Modbus\iml6yu.DataService.Modbus.csproj" />
+  </ItemGroup>
+
 </Project>

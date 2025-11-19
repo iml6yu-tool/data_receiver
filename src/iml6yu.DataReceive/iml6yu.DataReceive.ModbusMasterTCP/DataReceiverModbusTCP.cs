@@ -71,5 +71,36 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
             Client = factory.CreateMaster(tcp);
             return Client;
         }
+
+        protected override Task WhileDoAsync(CancellationToken token)
+        {
+            return Task.Run(() =>
+            {
+                //按照分组进行多线程并行
+                Parallel.ForEach(readNodes, readNode =>
+                {
+                    Parallel.ForEach(readNode.Value, item =>
+                    {
+                        while (!token.IsCancellationRequested)
+                        {
+                            if (VerifyConnect())
+                            {
+                                //按照modbus slaveaddress进行分组便利读取
+                                Parallel.ForEach(item.Value, async readConfig =>
+                                {
+                                    Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
+                                    readConfig.ReadItems.ForEach(node =>
+                                    {
+                                        tempDatas = ReadModbusNodeItem(readConfig, node, tempDatas);
+                                    });
+                                    await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
+                                });
+                            }
+                            Task.Delay(item.Key == 0 ? 500 : item.Key, token).Wait(token);
+                        }
+                    });
+                });
+            }, token);
+        }
     }
 }
