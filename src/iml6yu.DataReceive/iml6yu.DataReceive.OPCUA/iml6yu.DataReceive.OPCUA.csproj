@@ -5,13 +5,14 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>iml6yu.DataReceive.OPCUA</Title>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <Authors>iml6yu</Authors>
     <Description>OPCUA协议数据采集类库</Description>
     <Copyright>@iml6yu</Copyright>
     <PackageIcon>logo_128.jpg</PackageIcon>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,5 +33,7 @@
   <ItemGroup>
     <ProjectReference Include="..\iml6yu.DataReceive.Core\iml6yu.DataReceive.Core.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Include="readme.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 </Project>
