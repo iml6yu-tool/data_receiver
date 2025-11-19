@@ -579,11 +579,7 @@ namespace iml6yu.DataReceive.ModbusMaster
         private async Task<MessageResult> WriteAsync(byte slaveAddress, ModbusReadWriteType writeType, ushort bits, object value)
         {
             try
-            {
-                if (writeType == ModbusReadWriteType.Coils)
-                    await Client.WriteSingleCoilAsync(slaveAddress, bits, (bool)value);
-                else
-                    await Client.WriteSingleRegisterAsync(slaveAddress, bits, (ushort)value);
+            { 
                 switch (writeType)
                 {
                     case ModbusReadWriteType.Coils:
@@ -763,7 +759,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                         return MessageResult.Failed(writeResult.Code, writeResult.Message, writeResult.Error);
                 }
                 //读取刚刚写入的结果，确认是否写入成功
-                var readResult = await DirectReadAsync(data.Datas.Select(t => (DataReceiveContractItem)t).ToArray());
+                var readResult = await DirectReadAsync(data.Datas.Where(t=>!t.IsFlag).Select(t => (DataReceiveContractItem)t).ToArray());
                 if (!readResult.State)
                     return MessageResult.Failed(ResultType.DeviceWriteError, "无法完成校验，未写入标志位，请自行确认后再进行处理。( Verification failed, flag not written. Please confirm manually before proceeding with further operations.)", null);
 

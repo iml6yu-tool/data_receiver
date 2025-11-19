@@ -267,7 +267,7 @@ namespace iml6yu.DataReceive.OPCUA
 
                 var nodes = addressArray.Select(t => NodeId.Parse(t.Address)).ToArray();
                 var values = await Client.ReadNodesAsync(nodes);
-              
+
                 if (values == null)
                     return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取数据为空,read data is null.");
                 if (values.Count != addressArray.Count())
@@ -278,17 +278,17 @@ namespace iml6yu.DataReceive.OPCUA
                     Key = Option.ProductLineName,
                     Timestamp = GetTimestamp(),
                     Datas = new List<DataReceiveContractItem>()
-                }; 
+                };
                 for (var i = 0; i < values.Count; i++)
                 {
                     var item = addressArray.ElementAt(i);
-                    if (!VerifyValue(values[i].Value, item.ValueType))
+                    if (!VerifyValue(values[i].Value, item.ValueType, out object v))
                         return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取失败，预期类型是{((TypeCode)item.ValueType).ToString()}，而实际读取到的类型是{item.Value.GetType().Name},类型不匹配！");
                     data.Datas.Add(new DataReceiveContractItem()
                     {
                         Address = item.Address,
                         Timestamp = data.Timestamp,
-                        Value = values[i].Value,
+                        Value = v,
                         ValueType = item.ValueType
                     });
                 }

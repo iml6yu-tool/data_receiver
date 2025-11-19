@@ -420,7 +420,7 @@ namespace iml6yu.DataReceive.Core
                     continue;
                 if (CacheDataDic[key].Data.Value == null)
                     continue;
-                if (!VerifyValue(datas.Value[key].Value, CacheDataDic[key].Data.ValueType))
+                if (!VerifyValue(datas.Value[key].Value, CacheDataDic[key].Data.ValueType, out object v))
                 {
                     Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{(TypeCode)CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
                     continue;
@@ -428,7 +428,7 @@ namespace iml6yu.DataReceive.Core
                 data.Datas.Add(new DataReceiveContractItem()
                 {
                     Address = key,
-                    Value = datas.Value[key].Value,
+                    Value = v,
                     Timestamp = now,
                     ValueType = CacheDataDic[key].Data.ValueType
                 });
@@ -461,13 +461,13 @@ namespace iml6yu.DataReceive.Core
                 if (CacheDataDic[key].Data.Value != null && CacheDataDic[key].Data.Value.Equals(datas.Value[key].Value))
                     continue;
 
-                if (!VerifyValue(datas.Value[key].Value, CacheDataDic[key].Data.ValueType))
+                if (!VerifyValue(datas.Value[key].Value, CacheDataDic[key].Data.ValueType, out object v))
                 {
                     Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{(TypeCode)CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
                     continue;
                 }
 
-                CacheDataDic[key].Data.Value = datas.Value[key].Value;
+                CacheDataDic[key].Data.Value = v;
                 CacheDataDic[key].Data.Timestamp = datas.Value[key].Timestamp;
                 CacheDataDic[key].Timestamp = now;
 #warning 这里有可能会发生当数据多线程时的变动
@@ -476,44 +476,101 @@ namespace iml6yu.DataReceive.Core
             return data;
         }
 
-        protected virtual bool VerifyValue(object value, int typeCode)
+        protected virtual bool VerifyValue(object value, int typeCode, out object targetValue)
         {
             if (typeCode == 3)//TypeCode.Boolean
             {
-                if (value is bool) return true;
+                if (value is bool b)
+                {
+                    targetValue = b;
+                    return true;
+                }
                 else if (value is int || value is long || value is uint || value is ulong || value is byte || value is sbyte)
+                {
+                    targetValue = ((int)value == 1);
                     return ((int)value == 0) || ((int)value == 1);
+                }
                 else if (value is string s)
                 {
+                    targetValue = (s == "1") || (s == "true") || (s == "True") || (s == "TRUE");
                     return s == "1" || s == "0" || s == "false" || s == "true" || s == "False" || s == "True" || s == "FALSE" || s == "TRUE";
                 }
-                else return false;
+                else
+                {
+                    targetValue = false;
+                    return false;
+                }
             }
             else if (typeCode == 9 || typeCode == 11) //TypeCode.Int32 TypeCode.Int64
             {
-                return value is int || value is long;
+                if (value is int i)
+                {
+                    targetValue = i;
+                    return true;
+                }
+                if (value is long l)
+                {
+                    targetValue = l;
+                    return true;
+                }
+                targetValue = 0;
+                return false;
             }
             else if (typeCode == 10 || typeCode == 12) //TypeCode.UInt32 TypeCode.UInt64
             {
-                return value is uint || value is ulong;
+                if (value is uint ui)
+                {
+                    targetValue = ui;
+                    return true;
+                }
+                if (value is ulong ul)
+                {
+                    targetValue = ul;
+                    return true;
+                }
+                targetValue = 0;
+                return false;
             }
             else if (typeCode == 4 || typeCode == 16) //TypeCode.Char TypeCode.String
             {
-                return value is char || value is string;
+                if (value is char c)
+                {
+                    targetValue = c;
+                    return true;
+                }
+                if (value is string str)
+                {
+                    targetValue = str;
+                    return true;
+                }
+                targetValue = string.Empty;
+                return false;
             }
             else if (typeCode == 7 || typeCode == 8) //TypeCode.Char TypeCode.String
             {
-                return value is Int16 || value is UInt16;
+                if (value is Int16 s)
+                {
+                    targetValue = s;
+                    return true;
+                }
+                if (value is UInt16 us)
+                {
+                    targetValue = us;
+                    return true;
+                }
+                targetValue = 0;
+                return false;
             }
             else
             {
                 try
                 {
-                    Convert.ChangeType(value, (TypeCode)typeCode);
+                    targetValue = Convert.ChangeType(value, (TypeCode)typeCode);
                     return true;
                 }
                 catch
                 {
+                    targetValue = null;
                     return false;
                 }
             }
@@ -533,9 +590,12 @@ namespace iml6yu.DataReceive.Core
             {
                 return false;
             }
-            if (!VerifyValue(value, typeCode))
+            if (!VerifyValue(value, typeCode, out object v))
                 return false;
-            return object.Equals(value, expectation);
+            if (!VerifyValue(expectation, typeCode, out object ev))
+                return false;
+
+            return object.Equals(v, ev);
         }
         /// <summary>
         /// 将消息加入线程channel中
@@ -625,6 +685,6 @@ namespace iml6yu.DataReceive.Core
         public abstract Task<MessageResult> WriteAsync(DataWriteContractItem data);
 
         public abstract Task<MessageResult> WriteAsync<T>(string address, T data);
-       
+
     }
 }

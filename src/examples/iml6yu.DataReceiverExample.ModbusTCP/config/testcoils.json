@@ -1,0 +1,42 @@
+﻿[
+  {
+    "fullAddress": "1.Coils.0",
+    "address": "a",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.Coils.1",
+    "address": "b",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.Coils.3",
+    "address": "c",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  },
+  {
+    "fullAddress": "1.Coils.4",
+    "address": "d",
+    "valueType": "Boolean",
+    "isSubscribe": true,
+    "interval": 300,
+    "groupName": "L01",
+    "descript": "",
+    "alisa": ""
+  } 
+]

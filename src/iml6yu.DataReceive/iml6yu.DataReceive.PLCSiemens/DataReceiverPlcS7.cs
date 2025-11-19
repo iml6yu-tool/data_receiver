@@ -340,13 +340,13 @@ namespace iml6yu.DataReceive.PLCSiemens
                 for (var i = 0; i < values.Count; i++)
                 {
                     var item = addressArray.ElementAt(i);
-                    if (!VerifyValue(values[i].Value, item.ValueType))
+                    if (!VerifyValue(values[i].Value, item.ValueType,out object v))
                         return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取失败，预期类型是{((TypeCode)item.ValueType).ToString()}，而实际读取到的类型是{item.Value.GetType().Name},类型不匹配！");
                     data.Datas.Add(new DataReceiveContractItem()
                     {
                         Address = item.Address,
                         Timestamp = data.Timestamp,
-                        Value = values[i].Value,
+                        Value = v,
                         ValueType = item.ValueType
                     });
                 }
