@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace iml6yu.DataService.Modbus.Configs
+namespace iml6yu.DataService.Core.Configs
 {
     public class HeartOption
     {

@@ -1,5 +1,7 @@
+using iml6yu.DataService.Core.Configs;
 using iml6yu.DataService.Modbus.Configs;
-using iml6yu.DataService.ModbusTCP; 
+using iml6yu.DataService.ModbusTCP;
+using iml6yu.DataService.ModbusTCP.Configs;
 using System.Configuration;
 using System.Data;
 using System.Windows.Forms;
@@ -26,13 +28,13 @@ namespace iml6yu.DataServiceExample.ModbusTCP
                 Application.Exit();
                 return;
             }
-            DataServiceModbusOption? option =
-              Newtonsoft.Json.JsonConvert.DeserializeObject<DataServiceModbusOption>(File.ReadAllText(optionFile));
+            DataServiceModbusOptionTCP option =
+              Newtonsoft.Json.JsonConvert.DeserializeObject<DataServiceModbusOptionTCP>(File.ReadAllText(optionFile));
 
             dataService =
                  new DataServiceModbusTCP(option);
 
-            DrawDataGridView(option.Slaves);
+            DrawDataGridView(option.Storages);
         }
 
         private Task StartGetDatas()
@@ -85,7 +87,7 @@ namespace iml6yu.DataServiceExample.ModbusTCP
             });
         }
 
-        private void DrawDataGridView(List<DataServiceModbusSlaveOption> slaves)
+        private void DrawDataGridView(List<DataServiceStorageOption<byte>> slaves)
         {
             dataGridView1.AutoGenerateColumns = true;
             dataGridView1.DataError += DataGridView1_DataError;

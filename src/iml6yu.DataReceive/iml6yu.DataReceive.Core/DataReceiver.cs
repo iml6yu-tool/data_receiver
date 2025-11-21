@@ -214,7 +214,7 @@ namespace iml6yu.DataReceive.Core
                     .ToDictionary(t => t.Key, t => new CacheDataItem(DateTimeOffset.Now.ToUnixTimeMilliseconds(), new DataReceiveContractItem()
                     {
                         Address = t.First().Address,
-                        ValueType = (int)t.First().ValueTypeCode
+                        ValueType = (int)t.First().ValueType
                     })));
                 return MessageResult.Success();
             }

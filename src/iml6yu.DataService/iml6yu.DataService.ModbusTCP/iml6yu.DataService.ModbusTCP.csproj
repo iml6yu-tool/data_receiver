@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <ImportDirectoryBuildTargets>false</ImportDirectoryBuildTargets>
-    <TargetFramework>net8.0</TargetFramework>
+  <PropertyGroup> 
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -25,10 +23,6 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Configs\" />
   </ItemGroup>
 
   <ItemGroup>

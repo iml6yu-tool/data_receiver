@@ -1,18 +1,20 @@
 ﻿using iml6yu.Data.Core.Models;
+using iml6yu.DataService.Core.Configs;
 using iml6yu.DataService.Modbus.Configs;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
 using NModbus;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace iml6yu.DataService.Modbus
 {
-    public abstract class DataServiceModbus : IDataServiceModbus
+    public abstract class DataServiceModbus<TOption> : IDataServiceModbus where TOption : DataServiceModbusOption
     {
         protected ModbusFactory Factory { get; set; }
         public IModbusSlaveNetwork? Network { get; set; }
 
-        protected DataServiceModbusOption Option { get; }
+        protected TOption Option { get; }
 
         protected CancellationToken StopToken { get; set; }
 
@@ -21,18 +23,18 @@ namespace iml6yu.DataService.Modbus
         /// 构造函数
         /// </summary>
         /// <param name="option">配置</param>
-        public DataServiceModbus(DataServiceModbusOption option, ILogger logger)
+        public DataServiceModbus(TOption option, ILogger logger)
         {
             Logger = logger;
             Option = option;
             Factory = new ModbusFactory();
         }
 
-        protected abstract IModbusSlaveNetwork CreateNetWork(DataServiceModbusOption option);
-        private void CreateServicer(DataServiceModbusOption option)
+        protected abstract IModbusSlaveNetwork CreateNetWork(TOption option);
+        private void CreateServicer(TOption option)
         {
             Network = CreateNetWork(option);
-            option.Slaves.ForEach(opt =>
+            option.Storages.ForEach(opt =>
             {
                 var slave = Factory.CreateSlave(opt.Id);
                 if (opt.DefaultValues != null && opt.DefaultValues.Count > 0)
@@ -77,9 +79,9 @@ namespace iml6yu.DataService.Modbus
             Network?.Dispose();
         }
 
-        public void AsyncHeartBeat()
+        protected void AsyncHeartBeat()
         {
-            foreach (var slave in Option.Slaves)
+            foreach (var slave in Option.Storages)
             {
                 if (slave.Heart == null || string.IsNullOrEmpty(slave.Heart.HeartAddress))
                     continue;
@@ -92,21 +94,21 @@ namespace iml6yu.DataService.Modbus
                     switch (slave.Heart.HeartType)
                     {
                         case HeartType.OddAndEven:
-                            Task.Run(() =>
+                            Task.Run(async () =>
                             {
-                                WriteHeartData(Network?.GetSlave(slave.Id), writetype, startAddress, 1, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => (ushort)((v + 1) % 2));
+                                await WriteHeartDataAsync(Network?.GetSlave(slave.Id), writetype, startAddress, 1, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => (ushort)((v + 1) % 2));
                             });
                             break;
                         case HeartType.Number:
-                            Task.Run(() =>
+                            Task.Run(async () =>
                             {
-                                WriteHeartData(Network?.GetSlave(slave.Id), writetype, startAddress, 1, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { if (v == ushort.MaxValue) v = 0; return ++v; });
+                                await WriteHeartDataAsync(Network?.GetSlave(slave.Id), writetype, startAddress, 1, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { if (v == ushort.MaxValue) v = 0; return ++v; });
                             });
                             break;
                         case HeartType.Time:
-                            Task.Run(() =>
+                            Task.Run(async () =>
                             {
-                                WriteHeartData(Network?.GetSlave(slave.Id), writetype, startAddress, ushort.Parse(DateTime.Now.ToString("mmss")), TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { return ushort.Parse(DateTime.Now.ToString("mmss")); });
+                                await WriteHeartDataAsync(Network?.GetSlave(slave.Id), writetype, startAddress, ushort.Parse(DateTime.Now.ToString("mmss")), TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { return ushort.Parse(DateTime.Now.ToString("mmss")); });
                             });
                             break;
                         default:
@@ -119,7 +121,7 @@ namespace iml6yu.DataService.Modbus
                 }
             }
         }
-        protected virtual void WriteHeartData(IModbusSlave? slave, ModbusReadWriteType writeType, ushort startAddress, ushort value, TimeSpan interval, Func<ushort, ushort> funcValue)
+        protected virtual async Task WriteHeartDataAsync(IModbusSlave? slave, ModbusReadWriteType writeType, ushort startAddress, ushort value, TimeSpan interval, Func<ushort, ushort> funcValue)
         {
             if (slave == null) return;
             if (slave.DataStore == null) return;
@@ -132,9 +134,9 @@ namespace iml6yu.DataService.Modbus
 
             if (StopToken.IsCancellationRequested)
                 return;
-            Task.Delay(interval).Wait();
+            await Task.Delay(interval);
             value = funcValue(value);
-            WriteHeartData(slave, writeType, startAddress, value, interval, funcValue);
+            await WriteHeartDataAsync(slave, writeType, startAddress, value, interval, funcValue);
         }
 
         public async Task<List<MessageResult>> WriteAsync(DataWriteContract data)
@@ -148,74 +150,6 @@ namespace iml6yu.DataService.Modbus
         public async Task<MessageResult> WriteAsync(DataWriteContractItem data)
         {
             return await WriteAsync(data.Address, data.Value);
-            //try
-            //{
-            //    if (Network == null)
-            //        return MessageResult.Failed(ResultType.DeviceWriteError, $"数据服务还未初始化(DataService not init)");
-
-            //    byte slaveId;
-            //    ModbusReadWriteType writeType;
-            //    ushort startAddress;
-            //    string msg = string.Empty;
-            //    if (!data.Address.VerifyWriteAddress(out slaveId, out writeType, out startAddress, ref msg))
-            //        return MessageResult.Failed(ResultType.DeviceWriteError, msg);
-
-            //    var slave = Network.GetSlave(slaveId);
-            //    if (slave == null)
-            //        return MessageResult.Failed(ResultType.DeviceWriteError, $"地址{data.Address}对应的SlaveID({slaveId})不存在！");
-            //    if (data.Value == null)
-            //        return MessageResult.Failed(ResultType.DeviceWriteError, $"当前需要写入的数值内容是null(current value is null)");
-
-            //    switch (writeType)
-            //    {
-            //        case ModbusReadWriteType.Coils:
-            //            slave.DataStore.CoilDiscretes.WritePoints(startAddress, data.Value.ToModbusBooleanValues());
-            //            break;
-            //        case ModbusReadWriteType.Inputs:
-            //            slave.DataStore.CoilInputs.WritePoints(startAddress, data.Value.ToModbusBooleanValues());
-            //            break;
-            //        case ModbusReadWriteType.HoldingRegisters:
-            //        case ModbusReadWriteType.HoldingRegisters2:
-            //        case ModbusReadWriteType.HoldingRegisters4:
-            //            slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortValues(writeType.GetNumberOfPoint() * 2));
-            //            break;
-            //        case ModbusReadWriteType.HoldingRegisters2ByteSwap:
-            //        case ModbusReadWriteType.HoldingRegisters4ByteSwap:
-            //            slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortBSValues(writeType.GetNumberOfPoint() * 2));
-            //            break;
-            //        case ModbusReadWriteType.HoldingRegistersLittleEndian2:
-            //        case ModbusReadWriteType.HoldingRegistersLittleEndian4:
-            //            slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEValues(writeType.GetNumberOfPoint() * 2));
-            //            break;
-            //        case ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap:
-            //        case ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap:
-            //            slave.DataStore.HoldingRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEBSValues(writeType.GetNumberOfPoint() * 2));
-            //            break;
-            //        case ModbusReadWriteType.ReadInputRegisters:
-            //        case ModbusReadWriteType.ReadInputRegisters2:
-            //        case ModbusReadWriteType.ReadInputRegisters4:
-            //            slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortValues(writeType.GetNumberOfPoint() * 2));
-            //            break;
-            //        case ModbusReadWriteType.ReadInputRegisters2ByteSwap:
-            //        case ModbusReadWriteType.ReadInputRegisters4ByteSwap:
-            //            slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortBSValues(writeType.GetNumberOfPoint() * 2));
-            //            break;
-            //        case ModbusReadWriteType.ReadInputRegistersLittleEndian2:
-            //        case ModbusReadWriteType.ReadInputRegistersLittleEndian4:
-            //            slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEValues(writeType.GetNumberOfPoint() * 2));
-            //            break;
-            //        case ModbusReadWriteType.ReadInputRegistersLittleEndian2ByteSwap:
-            //        case ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap:
-            //            slave.DataStore.InputRegisters.WritePoints(startAddress, data.Value.ToModbusUShortLEBSValues(writeType.GetNumberOfPoint() * 2));
-            //            break;
-            //    }
-            //    return MessageResult.Success();
-            //}
-            //catch (Exception ex)
-            //{
-            //    Logger.LogError($"写数据错误{ex.Message}");
-            //    return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
-            //} 
         }
 
         public async Task<MessageResult> WriteAsync<T>(string address, T data)

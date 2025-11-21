@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup> 
+  <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>iml6yu.DataService.ModbusRTU</Title>
+    <Title>iml6yu.DataService.Core</Title>
     <Version>1.1.1</Version>
     <Authors>iml6yu</Authors>
-    <Description>一个ModbusRTU协议的主站服务类库</Description>
+    <Description>数据服务的核心类库</Description>
     <Copyright>@iml6yu</Copyright>
     <PackageIcon>logo_128.jpg</PackageIcon>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -24,13 +24,9 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="System.IO.Ports" Version="8.0.0" />
-    <PackageReference Include="NModbus.Serial" Version="3.0.81" />
-  </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\iml6yu.DataService.Modbus\iml6yu.DataService.Modbus.csproj" />
+    <ProjectReference Include="..\..\iml6yu.DataCore\iml6yu.Data.Core\iml6yu.Data.Core.csproj" />
   </ItemGroup>
 
 </Project>

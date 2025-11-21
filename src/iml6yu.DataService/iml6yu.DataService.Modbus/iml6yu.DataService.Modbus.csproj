@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <ImportDirectoryBuildTargets>false</ImportDirectoryBuildTargets>
-    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -27,10 +25,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="iml6yu.Data.Core" Version="1.1.1" />
     <PackageReference Include="iml6yu.Results" Version="1.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="NModbus" Version="3.0.81" />
     <PackageReference Include="System.IO.Ports" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\iml6yu.DataService.Core\iml6yu.DataService.Core.csproj" />
   </ItemGroup> 
 </Project>

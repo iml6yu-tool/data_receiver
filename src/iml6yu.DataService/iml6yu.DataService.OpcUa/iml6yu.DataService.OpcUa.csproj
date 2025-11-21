@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup> 
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Server" Version="1.5.377.22" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\iml6yu.DataService.Core\iml6yu.DataService.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -28,6 +28,7 @@
   <ItemGroup>
     <PackageReference Include="iml6yu.Fingerprint" Version="1.0.2" />
     <PackageReference Include="iml6yu.Results" Version="1.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
   </ItemGroup>
 
 </Project>

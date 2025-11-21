@@ -1,5 +1,0 @@
-<!-- 文件位置： YOUR_SOLUTION_ROOT/Examples/Directory.Build.props -->
-<Project>
-  <!-- 此文件 intentionally left blank (故意留空) 以避免受上级目录配置影响 -->
-  <!-- 你也可以在这里定义仅适用于Examples目录的配置 -->
-</Project>

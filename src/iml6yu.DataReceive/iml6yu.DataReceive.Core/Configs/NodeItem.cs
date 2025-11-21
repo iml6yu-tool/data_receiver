@@ -1,4 +1,6 @@
-﻿namespace iml6yu.DataReceive.Core.Configs
+﻿using System.Text.Json.Serialization;
+
+namespace iml6yu.DataReceive.Core.Configs
 {
     /// <summary>
     /// 设备节点配置
@@ -8,20 +10,8 @@
         public string FullAddress { get; set; }
         public string Address { get; set; }
 
-        /// <summary>
-        /// ValueType 对应的code类型
-        /// </summary>
-        public TypeCode ValueTypeCode { get; private set; }
-        private string valueType { get; set; }
-        public string ValueType
-        {
-            get { return valueType; }
-            set
-            {
-                valueType = value;
-                ValueTypeCode = Enum.Parse<TypeCode>(value);
-            }
-        }
+        [JsonConverter(typeof(JsonStringEnumConverter))] 
+        public TypeCode ValueType { get; set; }
         public string Descript { get; set; }
         /// <summary>
         /// 分组信息 

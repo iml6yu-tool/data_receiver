@@ -213,7 +213,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                 else
                 {
                     Array.Copy(values, i * numberOfPoint, arr, 0, numberOfPoint);
-                    currentValue = GetNodeItemCurrentValue(node.ReadType, node.ReadNodes[i].ValueTypeCode, arr);
+                    currentValue = GetNodeItemCurrentValue(node.ReadType, node.ReadNodes[i].ValueType, arr);
                 }
                 if (tempDatas.ContainsKey(node.ReadNodes[i].Address))
                     tempDatas[node.ReadNodes[i].Address] = new ReceiverTempDataValue(currentValue, timestamp);
@@ -699,7 +699,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                 {
                     Address = t.Address,
                     FullAddress = t.Address,
-                    ValueType = ((TypeCode)t.ValueType).ToString(),
+                    ValueType = (TypeCode)t.ValueType,
                 }).ToList());
 
                 Dictionary<string, ReceiverTempDataValue> values = new Dictionary<string, ReceiverTempDataValue>();
