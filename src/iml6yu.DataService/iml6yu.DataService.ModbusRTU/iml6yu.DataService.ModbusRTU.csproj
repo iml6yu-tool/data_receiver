@@ -5,13 +5,15 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>iml6yu.DataService.ModbusRTU</Title>
-    <Version>1.1.1</Version>
+    <Version>1.2.0</Version>
     <Authors>iml6yu</Authors>
     <Description>一个ModbusRTU协议的主站服务类库</Description>
     <Copyright>@iml6yu</Copyright>
     <PackageIcon>logo_128.jpg</PackageIcon>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageTags>modebus;modebusrtu;dataservice;iml6yu;iml6yu.data;</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +22,12 @@
       <PackagePath>\</PackagePath>
     </None>
     <None Include="..\..\..\..\logo_128.jpg">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>

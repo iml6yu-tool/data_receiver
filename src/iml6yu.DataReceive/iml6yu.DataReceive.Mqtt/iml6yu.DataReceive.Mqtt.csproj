@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>iml6yu.DataReceive.Mqtt</Title>
-    <Version>1.1.2</Version>
+    <Version>1.2.0</Version>
     <Authors>iml6yu</Authors>
     <Description>Mqtt协议数据采集类库</Description>
     <Copyright>@iml6yu</Copyright>
@@ -13,6 +13,7 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageTags>mqtt;datareceiver;iml6yu;iml6yu.data;</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

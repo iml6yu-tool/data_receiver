@@ -3,7 +3,35 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>iml6yu.DataService.OPCUA</Title>
+    <Version>1.2.0</Version>
+    <Authors>iml6yu</Authors>
+    <Description>一个OPCUA协议的数据服务类库</Description>
+    <Copyright>@iml6yu</Copyright>
+    <PackageIcon>logo_128.jpg</PackageIcon>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageTags>opcua;dataservice;iml6yu;iml6yu.data;</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\LICENSE" Link="LICENSE">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </None>
+    <None Include="..\..\..\..\logo_128.jpg" Link="logo_128.jpg">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup> 
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Server" Version="1.5.377.22" />
@@ -13,4 +41,5 @@
     <ProjectReference Include="..\iml6yu.DataService.Core\iml6yu.DataService.Core.csproj" />
   </ItemGroup>
 
+ 
 </Project>

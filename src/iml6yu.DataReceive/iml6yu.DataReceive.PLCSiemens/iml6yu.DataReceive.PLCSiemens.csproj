@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>iml6yu.DataReceive.S7Net</Title>
-    <Version>1.1.2</Version>
+    <Version>1.2.0</Version>
     <Authors>iml6yu</Authors>
     <Description>S7Net协议数据采集类库</Description>
     <Copyright>@iml6yu</Copyright>
@@ -13,7 +13,7 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <PackageTags>s7net;plc;</PackageTags>
+    <PackageTags>s7net;plc;iml6yu;iml6yu.data;s7netplus;datareceiver;</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
