@@ -1,5 +1,6 @@
 ﻿using iml6yu.Data.Core.Models;
 using iml6yu.DataService.Core;
+using iml6yu.DataService.Core.Configs;
 using iml6yu.DataService.OpcUa.Configs;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
@@ -8,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using Opc.Ua.Configuration;
 using Opc.Ua.Server;
+using System.Numerics;
 
 namespace iml6yu.DataService.OpcUa
 {
@@ -23,7 +25,7 @@ namespace iml6yu.DataService.OpcUa
                 return OpcUaInstance != null
                     && StandardServer != null
                     && NodeManager != null
-                    && StandardServer.CurrentState == ServerState.Running;  
+                    && StandardServer.CurrentState == ServerState.Running;
             }
         }
         protected DataServiceOpcUaOption Option { get; }
@@ -44,91 +46,41 @@ namespace iml6yu.DataService.OpcUa
         {
             Logger = logger;
             Option = option;
-            NodeManagerFactory = new DataServiceNodeManagerFactory();
+            var nodeConfig = option.Storages.ToDictionary(t => t.Id, t => t.DefaultValues.ToList());
+
+            #region 处理心跳地址
+            var allDefaultNodes = option.Storages.SelectMany(t => t.DefaultValues.ToList()).ToList();
+            var heartId = $"HeartByAutoCrate{DateTime.Now.ToString("yyyyMMddHHmmss")}";
+            foreach (var storage in option.Storages)
+            {
+                if (storage.Heart != null && !string.IsNullOrEmpty(storage.Heart.HeartAddress))
+                {
+                    //默认地址不包含心跳地址
+                    if (!allDefaultNodes.Any(t => t.Address == storage.Heart.HeartAddress))
+                    {
+                        if (!nodeConfig.ContainsKey(heartId))
+                            nodeConfig.Add(heartId, new List<DataServiceStorageDefaultObjectItem>());
+
+                        nodeConfig[heartId].Add(new DataServiceStorageDefaultObjectItem()
+                        {
+                            Address = storage.Heart.HeartAddress,
+                            ValueType = storage.Heart.HeartType == HeartType.Time ? TypeCode.DateTime : TypeCode.Int32,
+                            DefaultValue = storage.Heart.HeartType == HeartType.Time ? DateTime.Now : 0
+                        });
+                    }
+                }
+            }
+            #endregion
+
+            NodeManagerFactory = new DataServiceNodeManagerFactory(nodeConfig);
             StandardServer = CreateServer(option);
         }
         public void StartServicer(CancellationToken token)
         {
             StopToken = token;
             OpcUaInstance.StartAsync(StandardServer).Wait();
-            InitDataServiceStorages(Option);
             AsyncHeartBeat();
         }
-
-        private void InitDataServiceStorages(DataServiceOpcUaOption option)
-        {
-            // 初始化默认值
-            option.Storages?.ForEach(storageOption =>
-            {
-                storageOption.DefaultValues.ForEach(item =>
-                {
-                    NodeManager.BaseNodeFolder.AddChild(new BaseDataVariableState(NodeManager.BaseNodeFolder)
-                    {
-                        NodeId = new NodeId(item.Address, NodeManager.NamespaceIndex),
-                        BrowseName = new QualifiedName(item.Address, NodeManager.NamespaceIndex),
-                        DisplayName = new LocalizedText(item.Address),
-                        DataType = GetDataTypeId(item.ValueType),
-                        ValueRank = ValueRanks.Scalar,
-                        AccessLevel = AccessLevels.CurrentRead | AccessLevels.CurrentWrite,
-                        UserAccessLevel = AccessLevels.CurrentRead | AccessLevels.CurrentWrite,
-                        Value = GetDataValue(item.DefaultValue, item.ValueType),
-                        StatusCode = StatusCodes.Good,
-                        Timestamp = DateTime.Now
-                    });
-                });
-            });
-        }
-
-        private object GetDataValue(object defaultValue, TypeCode? valueType)
-        {
-            if (!valueType.HasValue)
-                return defaultValue;
-            return Convert.ChangeType(defaultValue, valueType.Value);
-        }
-
-        private NodeId GetDataTypeId(TypeCode? valueType)
-        {
-            if (!valueType.HasValue)
-                throw new ArgumentException("未配置ValueType,无法初始化。ValueType is required!");
-
-            switch (valueType.Value)
-            {
-                case TypeCode.Boolean:
-                    return DataTypeIds.Boolean;
-                case TypeCode.Byte:
-                    return DataTypeIds.Byte;
-                case TypeCode.SByte:
-                    return DataTypeIds.SByte;
-                case TypeCode.String:
-                    return DataTypeIds.String;
-                case TypeCode.Char:
-                    return DataTypeIds.String;
-                case TypeCode.DateTime:
-                    return DataTypeIds.DateTime;
-                case TypeCode.Decimal:
-                    return DataTypeIds.Decimal;
-                case TypeCode.Double:
-                    return DataTypeIds.Double;
-                case TypeCode.Int16:
-                    return DataTypeIds.Int16;
-                case TypeCode.Int32:
-                    return DataTypeIds.Int32;
-                case TypeCode.Int64:
-                    return DataTypeIds.Int64;
-                case TypeCode.Single:
-                    return DataTypeIds.Float;
-                case TypeCode.UInt16:
-                    return DataTypeIds.UInt16;
-                case TypeCode.UInt32:
-                    return DataTypeIds.UInt32;
-                case TypeCode.UInt64:
-                    return DataTypeIds.UInt64;
-
-                default:
-                    throw new ArgumentException($"ValueType的值 {valueType} 不支持！The {valueType} is not NotImplemented");
-            }
-        }
-
         public void StopServicer()
         {
             StandardServer?.Stop();
@@ -250,23 +202,23 @@ namespace iml6yu.DataService.OpcUa
             {
                 if (slave.Heart == null || string.IsNullOrEmpty(slave.Heart.HeartAddress))
                     continue;
-                var heartNode = NodeManager.Find(slave.Heart.HeartAddress) as BaseDataVariableState;
+                var heartNode = NodeManager?.Find(slave.Heart.HeartAddress) as BaseDataVariableState;
                 if (heartNode == null)
                 {
-                    Logger.LogError("配置的心跳地址节点不存在，请在初始化节点中配置心跳地址！heart node is not exist,please config it in DefaultValues.");
+                    Logger.LogError($"未配置心跳节点，心跳地址({slave.Heart.HeartAddress})不存在,The hear address({slave.Heart.HeartAddress}) not exist.");
                     continue;
                 }
-                string msg = string.Empty;
+                var ts = TimeSpan.FromMilliseconds(slave.Heart.HeartInterval);
                 switch (slave.Heart.HeartType)
                 {
                     case Core.Configs.HeartType.OddAndEven:
-                        Task.Run(async () => { await WriteHeartDataAsync(heartNode, 0, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => ((v++) % 2)); });
+                        Task.Run(async () => { await WriteHeartDataAsync(heartNode, 0, ts, v => ((v++) % 2)); });
                         break;
                     case Core.Configs.HeartType.Number:
-                        Task.Run(async () => { await WriteHeartDataAsync(heartNode, 0, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { if (v > int.MaxValue) v = 0; return ++v; }); });
+                        Task.Run(async () => { await WriteHeartDataAsync(heartNode, 0, ts, v => { if (v > int.MaxValue) v = 0; return ++v; }); });
                         break;
                     case Core.Configs.HeartType.Time:
-                        Task.Run(async () => { await WriteHeartDataAsync(heartNode, DateTime.Now, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => DateTime.Now); });
+                        Task.Run(async () => { await WriteHeartDataAsync(heartNode, DateTime.Now, ts, v => DateTime.Now); });
                         break;
                 }
             }
