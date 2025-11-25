@@ -9,13 +9,13 @@ namespace iml6yu.DataService.ModbusTCP
 {
     public class DataServiceModbusTCP : DataServiceModbus<DataServiceModbusOptionTCP>
     {
-        private System.Net.Sockets.TcpListener? listener;
+        private ModbusTcpListener? listener;
 
         public override bool IsRuning
         {
             get
             {
-                return Network != null && listener != null && listener.Server.Connected;
+                return Network != null && listener != null && listener.IsActive;
             }
         }
         public DataServiceModbusTCP() : base(null, null)
@@ -42,7 +42,7 @@ namespace iml6yu.DataService.ModbusTCP
             listener?.Server.Close();
             listener?.Dispose();
 #endif
-            listener = new System.Net.Sockets.TcpListener(iPAddress, port);
+            listener = new ModbusTcpListener(iPAddress, port);
             IModbusSlaveNetwork network = Factory.CreateSlaveNetwork(listener);
             listener.Start();
             return network;

@@ -34,13 +34,14 @@
             label1 = new Label();
             dataGridView1 = new DataGridView();
             bindingSource1 = new BindingSource(components);
+            button3 = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)bindingSource1).BeginInit();
             SuspendLayout();
             // 
             // button1
             // 
-            button1.Location = new Point(25, 27);
+            button1.Location = new Point(28, 27);
             button1.Name = "button1";
             button1.Size = new Size(75, 23);
             button1.TabIndex = 0;
@@ -50,7 +51,7 @@
             // 
             // button2
             // 
-            button2.Location = new Point(132, 27);
+            button2.Location = new Point(116, 27);
             button2.Name = "button2";
             button2.Size = new Size(75, 23);
             button2.TabIndex = 1;
@@ -78,11 +79,22 @@
             dataGridView1.Size = new Size(374, 807);
             dataGridView1.TabIndex = 3;
             // 
+            // button3
+            // 
+            button3.Location = new Point(204, 27);
+            button3.Name = "button3";
+            button3.Size = new Size(75, 23);
+            button3.TabIndex = 4;
+            button3.Text = "检查";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(398, 875);
+            Controls.Add(button3);
             Controls.Add(dataGridView1);
             Controls.Add(label1);
             Controls.Add(button2);
@@ -102,5 +114,6 @@
         private Label label1;
         private DataGridView dataGridView1;
         private BindingSource bindingSource1;
+        private Button button3;
     }
 }

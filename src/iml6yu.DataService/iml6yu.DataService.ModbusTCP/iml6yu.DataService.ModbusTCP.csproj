@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>iml6yu.DataService.ModbusTCP</Title>
-    <Version>1.2.0</Version>
+    <Version>1.2.2</Version>
     <Authors>iml6yu</Authors>
     <Description>一个ModbusTCP协议的主站服务类库</Description>
     <Copyright>@iml6yu</Copyright>
@@ -13,7 +13,7 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <PackageTags>modebus;modebustcp;dataservice;iml6yu;iml6yu.data;</PackageTags>
+    <PackageTags>modbus;modbustcp;dataservice;iml6yu;iml6yu.data;</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,11 +1,11 @@
 ﻿namespace iml6yu.DataService.Core.Configs
 {
-    public class DataServiceStorageOption<TStorageId>
+    public class DataServiceStorageOption
     {
         /// <summary>
         /// SlaveId（byte）或者是opcua的FolderName（string)
         /// </summary>
-        public TStorageId Id { get; set; }
+        public string Id { get; set; }
         /// <summary>
         /// 心跳配置
         /// </summary>

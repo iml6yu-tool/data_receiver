@@ -22,10 +22,18 @@ namespace iml6yu.DataService.OpcUa
         {
             get
             {
-                return OpcUaInstance != null
-                    && StandardServer != null
-                    && NodeManager != null
-                    && StandardServer.CurrentState == ServerState.Running;
+                try
+                {
+                    return OpcUaInstance != null
+                   && StandardServer != null
+                   && NodeManager != null
+                   && StandardServer.CurrentState == ServerState.Running;
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+
             }
         }
         protected DataServiceOpcUaOption Option { get; }
@@ -104,9 +112,14 @@ namespace iml6yu.DataService.OpcUa
 
         public async Task<MessageResult> WriteAsync<T>(string address, T data)
         {
+            if (NodeManager == null)
+                return MessageResult.Failed(ResultType.Failed, "还未初始化完成！Init is not Compated!");
             try
             {
+
                 var node = NodeManager.Find(address) as BaseDataVariableState;
+                if (node == null)
+                    return MessageResult.Failed(ResultType.Failed, $"当前地址（{address}）不存在！The Address({address}) is not found!");
                 node.Value = data;
                 node.StatusCode = StatusCodes.Good;
                 node.Timestamp = DateTime.Now;

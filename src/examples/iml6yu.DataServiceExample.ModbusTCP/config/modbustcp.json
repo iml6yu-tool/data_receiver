@@ -1,9 +1,9 @@
 ﻿{
   "IPAddress": null,
   "Port": 5022,
-  "Slaves": [
+  "Storages": [
     {
-      "Id": 1,
+      "Id": "1",
       "Heart": {
         "HeartType": "Number",
         "HeartAddress": "1.HoldingRegisters.0",

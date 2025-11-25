@@ -33,7 +33,16 @@ namespace iml6yu.Data.Core.JsonConverts
                     return reader.GetDecimal();
             }
             if (reader.TokenType == JsonTokenType.String)
-                reader.GetString();
+            {
+                var stringV = reader.GetString();
+                if (DateTime.TryParse(stringV, out DateTime dt))
+                {
+                    return dt;
+                }
+                return stringV;
+
+            }
+
             return null;
         }
 

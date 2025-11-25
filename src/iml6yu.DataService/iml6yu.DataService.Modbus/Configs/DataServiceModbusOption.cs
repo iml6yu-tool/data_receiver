@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace iml6yu.DataService.Modbus.Configs
 {
-    public class DataServiceModbusOption:DataService.Core.Configs.DataServiceOption<byte>
+    public class DataServiceModbusOption:DataService.Core.Configs.DataServiceOption
     {  
     }
 }

@@ -44,7 +44,7 @@ namespace iml6yu.DataServiceExample.ModbusTCP
                 while (!CancellationTokenSource.IsCancellationRequested)
                 {
                     //var datas = dataService.GetDatas();
-                   
+
                     //foreach (var slave in datas.Keys)
                     //{
                     //    int rowsCount = 0;
@@ -87,7 +87,7 @@ namespace iml6yu.DataServiceExample.ModbusTCP
             });
         }
 
-        private void DrawDataGridView(List<DataServiceStorageOption<byte>> slaves)
+        private void DrawDataGridView(List<DataServiceStorageOption> slaves)
         {
             dataGridView1.AutoGenerateColumns = true;
             dataGridView1.DataError += DataGridView1_DataError;
@@ -134,6 +134,11 @@ namespace iml6yu.DataServiceExample.ModbusTCP
                 CancellationTokenSource?.Dispose();
                 label1.BackColor = Color.Red;
             }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            var a = dataService.IsRuning;
         }
     }
 }

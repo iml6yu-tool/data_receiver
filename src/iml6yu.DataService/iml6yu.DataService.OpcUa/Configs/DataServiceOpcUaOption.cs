@@ -1,6 +1,6 @@
 ﻿namespace iml6yu.DataService.OpcUa.Configs
 {
-    public class DataServiceOpcUaOption : Core.Configs.DataServiceOption<string>
+    public class DataServiceOpcUaOption : Core.Configs.DataServiceOption
     {
         /// <summary>
         /// 地址 默认localhost

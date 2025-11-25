@@ -36,7 +36,7 @@ namespace iml6yu.DataService.Modbus
             Network = CreateNetWork(option);
             option.Storages.ForEach(opt =>
             {
-                var slave = Factory.CreateSlave(opt.Id);
+                var slave = Factory.CreateSlave(byte.Parse(opt.Id));
                 if (opt.DefaultValues != null && opt.DefaultValues.Count > 0)
                 {
                     DataWriteContract defaultValues = new DataWriteContract();
@@ -91,24 +91,27 @@ namespace iml6yu.DataService.Modbus
                 {
                     if (writetype != ModbusReadWriteType.ReadInputRegisters && writetype != ModbusReadWriteType.HoldingRegisters)
                         throw new Exception("心跳地址配置错误，只支持ReadInputRegisters 或者是 HoldingRegisters地址！");
+                    var slaveService = Network?.GetSlave(byte.Parse(slave.Id));
+                    if (slaveService == null)
+                        throw new Exception($"当前Slave(SlaveId:{slave.Id})服务不存在。");
                     switch (slave.Heart.HeartType)
                     {
                         case HeartType.OddAndEven:
                             Task.Run(async () =>
                             {
-                                await WriteHeartDataAsync(Network?.GetSlave(slave.Id), writetype, startAddress, 1, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => (ushort)((v + 1) % 2));
+                                await WriteHeartDataAsync(slaveService, writetype, startAddress, 1, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => (ushort)((v + 1) % 2));
                             });
                             break;
                         case HeartType.Number:
                             Task.Run(async () =>
                             {
-                                await WriteHeartDataAsync(Network?.GetSlave(slave.Id), writetype, startAddress, 1, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { if (v == ushort.MaxValue) v = 0; return ++v; });
+                                await WriteHeartDataAsync(slaveService, writetype, startAddress, 1, TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { if (v == ushort.MaxValue) v = 0; return ++v; });
                             });
                             break;
                         case HeartType.Time:
                             Task.Run(async () =>
                             {
-                                await WriteHeartDataAsync(Network?.GetSlave(slave.Id), writetype, startAddress, ushort.Parse(DateTime.Now.ToString("mmss")), TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { return ushort.Parse(DateTime.Now.ToString("mmss")); });
+                                await WriteHeartDataAsync(slaveService, writetype, startAddress, ushort.Parse(DateTime.Now.ToString("mmss")), TimeSpan.FromSeconds(slave.Heart.HeartInterval), v => { return ushort.Parse(DateTime.Now.ToString("mmss")); });
                             });
                             break;
                         default:
