@@ -18,14 +18,73 @@ namespace iml6yu.Database.Constant.Services
         public ISqlSugarClient Db { get; }
 
         public ILogger Logger { get; }
+
+        /// <summary>
+        /// 初始化数据库
+        /// </summary>
+        /// <returns></returns>
+        public MessageResult InitDb()
+        {
+            try
+            {
+                if (Db.CurrentConnectionConfig.DbType == DbType.Sqlite)
+                {
+                    var fileName = Db.CurrentConnectionConfig.ConnectionString.Replace("Data Source=", "").Trim();
+                    if (File.Exists(fileName))
+                    {
+                        return MessageResult.Success();
+                    }
+                    var dir = Path.GetDirectoryName(fileName);
+                    if (dir != null && !Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+                }
+                Db.DbMaintenance.CreateDatabase();
+                return MessageResult.Success();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("初始化数据库发生异常！异常信息如下：\r\n{0}", ex.Message);
+                return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+            }
+
+        }
+        /// <summary>
+        /// 初始化表
+        /// </summary>
+        /// <param name="tables"></param>
+        /// <returns></returns>
+        public MessageResult InitTables(params Type[] tables)
+        {
+            try
+            {
+                Db.CodeFirst.InitTables(tables);
+                return MessageResult.Success();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("初始化数据表发生异常！异常信息如下：\r\n{0}", ex.Message);
+                return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+            }
+        }
     }
 
     public abstract class BasicService<TEntity> : BasicService where TEntity : BasicEntity, new()
     {
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="db"></param>
+        /// <param name="loggerFactory"></param>
         public BasicService(ISqlSugarClient db, ILoggerFactory loggerFactory) : base(db, loggerFactory)
         {
         }
-
+        /// <summary>
+        /// 通过id获取实体
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public virtual async Task<DataResult<TEntity>> GetAsync(long id)
         {
             try
@@ -39,6 +98,11 @@ namespace iml6yu.Database.Constant.Services
                 return DataResult<TEntity>.Failed(ResultType.Failed, ex.Message);
             }
         }
+        /// <summary>
+        /// 通过查询条件获取实体集合
+        /// </summary>
+        /// <param name="search">查询条件</param>
+        /// <returns></returns>
         public virtual async Task<CollectionResult<TEntity>> GetAsync(ParSearch search)
         {
             try
@@ -53,12 +117,15 @@ namespace iml6yu.Database.Constant.Services
             }
 
         }
-
+        /// <summary>
+        /// 获取所有实体集合
+        /// </summary>
+        /// <returns></returns>
         public virtual async Task<CollectionResult<TEntity>> GetAsync()
         {
             try
             {
-                var datas = Db.Queryable<TEntity>().Where(t => !t.Deleted).ToList();
+                var datas = await Db.Queryable<TEntity>().Where(t => !t.Deleted).ToListAsync();
                 return CollectionResult<TEntity>.Success(1, datas.Count(), datas, datas.Count());
             }
             catch (Exception ex)
@@ -66,6 +133,12 @@ namespace iml6yu.Database.Constant.Services
                 return CollectionResult<TEntity>.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
+
+        /// <summary>
+        /// 插入一条数据信息
+        /// </summary>
+        /// <param name="entity">数据</param>
+        /// <returns></returns>
         public virtual async Task<MessageResult> SaveAsync(TEntity entity)
         {
             try
@@ -80,6 +153,12 @@ namespace iml6yu.Database.Constant.Services
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
+
+        /// <summary>
+        /// 插入多条数据信息
+        /// </summary>
+        /// <param name="entities">数据</param>
+        /// <returns></returns>
         public virtual async Task<MessageResult> SaveAsync(List<TEntity> entities)
         {
             try
@@ -94,6 +173,12 @@ namespace iml6yu.Database.Constant.Services
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
+
+        /// <summary>
+        /// 更新一条数据信息
+        /// </summary>
+        /// <param name="entity">数据</param>
+        /// <returns></returns>
         public virtual async Task<MessageResult> UpdateAsync(TEntity entity)
         {
             try
@@ -108,6 +193,12 @@ namespace iml6yu.Database.Constant.Services
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
+
+        /// <summary>
+        /// 批量更新数据信息
+        /// </summary>
+        /// <param name="entities"></param>
+        /// <returns></returns>
         public virtual async Task<MessageResult> UpdateAsync(List<TEntity> entities)
         {
             try
@@ -122,7 +213,13 @@ namespace iml6yu.Database.Constant.Services
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
-        public virtual async Task<MessageResult> DeleteAsync(params long[] ids)
+
+        /// <summary>
+        /// 根据id列表删除数据
+        /// </summary>
+        /// <param name="ids"></param>
+        /// <returns></returns>
+        public virtual async Task<MessageResult> DeleteAsync(long[] ids)
         {
             try
             {
@@ -135,6 +232,12 @@ namespace iml6yu.Database.Constant.Services
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
+
+        /// <summary>
+        /// 根据id删除数据
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public virtual async Task<MessageResult> DeleteAsync(long id)
         {
             try
@@ -148,6 +251,12 @@ namespace iml6yu.Database.Constant.Services
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
+
+        /// <summary>
+        /// 根基实体删除数据
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public virtual async Task<MessageResult> DeleteAsync(TEntity entity)
         {
             try
@@ -162,7 +271,11 @@ namespace iml6yu.Database.Constant.Services
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
-
+        /// <summary>
+        /// 根据实体集合删除数据
+        /// </summary>
+        /// <param name="entities"></param>
+        /// <returns></returns>
         public virtual async Task<MessageResult> DeleteAsync(List<TEntity> entities)
         {
             try
@@ -178,19 +291,41 @@ namespace iml6yu.Database.Constant.Services
             }
         }
 
+        /// <summary>
+        /// 根据id查找实体
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public virtual async Task<TEntity> FindAsync(long id)
         {
             return await Db.Queryable<TEntity>().FirstAsync(t => t.Id == id);
         }
-        public virtual async Task<TEntity> FindAsync(params long[] ids)
+
+        /// <summary>
+        /// 根据ids查找实体
+        /// </summary>
+        /// <param name="ids"></param>
+        /// <returns></returns>
+        public virtual async Task<TEntity> FindAsync(long[] ids)
         {
             return await Db.Queryable<TEntity>().FirstAsync(t => ids.Contains(t.Id));
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns></returns>
         public virtual async Task<List<TEntity>> FindAsync(Expression<Func<TEntity, bool>> expression)
         {
             return await Db.Queryable<TEntity>().Where(expression).ToListAsync();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="search"></param>
+        /// <returns></returns>
         public virtual async Task<(List<TEntity>, int)> FindAsync(ParSearch search)
         {
             var q = Db.Queryable<TEntity>();

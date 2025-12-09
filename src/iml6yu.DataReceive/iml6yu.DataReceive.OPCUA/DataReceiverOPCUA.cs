@@ -225,25 +225,36 @@ namespace iml6yu.DataReceive.OPCUA
                     {
                         while (!token.IsCancellationRequested)
                         {
-                            if (VerifyConnect())
+                            try
                             {
-                                Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
-                                var values = await Client.ReadNodesAsync(kv.Value.Item2.ToArray());
-                                if (values == null)
-                                    Logger.LogWarning("读取数据为空");
-                                else if (values.Count != kv.Value.Item1.Count)
-                                    Logger.LogWarning($"读取数据结果{values.Count}条，预期是{kv.Value.Item1.Count}条，摒弃不匹配的结果！");
-                                else
+                                if (VerifyConnect())
                                 {
-                                    var ts = GetTimestamp();
-                                    for (var i = 0; i < values.Count; i++)
+                                    Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
+                                    var values = await Client.ReadNodesAsync(kv.Value.Item2.ToArray());
+                                    if (values == null)
+                                        Logger.LogWarning("读取数据为空");
+                                    else if (values.Count != kv.Value.Item1.Count)
+                                        Logger.LogWarning($"读取数据结果{values.Count}条，预期是{kv.Value.Item1.Count}条，摒弃不匹配的结果！");
+                                    else
                                     {
-                                        tempDatas.Add(kv.Value.Item1[i].Address, new ReceiverTempDataValue(values[i].Value, ts));
+                                        var ts = GetTimestamp();
+                                        for (var i = 0; i < values.Count; i++)
+                                        {
+                                            tempDatas.Add(kv.Value.Item1[i].Address, new ReceiverTempDataValue(values[i].Value, ts));
+                                        }
+                                        await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
                                     }
-                                    await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
                                 }
+                                if (token.IsCancellationRequested)
+                                    return;
+                                await Task.Delay(kv.Key);
                             }
-                            await Task.Delay(kv.Key);
+                            catch (Exception ex)
+                            {
+                                Logger.LogError(ex, "OPCUA Read Error:{0}", ex.Message);
+                                await Task.Delay(kv.Key);
+                            }
+
                         }
                     });
                 });

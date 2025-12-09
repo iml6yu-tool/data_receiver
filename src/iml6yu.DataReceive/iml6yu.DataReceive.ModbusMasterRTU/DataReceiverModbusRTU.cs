@@ -84,34 +84,46 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                 var delayTime = TimeSpan.FromMilliseconds(readNodes.Values.SelectMany(t => t.Keys).Where(t => t > 0).Min(t => t));
                 while (!token.IsCancellationRequested)
                 {
-                    if (VerifyConnect())
+                    try
                     {
-                        //按照分组循环
-                        foreach (var readNode in readNodes)
+                        if (VerifyConnect())
                         {
-                            //按照间隔进行循环
-                            foreach (var item in readNode.Value)
+                            //按照分组循环
+                            foreach (var readNode in readNodes)
                             {
-                                Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
-                                //按照slaveid循环
-                                foreach (var readConfig in item.Value)
+                                //按照间隔进行循环
+                                foreach (var item in readNode.Value)
                                 {
-                                    //按照读取节点进行循环
-                                    foreach (var node in readConfig.ReadItems)
+                                    Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
+                                    //按照slaveid循环
+                                    foreach (var readConfig in item.Value)
                                     {
-                                        tempDatas = ReadModbusNodeItem(readConfig, node, tempDatas);
+                                        //按照读取节点进行循环
+                                        foreach (var node in readConfig.ReadItems)
+                                        {
+                                            tempDatas = ReadModbusNodeItem(readConfig, node, tempDatas);
+                                        }
+                                        await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
                                     }
-                                    await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
+                                    //释放一次CPU
+                                    await Task.Delay(0);
                                 }
                                 //释放一次CPU
                                 await Task.Delay(0);
                             }
-                            //释放一次CPU
-                            await Task.Delay(0);
                         }
+                        if (token.IsCancellationRequested)
+                            return;
+                        //延迟等待
+                        await Task.Delay(delayTime);
                     }
-                    //延迟等待
-                    Task.Delay(delayTime, token).Wait(token);
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Modbus RTU Data Receive WhileDoAsync Error:{0}", ex.Message);
+                        //延迟等待
+                        await Task.Delay(delayTime);
+                    }
+
                 }
             }, token);
         }

@@ -16,7 +16,7 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
     {
         private TcpClient tcp;
         public override bool IsConnected => tcp != null && Client != null && tcp.Connected;
-          
+
         public DataReceiverModbusTCP(DataReceiverModbusTCPOption option, ILogger logger, bool isAutoLoadNodeConfig = false, List<NodeItem> nodes = null) : base(option, logger, isAutoLoadNodeConfig, nodes)
         {
         }
@@ -79,24 +79,33 @@ namespace iml6yu.DataReceive.ModbusMasterTCP
                 //按照分组进行多线程并行
                 Parallel.ForEach(readNodes, readNode =>
                 {
-                    Parallel.ForEach(readNode.Value, item =>
+                    Parallel.ForEach(readNode.Value, async item =>
                     {
                         while (!token.IsCancellationRequested)
                         {
-                            if (VerifyConnect())
+                            try
                             {
-                                //按照modbus slaveaddress进行分组便利读取
-                                Parallel.ForEach(item.Value, async readConfig =>
+                                if (VerifyConnect())
                                 {
-                                    Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
-                                    readConfig.ReadItems.ForEach(node =>
+                                    //按照modbus slaveaddress进行分组便利读取
+                                    Parallel.ForEach(item.Value, async readConfig =>
                                     {
-                                        tempDatas = ReadModbusNodeItem(readConfig, node, tempDatas);
+                                        Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
+                                        readConfig.ReadItems.ForEach(node =>
+                                        {
+                                            tempDatas = ReadModbusNodeItem(readConfig, node, tempDatas);
+                                        });
+                                        await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
                                     });
-                                    await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
-                                });
+                                }
+                                await Task.Delay(item.Key == 0 ? 500 : item.Key);
                             }
-                            Task.Delay(item.Key == 0 ? 500 : item.Key, token).Wait(token);
+                            catch (Exception ex)
+                            {
+                                Logger.LogError(ex, "ModbusTCP Read Error:{0}", ex.Message);
+                                await Task.Delay(item.Key == 0 ? 500 : item.Key);
+                            }
+
                         }
                     });
                 });

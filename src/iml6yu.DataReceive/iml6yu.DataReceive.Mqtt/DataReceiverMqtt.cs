@@ -172,8 +172,16 @@ namespace iml6yu.DataReceive.Mqtt
             //如果取消信号发出，则断开当前连接
             return Task.Run(async () =>
               {
-                  if (token.IsCancellationRequested)
-                      await DisConnectAsync();
+                  while (!token.IsCancellationRequested)
+                  {
+                      if (token.IsCancellationRequested)
+                      {
+                          await DisConnectAsync();
+                          return;
+                      } 
+                      await Task.Delay(2000);
+                  }
+
               });
         }
 

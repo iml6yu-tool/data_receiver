@@ -178,8 +178,10 @@ namespace iml6yu.DataReceive.PLCSiemens
                     {
                         while (!tokenSource.IsCancellationRequested)
                         {
-                            if (IsConnected)
-                                _ = Client.ReadMultipleVarsAsync(item.Value.Values.ToList()).ContinueWith(async t =>
+                            try
+                            {
+                                if (IsConnected)
+                                    _ = Client.ReadMultipleVarsAsync(item.Value.Values.ToList()).ContinueWith(async t =>
                                     {
                                         if (t.IsFaulted)
                                         {
@@ -199,9 +201,17 @@ namespace iml6yu.DataReceive.PLCSiemens
                                         }
                                         await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
                                     });
-                            await Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource);
-                        }
-
+                                //结束了，就等待下一个间隔，直接退出吧
+                                if (tokenSource.IsCancellationRequested)
+                                    return;
+                                await Task.Delay(item.Key == 0 ? 500 : item.Key);
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data error. {ex.Message}");
+                                await Task.Delay(item.Key == 0 ? 500 : item.Key);
+                            } 
+                        } 
                     });
 
                 });
@@ -340,7 +350,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                 for (var i = 0; i < values.Count; i++)
                 {
                     var item = addressArray.ElementAt(i);
-                    if (!VerifyValue(values[i].Value, item.ValueType,out object v))
+                    if (!VerifyValue(values[i].Value, item.ValueType, out object v))
                         return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取失败，预期类型是{((TypeCode)item.ValueType).ToString()}，而实际读取到的类型是{item.Value.GetType().Name},类型不匹配！");
                     data.Datas.Add(new DataReceiveContractItem()
                     {
@@ -400,7 +410,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                     //验证当前读取的值和预期写入的值是否相等
                     if (!VerifyValueEqual(v, address.Value, address.ValueType))
                         return MessageResult.Failed(ResultType.DeviceWriteError, $"数据{address.Address}写入失败,当前值是{v},预期值是{address.Value}");
-                } 
+                }
                 return MessageResult.Success();
             }
             catch (Exception ex)

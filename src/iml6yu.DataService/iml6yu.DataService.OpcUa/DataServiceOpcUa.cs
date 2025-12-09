@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using Opc.Ua;
 using Opc.Ua.Configuration;
 using Opc.Ua.Server;
+using System;
 using System.Numerics;
 
 namespace iml6yu.DataService.OpcUa
@@ -78,23 +79,30 @@ namespace iml6yu.DataService.OpcUa
                     }
                 }
             }
-            #endregion
-
-            NodeManagerFactory = new DataServiceNodeManagerFactory(nodeConfig);
-            StandardServer = CreateServer(option);
+            #endregion 
+            NodeManagerFactory = new DataServiceNodeManagerFactory(nodeConfig); 
         }
         public void StartServicer(CancellationToken token)
         {
-            StopToken = token;
-            OpcUaInstance.StartAsync(StandardServer).Wait();
+            StandardServer = CreateServer(Option); 
+            OpcUaInstance.StartAsync(StandardServer).Wait(token);
             AsyncHeartBeat();
+            StopToken = token;
         }
         public void StopServicer()
         {
-            StandardServer?.Stop();
-            OpcUaInstance?.Stop();
-            OpcUaInstance = null;
-            StandardServer = null;
+            try
+            {
+                StandardServer?.Stop();
+                OpcUaInstance?.Stop();
+                OpcUaInstance = null;
+                StandardServer = null;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, ex.Message);
+            }
+
         }
 
         public async Task<List<MessageResult>> WriteAsync(DataWriteContract data)
