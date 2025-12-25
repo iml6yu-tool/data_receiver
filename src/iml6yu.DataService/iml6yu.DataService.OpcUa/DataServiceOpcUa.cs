@@ -28,6 +28,7 @@ namespace iml6yu.DataService.OpcUa
                     return OpcUaInstance != null
                    && StandardServer != null
                    && NodeManager != null
+                   && StandardServer.CurrentInstance != null
                    && StandardServer.CurrentState == ServerState.Running;
                 }
                 catch (Exception ex)
@@ -80,11 +81,15 @@ namespace iml6yu.DataService.OpcUa
                 }
             }
             #endregion 
-            NodeManagerFactory = new DataServiceNodeManagerFactory(nodeConfig); 
+            NodeManagerFactory = new DataServiceNodeManagerFactory(nodeConfig);
         }
         public void StartServicer(CancellationToken token)
         {
-            StandardServer = CreateServer(Option); 
+            if (StandardServer == null)
+            {
+                StandardServer = CreateServer(Option);
+            }
+
             OpcUaInstance.StartAsync(StandardServer).Wait(token);
             AsyncHeartBeat();
             StopToken = token;
@@ -95,12 +100,15 @@ namespace iml6yu.DataService.OpcUa
             {
                 StandardServer?.Stop();
                 OpcUaInstance?.Stop();
-                OpcUaInstance = null;
-                StandardServer = null;
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, ex.Message);
+            }
+            finally
+            {
+                OpcUaInstance = null;
+                StandardServer = null;
             }
 
         }
@@ -157,27 +165,27 @@ namespace iml6yu.DataService.OpcUa
                     ApplicationCertificate = new CertificateIdentifier
                     {
                         StoreType = "Directory",
-                        StorePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "own")
+                        StorePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".ua_certs/own")
                     },
                     TrustedIssuerCertificates = new CertificateTrustList()
                     {
                         StoreType = "Directory",
-                        StorePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "issuer"),
+                        StorePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".ua_certs/issuer"),
                     },
                     TrustedPeerCertificates = new CertificateTrustList()
                     {
                         StoreType = "Directory",
-                        StorePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "peer"),
+                        StorePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".ua_certs/peer"),
                     },
                     TrustedUserCertificates = new CertificateTrustList()
                     {
                         StoreType = "Directory",
-                        StorePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "user")
+                        StorePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".ua_certs/user")
                     },
                     UserIssuerCertificates = new CertificateTrustList()
                     {
                         StoreType = "Directory",
-                        StorePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "userIssuer")
+                        StorePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".ua_certs/userIssuer")
                     },
                 },
                 ServerConfiguration = new ServerConfiguration
@@ -205,12 +213,12 @@ namespace iml6yu.DataService.OpcUa
             OpcUaInstance.ApplicationConfiguration = config;
 
 
-            bool cert = OpcUaInstance.CheckApplicationInstanceCertificatesAsync(false).AsTask().Result;
+            OpcUaInstance.CheckApplicationInstanceCertificatesAsync(false,0).AsTask().Wait();
 
-            if (!cert)
-            {
-                throw new Exception("Application instance certificate invalid!");
-            }
+            //if (!cert)
+            //{
+            //    throw new Exception("Application instance certificate invalid!");
+            //}
             // 3. 创建服务器实例并启动
             StandardServer server = new StandardServer();
             server.AddNodeManager(NodeManagerFactory);
