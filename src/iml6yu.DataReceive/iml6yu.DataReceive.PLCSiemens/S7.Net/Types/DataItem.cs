@@ -51,7 +51,27 @@ namespace S7.Net.Types
             VarType = VarType.Byte;
             Count = 1;
         }
+        /// <summary>
+        /// Create an instance of <see cref="DataItem"/> from the supplied address.
+        /// </summary>
+        /// <param name="address">The address to create the DataItem for.</param>
+        /// <returns>A new <see cref="DataItem"/> instance with properties parsed from <paramref name="address"/>.</returns>
+        /// <remarks>The <see cref="Count" /> property is not parsed from the address.</remarks>
+        public static DataItem FromAddress(string address, int count)
+        {
+            PLCAddress.Parse(address, out var dataType, out var dbNumber, out var varType, out var startByte,
+                out var bitNumber);
 
+            return new DataItem
+            {
+                DataType = dataType,
+                DB = dbNumber,
+                VarType = varType,
+                StartByteAdr = startByte,
+                BitAdr = (byte)(bitNumber == -1 ? 0 : bitNumber),
+                Count = count
+            };
+        }
         /// <summary>
         /// Create an instance of <see cref="DataItem"/> from the supplied address.
         /// </summary>
@@ -69,7 +89,7 @@ namespace S7.Net.Types
                 DB = dbNumber,
                 VarType = varType,
                 StartByteAdr = startByte,
-                BitAdr = (byte) (bitNumber == -1 ? 0 : bitNumber)
+                BitAdr = (byte)(bitNumber == -1 ? 0 : bitNumber)
             };
         }
 
@@ -87,7 +107,7 @@ namespace S7.Net.Types
             if (typeof(T).IsArray)
             {
                 var array = ((Array?)dataItem.Value);
-                if ( array != null)
+                if (array != null)
                 {
                     dataItem.Count = array.Length;
                 }

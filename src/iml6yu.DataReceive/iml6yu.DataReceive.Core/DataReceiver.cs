@@ -72,7 +72,7 @@ namespace iml6yu.DataReceive.Core
         /// <item>Value:配置的节点</item>
         /// </list>
         /// </summary>
-        protected Dictionary<string, List<NodeItem>> ConfigNodes { get; set; }
+        protected Dictionary<string, List<NodeItem>> ConfigNodes { get; set; } = new Dictionary<string, List<NodeItem>>();
         /// <summary>
         /// 数据缓存
         /// </summary>
@@ -206,29 +206,30 @@ namespace iml6yu.DataReceive.Core
         {
             if (nodes == null)
                 return MessageResult.Failed(ResultType.ParameterError, nameof(nodes) + " parameter is null!");
-            try
-            {
-                ConfigNodes = nodes.GroupBy(t => t.GroupName).ToDictionary(t => t.Key, t => t.ToList());
-                CacheDataDic = new ConcurrentDictionary<string, CacheDataItem>(
-                    nodes.GroupBy(t => t.Address)
-                    .ToDictionary(t => t.Key, t => new CacheDataItem(DateTimeOffset.Now.ToUnixTimeMilliseconds(), new DataReceiveContractItem()
-                    {
-                        Address = t.First().Address,
-                        ValueType = (int)t.First().ValueType
-                    })));
-                return MessageResult.Success();
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex?.ToString());
+            lock (ConfigNodes)
+                try
+                {
+                    ConfigNodes = nodes.GroupBy(t => t.GroupName).ToDictionary(t => t.Key, t => t.ToList());
+                    CacheDataDic = new ConcurrentDictionary<string, CacheDataItem>(
+                        nodes.GroupBy(t => t.Address)
+                        .ToDictionary(t => t.Key, t => new CacheDataItem(DateTimeOffset.Now.ToUnixTimeMilliseconds(), new DataReceiveContractItem()
+                        {
+                            Address = t.First().Address,
+                            ValueType = (int)t.First().ValueType
+                        })));
+                    return MessageResult.Success();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex?.ToString());
 
-                #region 发生异常后给定空数据，让程序能够运行，但是无法接收数据
-                ConfigNodes = ConfigNodes ?? new Dictionary<string, List<NodeItem>>();
-                CacheDataDic = CacheDataDic ?? new ConcurrentDictionary<string, CacheDataItem>();
-                #endregion
+                    #region 发生异常后给定空数据，让程序能够运行，但是无法接收数据
+                    ConfigNodes = ConfigNodes ?? new Dictionary<string, List<NodeItem>>();
+                    CacheDataDic = CacheDataDic ?? new ConcurrentDictionary<string, CacheDataItem>();
+                    #endregion
 
-                return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
-            }
+                    return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+                }
 
         }
 
@@ -531,7 +532,34 @@ namespace iml6yu.DataReceive.Core
                 targetValue = 0;
                 return false;
             }
-            else if (typeCode == 4 || typeCode == 16) //TypeCode.Char TypeCode.String
+            else if (typeCode == 16) //DateTime
+            {
+                if (value is DateTime dt)
+                {
+                    targetValue = dt;
+                    return true;
+                }
+                if (value is string ds)
+                {
+
+                    DateTime.TryParse(ds, out dt);
+                    targetValue = dt;
+                    return true;
+                }
+                if (value is TimeSpan ts)
+                {
+                    targetValue = new DateTime(ts.Ticks + DateTime.UnixEpoch.Ticks);
+                    return true;
+                }
+                if (value is UInt32 dd)
+                {
+                    targetValue = DateTimeOffset.FromUnixTimeMilliseconds(dd).DateTime;
+                    return true;
+                }
+                targetValue = DateTime.MinValue;
+                return false;
+            }
+            else if (typeCode == 4 || typeCode == 18) //TypeCode.Char TypeCode.String
             {
                 if (value is char c)
                 {

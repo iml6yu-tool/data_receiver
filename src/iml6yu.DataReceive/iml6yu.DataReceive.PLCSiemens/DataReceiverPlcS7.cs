@@ -46,6 +46,7 @@ namespace iml6yu.DataReceive.PLCSiemens
             }
             catch (Exception ex)
             {
+                Logger.LogError($"数据转S7读取格式发生异常！{ex.Message}");
                 return MessageResult.Failed(ResultType.ParameterError, ex.Message, ex);
             }
         }
@@ -210,8 +211,8 @@ namespace iml6yu.DataReceive.PLCSiemens
                             {
                                 Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data error. {ex.Message}");
                                 await Task.Delay(item.Key == 0 ? 500 : item.Key);
-                            } 
-                        } 
+                            }
+                        }
                     });
 
                 });
@@ -241,7 +242,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                 //分组读取节点
                 var s7DataItems = intervalToNodeItem.ToDictionary(t => t.Key, t => t.Value.Select(t =>
                 {
-                    var dataItem = DataItem.FromAddress(t.FullAddress);
+                    var dataItem = DataItem.FromAddress(t.FullAddress,t.Count);
                     return (t.FullAddress, t.Address, dataItem);
                 }).Where(t => t.Item3 != null).ToDictionary(t => t.Item2, t => t.Item3));
                 result.Add(key, s7DataItems);

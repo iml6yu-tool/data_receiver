@@ -65,6 +65,34 @@ SOFTWARE.
 - WriteAsync<T>(string address, T data) 写数据
 - WriteWithVerifyAsync(DataWriteContract data) 写数据并且验证写入是否成功（大多数是因为业务中需要批量写入多条数据，并且设置了写入标志位）
 
+### v1.2.2版本新增加数据类型支持
+```csharp
+ case "DDT":// 年（2位自动补充）月日时分秒周
+      varType = VarType.DateTime;
+      return;
+  case "DAT":// 年月日
+      varType = VarType.Date;
+      return;
+  case "TMS": // timespan  耗时
+      varType = VarType.Time;
+      return;
+  case "TOD": // 时分秒
+      varType = VarType.DWord;
+      return;
+  case "DTL": // DateTimeLong  长日期时间  年月日时分秒
+      varType = VarType.DateTimeLong;
+      return;
+  case "STR": //字符串  读取后前面会默认增加?\u0007 
+      varType = VarType.String;
+      return;
+  case "S7S"://字符串
+      varType = VarType.S7String;
+      return;
+  case "S7W"://字符串
+      varType = VarType.S7WString;
+      return;
+```
+
 ## 最后
 如果在使用过程中遇到任何bug或者困难，可以添加WeChat或者是Microsoft Teams
 

@@ -26,6 +26,10 @@ namespace iml6yu.DataReceive.Core.Configs
         /// </summary>
         public int Interval { get; set; }
 
+        /// <summary>
+        /// 读取数据长度 
+        /// </summary>
+        public int Count { get; set; } = 1;
         ///// <summary>
         ///// 是否订阅opc数据(opc专用）
         ///// </summary>

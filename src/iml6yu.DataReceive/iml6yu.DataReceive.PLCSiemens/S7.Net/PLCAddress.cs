@@ -77,6 +77,35 @@
                                 throw new InvalidAddressException("Bit can only be 0-7");
                             varType = VarType.Bit;
                             return;
+                        /*
+                         * Auth：刘会东
+                         * Date：2026年1月21日
+                         * Reason：添加对DateTime Date Time Timer DateTimeLong String S7String S7WString的支持
+                         */
+                        case "DDT":// 年（2位自动补充）月日时分秒周
+                            varType = VarType.DateTime;
+                            return;
+                        case "DAT":// 年月日
+                            varType = VarType.Date;
+                            return;
+                        case "TMS": // timespan  耗时
+                            varType = VarType.Time;
+                            return;
+                        case "TOD": // 时分秒
+                            varType = VarType.DWord;
+                            return;
+                        case "DTL": // DateTimeLong  长日期时间  年月日时分秒
+                            varType = VarType.DateTimeLong;
+                            return;
+                        case "STR": //字符串  读取后前面会默认增加?\u0007 
+                            varType = VarType.String;
+                            return;
+                        case "S7S"://字符串
+                            varType = VarType.S7String;
+                            return;
+                        case "S7W"://字符串
+                            varType = VarType.S7WString;
+                            return;
                         default:
                             throw new InvalidAddressException();
                     }
