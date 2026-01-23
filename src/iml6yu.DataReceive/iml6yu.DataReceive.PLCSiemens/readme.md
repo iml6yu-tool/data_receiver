@@ -67,7 +67,7 @@ SOFTWARE.
 
 ### v1.2.2版本新增加数据类型支持
 ```csharp
- case "DDT":// 年（2位自动补充）月日时分秒周
+ case "DDT":// 年月日时分秒 对应s7 1500中的DateTime类型(64bit 8byte)
       varType = VarType.DateTime;
       return;
   case "DAT":// 年月日

@@ -1,5 +1,6 @@
 using iml6yu.DataReceive.PLCSiemens;
 using iml6yu.DataReceive.PLCSiemens.Configs;
+using iml6yu.DataReceiverExample.S7;
 
 namespace iml6yu.DataReceiverExample
 {

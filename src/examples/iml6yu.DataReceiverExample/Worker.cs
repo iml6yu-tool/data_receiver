@@ -49,8 +49,8 @@ namespace iml6yu.DataReceiverExample
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            await base.StopAsync(cancellationToken);
             await receiver.StopWorkAsync();
+            await base.StopAsync(cancellationToken);  
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -61,7 +61,7 @@ namespace iml6yu.DataReceiverExample
                 {
                     logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 }
-                await Task.Delay(1000000, stoppingToken);
+                await Task.Delay(1000, stoppingToken);
             }
         }
     }

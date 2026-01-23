@@ -23,7 +23,7 @@ namespace iml6yu.DataServiceExample.OpcUa
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
-            dataService?.StopServicer();
+            dataService?.StopServicer(); 
             return base.StopAsync(cancellationToken);
         }
 

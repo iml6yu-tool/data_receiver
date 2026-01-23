@@ -306,8 +306,12 @@ namespace iml6yu.DataReceive.Core
                             Logger.LogWarning($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort})正在尝试重连...");
                             await ConnectAsync();
                         }
-                        await Task.Delay(TimeSpan.FromSeconds(30));
+                        await Task.Delay(TimeSpan.FromSeconds(30), token);
                     }
+                }
+                catch (TaskCanceledException tcex)
+                {
+                    Logger.LogError($"系统线程异常退出！\r\n{tcex.ToString()}");
                 }
                 catch (Exception ex)
                 {
@@ -320,7 +324,7 @@ namespace iml6yu.DataReceive.Core
 
         public async Task StopWorkAsync()
         {
-            DoTask.Dispose();
+            DoTask?.Dispose();
             await DisConnectAsync();
         }
 
@@ -366,7 +370,7 @@ namespace iml6yu.DataReceive.Core
             {
                 while (!token.IsCancellationRequested)
                 {
-                    await foreach (var data in MessageChannel.Reader.ReadAllAsync())
+                    await foreach (var data in MessageChannel.Reader.ReadAllAsync(token))
                     {
                         try
                         {
@@ -698,7 +702,7 @@ namespace iml6yu.DataReceive.Core
 
         public virtual void Dispose()
         {
-            DoTask.Dispose();
+            DoTask?.Dispose();
             Subscribers?.Clear();
             MessageChannel.Writer.Complete();
             CacheDataDic.Clear();
