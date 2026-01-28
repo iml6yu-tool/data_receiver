@@ -167,7 +167,7 @@ namespace iml6yu.Data.Core.Extensions
             {
                 convertValue = v;
                 return true;
-            } 
+            }
             else if (originValue is byte b)
             {
                 convertValue = b;
@@ -271,7 +271,26 @@ namespace iml6yu.Data.Core.Extensions
             }
             return false;
         }
-
+        /// <summary>
+        /// 将原始值转成Datetime类型
+        /// </summary>
+        /// <param name="originValue"></param>
+        /// <param name="convertValue"></param>
+        /// <returns></returns>
+        public static bool VerifyAndConvertDatetime(this object originValue, out DateTime convertValue)
+        {
+            convertValue = DateTime.UnixEpoch;
+            if (originValue is DateTime v)
+            {
+                convertValue = v;
+                return true;
+            }
+            else if (originValue is string c)
+            {
+                return DateTime.TryParse(c, out convertValue); 
+            }
+            return false;
+        }
         ///// <summary>
         ///// 将一个object类型的Value进行类型校验并且转成对应的类型
         ///// </summary>
@@ -680,128 +699,57 @@ namespace iml6yu.Data.Core.Extensions
             convertValue = null;
 
             if (typeCode == 3)//TypeCode.Boolean
-            { 
-                if (originValue is bool v)
-                {
-                    convertValue = v;
-                    return true;
-                }
-
-                else if (originValue is int || originValue is long || originValue is uint || originValue is ulong || originValue is byte || originValue is sbyte)
-                {
-                    if ((int)originValue == 1)
-                    {
-                        convertValue = true;
-                        return true;
-                    }
-                    if ((int)originValue == 0)
-                    {
-                        convertValue = false;
-                        return true;
-                    }
-                    return false;
-                }
-                else if (originValue is string s)
-                {
-                    if (s == "1" || s == "true" || s == "True" || s == "TRUE")
-                    {
-                        convertValue = true;
-                        return true;
-                    }
-
-                    if (s == "0" || s == "false" || s == "False" || s == "FALSE")
-                    {
-                        convertValue = false;
-                        return true;
-                    }
-                    return false;
-                }
-                else return false;
+            {
+                var r = VerifyAndConverBool(originValue, out bool boolValue);
+                convertValue = boolValue;
+                return r;
             }
 
             if (typeCode == 6)// TypeCode.Byte
             {
-                if (originValue is byte v)
-                {
-                    convertValue = v;
-                    return true;
-                }
-                return false;
+                var r = VerifyAndConvertByte(originValue, out byte byteValue);
+                convertValue = byteValue;
+                return r;
             }
 
             if (typeCode == 7)// TypeCode.Int16
             {
-                if (originValue is short v)
-                {
-                    convertValue = v;
-                    return true;
-                }
-                else if (originValue is byte b)
-                {
-                    convertValue = (short)b;
-                    return true;
-                }
-                return false;
+                var r = VerifyAndConvertShort(originValue, out short shortValue);
+                convertValue = shortValue;
+                return r;
             }
 
             if (typeCode == 9)// TypeCode.Int32
             {
-                if (originValue is int v)
-                {
-                    convertValue = v;
-                    return true;
-                }
-                else if (originValue is byte b)
-                {
-                    convertValue = (int)b;
-                    return true;
-                }
-                else if (originValue is short s)
-                {
-                    convertValue = (int)s;
-                    return true;
-                }
-                return false;
+                var r = VerifyAndConvertInt(originValue, out int intValue);
+                convertValue = intValue;
+                return r;
             }
 
             if (typeCode == 11)//TypeCode.Int64
             {
-                if (originValue is long v)
-                {
-                    convertValue = v;
-                    return true;
-                }
-                else if (originValue is byte b)
-                {
-                    convertValue = (int)b;
-                    return true;
-                }
-                else if (originValue is short s)
-                {
-                    convertValue = (int)s;
-                    return true;
-                }
-                else if (originValue is int i)
-                {
-                    convertValue = (long)i;
-                    return true;
-                }
-                return false;
+                var r = VerifyAndConvertLong(originValue, out long longValue);
+                convertValue = longValue;
+                return r;
             }
 
-            else if (typeCode == 4 || typeCode == 16) //TypeCode.Char TypeCode.String
+            else if (typeCode == 4) //TypeCode.Char TypeCode.String
             {
-                if (originValue is char c)
-                {
-                    convertValue = c;
-                    return true;
-                }
-                if (originValue is string s)
-                {
-                    convertValue = s;
-                    return true;
-                }
-                return false;
+                var r = VerifyAndConvertChar(originValue, out char charValue);
+                convertValue = charValue;
+                return r;
+            }
+            if (typeCode == 18)
+            {
+                var r = VerifyAndConvertString(originValue, out string stringValue);
+                convertValue = stringValue;
+                return r;
+            }
+            if (typeCode == 16)
+            {
+                var r = VerifyAndConvertDatetime(originValue, out DateTime dtValue);
+                convertValue = dtValue;
+                return r;
             }
             try
             {
@@ -811,114 +759,7 @@ namespace iml6yu.Data.Core.Extensions
             catch
             {
                 return false;
-            }
-
-
-
-            convertValue = null;
-            if (typeCode == 3)//TypeCode.Boolean
-            {
-                if (originValue is bool v)
-                {
-                    convertValue = v;
-                    return true;
-                }
-
-                else if (originValue is int || originValue is long || originValue is uint || originValue is ulong || originValue is byte || originValue is sbyte)
-                {
-                    if ((int)originValue == 1)
-                    {
-                        convertValue = true;
-                        return true;
-                    }
-                    if ((int)originValue == 0)
-                    {
-                        convertValue = false;
-                        return true;
-                    }
-                    return false;
-                }
-                else if (originValue is string s)
-                {
-                    if (s == "1" || s == "true" || s == "True" || s == "TRUE")
-                    {
-                        convertValue = true;
-                        return true;
-                    }
-
-                    if (s == "0" || s == "false" || s == "False" || s == "FALSE")
-                    {
-                        convertValue = false;
-                        return true;
-                    }
-                    return false;
-                }
-                else return false;
-            }
-            else if (typeCode == 6 || typeCode == 7 || typeCode == 9 || typeCode == 11) //TypeCode.Byte TypeCode.Int16 TypeCode.Int32 TypeCode.Int64
-            {
-                if (originValue is byte b)
-                {
-                    convertValue = b;
-                    return true;
-                }
-                if (originValue is short s)
-                {
-                    convertValue = s;
-                    return true;
-                }
-                if (originValue is int i)
-                {
-                    convertValue = i;
-                    return true;
-                }
-                if (originValue is long l)
-                {
-                    convertValue = l;
-                    return true;
-                }
-                return false;
-            }
-            else if (typeCode == 10 || typeCode == 12) //TypeCode.UInt32 TypeCode.UInt64
-            {
-                if (originValue is uint ui)
-                {
-                    convertValue = ui;
-                    return true;
-                }
-                if (originValue is ulong ul)
-                {
-                    convertValue = ul;
-                    return true;
-                }
-                return false;
-            }
-            else if (typeCode == 4 || typeCode == 16) //TypeCode.Char TypeCode.String
-            {
-                if (originValue is char c)
-                {
-                    convertValue = c;
-                    return true;
-                }
-                if (originValue is string s)
-                {
-                    convertValue = s;
-                    return true;
-                }
-                return false;
-            }
-            else
-            {
-                try
-                {
-                    convertValue = Convert.ChangeType(originValue, (TypeCode)typeCode);
-                    return true;
-                }
-                catch
-                {
-                    return false;
-                }
-            }
+            } 
         }
     }
 }

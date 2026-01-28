@@ -29,6 +29,10 @@ namespace iml6yu.Data.Core.JsonConverts
                     return longNum;
                 if (reader.TryGetDouble(out double doubleNum))
                     return doubleNum;
+                if (reader.TryGetUInt32(out uint uintNum))
+                    return uintNum;
+                if (reader.TryGetUInt64(out ulong ulongNum))
+                    return ulongNum;
                 else
                     return reader.GetDecimal();
             }
@@ -38,7 +42,10 @@ namespace iml6yu.Data.Core.JsonConverts
                 if (DateTime.TryParse(stringV, out DateTime dt))
                 {
                     return dt;
-                }
+                } 
+                // 尝试解析为 Guid
+                if (Guid.TryParse(stringV, out Guid guid))
+                    return guid;
                 return stringV;
 
             }
@@ -52,21 +59,26 @@ namespace iml6yu.Data.Core.JsonConverts
                 writer.WriteNullValue();
             else
             {
-                Type objType = value.GetType();
-                if (objType == typeof(string) || objType == typeof(DateTime) || objType == typeof(Guid))
-                    writer.WriteStringValue(value.ToString());
-                else if (objType == typeof(int))
-                    writer.WriteNumberValue((int)value);
-                else if (objType == typeof(double))
-                    writer.WriteNumberValue((double)value);
-                else if (objType == typeof(decimal))
-                    writer.WriteNumberValue((decimal)value);
-                else if (objType == typeof(char))
-                    writer.WriteNumberValue((char)value);
-                else if (objType == typeof(bool))
-                    writer.WriteBooleanValue((bool)value);
-                else
-                    writer.WriteStringValue(value.ToString());
+                Type valueType = value.GetType();
+
+                // 使用默认序列化器处理复杂类型
+                JsonSerializer.Serialize(writer, value, valueType, options);
+
+                //Type objType = value.GetType();
+                //if (objType == typeof(string) || objType == typeof(DateTime) || objType == typeof(Guid))
+                //    writer.WriteStringValue(value.ToString());
+                //else if (objType == typeof(int))
+                //    writer.WriteNumberValue((int)value);
+                //else if (objType == typeof(double))
+                //    writer.WriteNumberValue((double)value);
+                //else if (objType == typeof(decimal))
+                //    writer.WriteNumberValue((decimal)value);
+                //else if (objType == typeof(char))
+                //    writer.WriteNumberValue((char)value);
+                //else if (objType == typeof(bool))
+                //    writer.WriteBooleanValue((bool)value);
+                //else
+                //    writer.WriteStringValue(value.ToString());
             }
         }
     }
