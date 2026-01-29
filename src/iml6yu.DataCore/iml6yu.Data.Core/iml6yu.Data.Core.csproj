@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>iml6yu.Data.Core</Title>
-    <Version>1.2.5</Version>
+    <Version>1.2.6</Version>
     <Authors>iml6yu</Authors>
     <Description>数据采集与写入的核心类库</Description>
     <Copyright>@iml6yu</Copyright>
@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="iml6yu.Fingerprint" Version="1.0.2" />
+    <PackageReference Include="iml6yu.Fingerprint" Version="1.0.3" />
     <PackageReference Include="iml6yu.Results" Version="1.0.6" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
   </ItemGroup>

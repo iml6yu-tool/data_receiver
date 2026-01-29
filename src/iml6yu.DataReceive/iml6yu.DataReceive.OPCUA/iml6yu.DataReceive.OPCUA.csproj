@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>iml6yu.DataReceive.OPCUA</Title>
-    <Version>1.2.3</Version>
+    <Version>1.2.6</Version>
     <Authors>iml6yu</Authors>
     <Description>OPCUA协议数据采集类库</Description>
     <Copyright>@iml6yu</Copyright>

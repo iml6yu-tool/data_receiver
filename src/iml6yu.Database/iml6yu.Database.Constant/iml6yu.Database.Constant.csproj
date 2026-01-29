@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.1.1</Version>
+    <Version>1.2.6</Version>
     <Authors>iml6yu</Authors>
     <Copyright>@iml6yu</Copyright>
     <PackageIcon>logo_128.jpg</PackageIcon>
@@ -25,7 +25,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="iml6yu.Fingerprint" Version="1.0.2" />
+    <PackageReference Include="iml6yu.Fingerprint" Version="1.0.3" />
     <PackageReference Include="iml6yu.Results" Version="1.0.6" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.6.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
