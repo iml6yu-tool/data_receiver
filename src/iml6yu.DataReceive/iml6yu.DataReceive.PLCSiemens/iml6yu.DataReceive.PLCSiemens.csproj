@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>iml6yu.DataReceive.S7Net</Title>
-    <Version>1.2.6</Version>
+    <Version>1.2.7-beta260203001</Version>
     <Authors>iml6yu</Authors>
     <Description>S7Net协议数据采集类库</Description>
     <Copyright>@iml6yu</Copyright>

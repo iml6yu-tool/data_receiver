@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>iml6yu.DataReceive.ModbusMaster</Title>
-    <Version>1.2.6</Version>
+    <Version>1.2.7-beta260203001</Version>
     <Authors>iml6yu</Authors>
     <Description>Modbus协议数据采集的基础类库</Description>
     <Copyright>@iml6yu</Copyright>

@@ -50,5 +50,7 @@ namespace iml6yu.Data.Core.Models
         public int FaultLevel { get; set; }
 
         public string LineName { get; set; }
+
+        public string CreateTime { get; set; }
     }
 }
