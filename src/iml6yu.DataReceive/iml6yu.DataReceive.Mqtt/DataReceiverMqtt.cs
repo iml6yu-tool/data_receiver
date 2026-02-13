@@ -56,6 +56,7 @@ namespace iml6yu.DataReceive.Mqtt
 
             if (ConfigNodes == null)
                 return MessageResult.Failed(ResultType.ParameterError, "", new ArgumentNullException(nameof(ConfigNodes)));
+
             try
             {
                 foreach (var key in ConfigNodes.Keys)
@@ -178,7 +179,7 @@ namespace iml6yu.DataReceive.Mqtt
                       {
                           await DisConnectAsync();
                           return;
-                      } 
+                      }
                       await Task.Delay(2000);
                   }
 
@@ -201,8 +202,10 @@ namespace iml6yu.DataReceive.Mqtt
                       if (dic == null || dic.Count == 0)
                           return new Dictionary<string, Dictionary<string, ReceiverTempDataValue>>();
 
-                      var result = new Dictionary<string, Dictionary<string, ReceiverTempDataValue>>();
+                      if (AddressRefGroupName.Count == 0)
+                          return new Dictionary<string, Dictionary<string, ReceiverTempDataValue>>() { { Option.ProductLineName, dic } };
 
+                      var result = new Dictionary<string, Dictionary<string, ReceiverTempDataValue>>();
                       foreach (var address in dic.Keys)
                       {
                           if (!AddressRefGroupName.ContainsKey(address)) continue;
@@ -210,13 +213,10 @@ namespace iml6yu.DataReceive.Mqtt
                               result.Add(AddressRefGroupName[address].Item1, new Dictionary<string, ReceiverTempDataValue>());
                           result[AddressRefGroupName[address].Item1].Add(AddressRefGroupName[address].Item2, dic[address]);
                       }
-                      dic.Clear();
-                      dic = null;
                       return result;
                   }
                   catch (Exception ex)
                   {
-
                       OnErrorEvent(this, new ExceptionArgs() { Ex = ex, Message = "Parse message of mqtt received error" });
                       return null;
                   }

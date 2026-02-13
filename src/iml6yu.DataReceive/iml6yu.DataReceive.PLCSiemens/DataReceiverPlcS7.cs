@@ -202,10 +202,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                                         }
                                         await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
                                     });
-                                //结束了，就等待下一个间隔，直接退出吧
-                                if (tokenSource.IsCancellationRequested)
-                                    return;
-                                await Task.Delay(item.Key == 0 ? 500 : item.Key);
+                                await Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource);
                             }
                             catch (Exception ex)
                             {
@@ -242,7 +239,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                 //分组读取节点
                 var s7DataItems = intervalToNodeItem.ToDictionary(t => t.Key, t => t.Value.Select(t =>
                 {
-                    var dataItem = DataItem.FromAddress(t.FullAddress,t.Count);
+                    var dataItem = DataItem.FromAddress(t.FullAddress, t.Count);
                     return (t.FullAddress, t.Address, dataItem);
                 }).Where(t => t.Item3 != null).ToDictionary(t => t.Item2, t => t.Item3));
                 result.Add(key, s7DataItems);

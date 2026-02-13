@@ -522,13 +522,13 @@ namespace S7.Net
                     var lenght = 0;
                     if (key == VarType.Bit)
                         lenght = 1;
-                    else if (key == VarType.Byte)
+                    else if (key == VarType.Byte || key == VarType.String || key == VarType.S7String)
                         lenght = 8;
                     else if (key == VarType.Real || key == VarType.DInt || key == VarType.DWord || key == VarType.Timer || key == VarType.Time)
                         lenght = 32;
                     else if (key == VarType.LReal || key == VarType.DateTime)
                         lenght = 64;
-                    else if (key == VarType.Word || key == VarType.Int || key == VarType.Counter || key == VarType.Date)
+                    else if (key == VarType.Word || key == VarType.Int || key == VarType.Counter || key == VarType.Date || key == VarType.S7WString)
                         lenght = 16;
                     else if (key == VarType.DateTimeLong)
                         lenght = 96;
