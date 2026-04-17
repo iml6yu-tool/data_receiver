@@ -6,6 +6,8 @@
     <LangVersion>latest</LangVersion>
     <!-- 启用可空引用类型，提升代码健壮性 -->
     <Nullable>enable</Nullable>
+    <!--版本-->
+    <Version>1.2.8-beta260414001</Version>
     <!-- 将所有警告视为错误，确保代码质量 -->
     <!--<TreatWarningsAsErrors>false</TreatWarningsAsErrors>-->
     <!-- 启用全局using指令，简化代码 -->

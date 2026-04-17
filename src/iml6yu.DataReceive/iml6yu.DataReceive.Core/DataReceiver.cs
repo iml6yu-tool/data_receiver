@@ -445,7 +445,11 @@ namespace iml6yu.DataReceive.Core
         {
             return DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected static long GetTimestamp(DateTimeOffset dto)
+        {
+            return dto.ToUnixTimeMilliseconds();
+        }
         /// <summary>
         /// 更新缓存
         /// </summary>
@@ -633,7 +637,7 @@ namespace iml6yu.DataReceive.Core
         /// 将消息加入线程channel中
         /// </summary>
         /// <param name="productLineName">产线名称</param>
-        /// <param name="msg">字典：数据地址 --> 数据临时值（值和时间戳）</param>
+        /// <param name="msg">字典：数据地址 ref 数据临时值（值和时间戳）</param>
         /// <returns></returns>
         protected virtual async Task ReceiveDataToMessageChannelAsync(string productLineName, Dictionary<string, ReceiverTempDataValue> msg)
         {

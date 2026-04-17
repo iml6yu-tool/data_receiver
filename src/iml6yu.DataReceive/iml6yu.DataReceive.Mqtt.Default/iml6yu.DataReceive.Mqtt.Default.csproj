@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>iml6yu.DataReceive.Mqtt.Default</Title> 
+    <Authors>iml6yu</Authors>
+    <Description>Defauult Mqtt协议数据采集类库,数据格式是按照当前系统的推送格式进行反序列化</Description>
+    <Copyright>@iml6yu</Copyright>
+    <PackageIcon>logo_128.jpg</PackageIcon>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageTags>mqtt;datareceiver;iml6yu;iml6yu.data;</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\iml6yu.DataReceive.Mqtt\iml6yu.DataReceive.Mqtt.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\LICENSE" Link="LICENSE">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </None>
+    <None Include="..\..\..\..\logo_128.jpg" Link="logo_128.jpg">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </None> 
+  </ItemGroup> 
+ <ItemGroup>
+    <None Include="readme.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
+</Project>

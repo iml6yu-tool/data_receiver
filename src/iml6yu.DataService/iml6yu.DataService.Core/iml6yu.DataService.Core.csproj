@@ -4,8 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>iml6yu.DataService.Core</Title>
-    <Version>1.2.1</Version>
+    <Title>iml6yu.DataService.Core</Title> 
     <Authors>iml6yu</Authors>
     <Description>数据服务的核心类库</Description>
     <Copyright>@iml6yu</Copyright>

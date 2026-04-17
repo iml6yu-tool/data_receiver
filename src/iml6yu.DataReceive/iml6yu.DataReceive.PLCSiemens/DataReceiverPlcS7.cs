@@ -206,7 +206,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                             }
                             catch (Exception ex)
                             {
-                                Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data error. {ex.Message}");
+                                Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data exception. {ex.Message}");
                                 await Task.Delay(item.Key == 0 ? 500 : item.Key);
                             }
                         }

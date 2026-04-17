@@ -71,30 +71,52 @@ SOFTWARE.
 ## 点位配置文件
 ### FullAddress配置格式说明
 **格式** slaveAddress.ReadType.Bit
+
 **说明**
-- slaveAddress：站点ID，0~255
-- ReadType：读取类型 一共有以下几种
-	+ Coils *<span style="color:blue">用于读取和控制远程设备的开关状态，通常用于控制继电器等开关设备,Reads from 1 to 2000 contiguous coils status.</span>"*,**读取到的数据类型都是bool**
-	+ HoldingRegisters *<span style="color:blue">用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息,Reads contiguous block of holding registers.</span>"*,**读取到的数据类型都是ushort**
-	+ HoldingRegisters2 大端32位(ABCD) Int32
-    + HoldingRegisters2ByteSwap 大端32位(BADC) Int32
-    + HoldingRegisters4 大端64位(ABCD EFGH) Int64
-    + HoldingRegisters4ByteSwap 大端64位(BADC FEHG) Int64
-    + HoldingRegistersLittleEndian2 小端32位(DCBA) Int32
-    + HoldingRegistersLittleEndian2ByteSwap 小端32位(CDAB) Int32
-    + HoldingRegistersLittleEndian4 小端64位(HGFE DCBA) Int64
-    + HoldingRegistersLittleEndian4ByteSwap 小端64位(GHEF CDAB) Int64
-    + Inputs *<span style="color:blue">用于读取远程设备的输入状态，通常用于读取传感器等输入设备的状态, Reads from 1 to 2000 contiguous discrete input status.</span>"*,**读取到的数据类型都是bool**
-	+ ReadInputRegisters *<span style="color:blue">用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据,Reads contiguous block of input registers.</span>"*,**读取到的数据类型都是ushort**
-    + ReadInputRegisters2 大端32位(ABCD) Int32
-    + ReadInputRegisters2ByteSwap 大端32位(BADC) Int32
-    + ReadInputRegisters4 大端64位(ABCD EFGH) Int64
-    + ReadInputRegisters4ByteSwap 大端64位(BADC FEHG) Int64
-    + ReadInputRegistersLittleEndian2 小端32位(DCBA) Int32
-    + ReadInputRegistersLittleEndian2ByteSwap 小端32位(CDAB) Int32
-    + ReadInputRegistersLittleEndian4 小端64位(HGFE DCBA) Int64
-    + ReadInputRegistersLittleEndian4ByteSwap 小端64位(GHEF CDAB) Int64
-- Bit:点位，数字
+
+`slaveAddress`站点ID，0~255,`ReadType`读取类型 ,`Bit`点位，数字。
+
+- ReadType 明细说明
+
+|类型|位数|说明|
+|----|----|----|
+|Coils|1bit| 用于读取和控制远程设备的开关状态，通常用于控制继电器等开关设备, Reads from 1 to 2000 contiguous coils status.|
+|Inputs|1bit| 用于读取远程设备的输入状态，通常用于读取传感器等输入设备的状态, Reads from 1 to 2000 contiguous discrete input status.|
+|HoldingRegisters|1bit| 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.|
+|HoldingRegisters2|32bit| （默认大端 ABCD） 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.|
+|HoldingRegisters2ByteSwap|32bit| （默认大端 BADC） 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.|
+|HoldingRegistersFloat|32bit| float （默认大端 ABCD）|
+|HoldingRegistersFloatLittleEndian|32bit| float 小端(DCBA)|
+|HoldingRegistersFloatByteSwap|32bit| float 大端交换 (BADC)|
+|HoldingRegistersFloatLittleEndianByteSwap|32bit| float 小端交换 (CDAB)|
+|HoldingRegisters4|64bit|  大端 （ABCD EFGH） 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.|
+|HoldingRegisters4ByteSwap|64bit| 大端交换 （BADC FEHG） 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.|
+|HoldingRegistersDouble|64bit| double默认大端 ABCD EFGH）|
+|HoldingRegistersDoubleLittleEndian|64bit| double小端(HGFE DCBA)|
+|HoldingRegistersDoubleByteSwap|64bit| double 大端交换 （BADC FEHG）|
+|HoldingRegistersDoubleLittleEndianByteSwap|64bit| double小端交换(FEHG CDAB)|
+|HoldingRegistersLittleEndian2|32bit| 小端(DCBA) 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.|
+|HoldingRegistersLittleEndian2ByteSwap|32bit| 小端(CDAB) 读取2个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.|
+|HoldingRegistersLittleEndian4|64bit|  小端(HGFE DCBA) 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.|
+|HoldingRegistersLittleEndian4ByteSwap|64bit|  小端交换(FEHG CDAB) 读取4个short 用于存储和读取远程设备的数据，通常用于存储控制参数、设备状态等信息, Reads contiguous block of holding registers.|
+|ReadInputRegisters|16bit| 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.|
+|ReadInputRegisters2|32bit| (ABCD) 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.|
+|ReadInputRegisters2ByteSwap|32bit| (BADC) 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.|
+|ReadInputRegistersFloat|32bit| float（默认大端 ABCD）|
+|ReadInputRegistersFloatLittleEndian|32bit| float小端(DCBA)|
+|ReadInputRegistersFloatByteSwap|32bit| float大端交换 (BADC)|
+|ReadInputRegistersFloatLittleEndianByteSwap|32bit| float小端交换 (CDAB)|
+|ReadInputRegisters4|64bit| (ABCD EFGH) 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.|
+|ReadInputRegisters4ByteSwap|64bit| (BADC FEHG) 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.|
+|ReadInputRegistersLittleEndian2|32bit| (DCBA) 小端 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.|
+|ReadInputRegistersLittleEndian2ByteSwap|32bit| (CDAB) 小端 读取2个short  用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.|
+|ReadInputRegistersLittleEndian4|64bit| (HGFE DCBA) 小端 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.|
+|ReadInputRegistersLittleEndian4ByteSwap|64bit| (GHEF CDAB) 小端 读取4个short 用于存储远程设备的输入数据，通常用于存储传感器等输入设备的数据, Reads contiguous block of input registers.|
+|ReadInputRegistersDouble|64bit| double （默认大端 ABCD EFGH）|
+|ReadInputRegistersDoubleLittleEndian|64bit| double  小端(HGFE DCBA)|
+|ReadInputRegistersDoubleByteSwap|64bit| double   大端交换 （BADC FEHG）|
+|ReadInputRegistersDoubleLittleEndianByteSwap|64bit| double  小端交换(FEHG CDAB)  |
+
 
 **例子**
 - 1.Coils.0

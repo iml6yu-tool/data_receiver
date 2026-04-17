@@ -299,7 +299,7 @@ namespace iml6yu.DataReceive.Mqtt
             return mqttSubscribeOptions;
         }
 
-        private Dictionary<string, ReceiverTempDataValue> JsonDataPrase(string json)
+        protected virtual Dictionary<string, ReceiverTempDataValue> JsonDataPrase(string json)
         {
 
             try

@@ -4,8 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>iml6yu.DataService.Modbus</Title>
-    <Version>1.2.1</Version>
+    <Title>iml6yu.DataService.Modbus</Title> 
     <Authors>iml6yu</Authors>
     <Description>Modbus数据服务，提供一个modbus主站服务的基础类库</Description>
     <Copyright>@iml6yu</Copyright>

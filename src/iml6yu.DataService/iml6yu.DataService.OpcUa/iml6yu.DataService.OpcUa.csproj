@@ -4,8 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>iml6yu.DataService.OPCUA</Title>
-    <Version>1.2.5</Version>
+    <Title>iml6yu.DataService.OPCUA</Title> 
     <Authors>iml6yu</Authors>
     <Description>一个OPCUA协议的数据服务类库</Description>
     <Copyright>@iml6yu</Copyright>

@@ -81,6 +81,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataServiceExample.O
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "test\TestProject\TestProject.csproj", "{945DB3EE-8689-48C7-A84E-EA527B0C1A19}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataReceive.NetTCP", "iml6yu.DataReceive\iml6yu.DataReceive.NetTCP\iml6yu.DataReceive.NetTCP.csproj", "{B5924E01-4F67-4985-8E54-53F5B65791F6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataReceive.Mqtt.InPlant", "iml6yu.DataReceive\iml6yu.DataReceive.Mqtt.InPlant\iml6yu.DataReceive.Mqtt.InPlant.csproj", "{82AB3D09-C95C-48B6-AA69-3C322A8FEC7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataReceive.Mqtt.Default", "iml6yu.DataReceive\iml6yu.DataReceive.Mqtt.Default\iml6yu.DataReceive.Mqtt.Default.csproj", "{91FAAAB3-AA16-4A5A-AD23-4D9C50889361}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iml6yu.DataReceiverExample.S7.Winform", "examples\iml6yu.DataReceiverExample.S7.Winform\iml6yu.DataReceiverExample.S7.Winform.csproj", "{9ED8F092-78EA-4AB7-B1DE-BFC20F1E5290}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -183,6 +191,22 @@ Global
 		{945DB3EE-8689-48C7-A84E-EA527B0C1A19}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{945DB3EE-8689-48C7-A84E-EA527B0C1A19}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{945DB3EE-8689-48C7-A84E-EA527B0C1A19}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5924E01-4F67-4985-8E54-53F5B65791F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5924E01-4F67-4985-8E54-53F5B65791F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5924E01-4F67-4985-8E54-53F5B65791F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5924E01-4F67-4985-8E54-53F5B65791F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82AB3D09-C95C-48B6-AA69-3C322A8FEC7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82AB3D09-C95C-48B6-AA69-3C322A8FEC7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82AB3D09-C95C-48B6-AA69-3C322A8FEC7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82AB3D09-C95C-48B6-AA69-3C322A8FEC7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91FAAAB3-AA16-4A5A-AD23-4D9C50889361}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91FAAAB3-AA16-4A5A-AD23-4D9C50889361}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91FAAAB3-AA16-4A5A-AD23-4D9C50889361}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91FAAAB3-AA16-4A5A-AD23-4D9C50889361}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9ED8F092-78EA-4AB7-B1DE-BFC20F1E5290}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9ED8F092-78EA-4AB7-B1DE-BFC20F1E5290}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9ED8F092-78EA-4AB7-B1DE-BFC20F1E5290}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9ED8F092-78EA-4AB7-B1DE-BFC20F1E5290}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -212,6 +236,10 @@ Global
 		{A85B5811-F6E3-49A4-8976-EB08A72E1B7F} = {8C79E9E4-3B07-4A80-9165-075B0850D52C}
 		{FCD6D7B9-6AB3-42F0-A0B4-D3019BDA20B1} = {0EB3193F-52FD-4AAE-8499-CB8E4C0697A8}
 		{945DB3EE-8689-48C7-A84E-EA527B0C1A19} = {3A3AFE5E-83DD-42A5-9266-4EB65E10073F}
+		{B5924E01-4F67-4985-8E54-53F5B65791F6} = {3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}
+		{82AB3D09-C95C-48B6-AA69-3C322A8FEC7C} = {3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}
+		{91FAAAB3-AA16-4A5A-AD23-4D9C50889361} = {3E4BC3E2-EA03-41DC-B17C-8FDA02BBCAB9}
+		{9ED8F092-78EA-4AB7-B1DE-BFC20F1E5290} = {0EB3193F-52FD-4AAE-8499-CB8E4C0697A8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {17FDDAE9-6592-4AE5-9DC7-85C0D6913D5A}

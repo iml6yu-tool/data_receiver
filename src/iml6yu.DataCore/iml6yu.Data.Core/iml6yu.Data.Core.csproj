@@ -4,8 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Title>iml6yu.Data.Core</Title>
-    <Version>1.2.7-beta260203001</Version>
+    <Title>iml6yu.Data.Core</Title> 
     <Authors>iml6yu</Authors>
     <Description>数据采集与写入的核心类库</Description>
     <Copyright>@iml6yu</Copyright>
