@@ -380,15 +380,33 @@ namespace iml6yu.DataReceive.Core
                             {
                                 //发布数据变更通知
                                 DataChangedEvent?.Invoke(Option, changeDatas);
-
+                                if (Option.RefLineNames != null && Option.RefLineNames.Length > 0)
+                                {
+                                    foreach (var lineName in Option.RefLineNames)
+                                    {
+                                        var copyData = changeDatas.DeepCopy();
+                                        copyData.Key = lineName;
+                                        DataChangedEvent?.Invoke(Option, copyData);
+                                    }
+                                }
                                 //订阅事件
                                 if (Subscribers.Count > 0)
                                     Parallel.ForEach(Subscribers, item =>
                                     {
                                         if (item.Value.Count > 0)
                                         {
-                                            var subDatas = changeDatas.Datas.Join(item.Value, d => d.Address, s => s, (d, s) => d).ToList();
-                                            DataSubscribeEvent?.Invoke(item.Key, new DataReceiveContract(changeDatas.Timestamp) { Datas = subDatas });
+                                            var subDataItems = changeDatas.Datas.Join(item.Value, d => d.Address, s => s, (d, s) => d).ToList();
+                                            var subData = new DataReceiveContract(changeDatas.Timestamp) { Key = changeDatas.Key, Datas = subDataItems };
+                                            DataSubscribeEvent?.Invoke(item.Key, subData);
+                                            if (Option.RefLineNames != null && Option.RefLineNames.Length > 0)
+                                            {
+                                                foreach (var lineName in Option.RefLineNames)
+                                                {
+                                                    var copyData = subData.DeepCopy();
+                                                    copyData.Key = lineName;
+                                                    DataSubscribeEvent?.Invoke(item.Key, copyData);
+                                                }
+                                            }
                                         }
                                     });
                             }
@@ -400,6 +418,15 @@ namespace iml6yu.DataReceive.Core
                                 var intervalDatas = GetDataContract(data);
                                 if (intervalDatas != null && intervalDatas.Datas.Count > 0)
                                     DataIntervalEvent?.Invoke(Option, intervalDatas);
+                                if (Option.RefLineNames != null && Option.RefLineNames.Length > 0)
+                                {
+                                    foreach (var lineName in Option.RefLineNames)
+                                    {
+                                        var copyData = intervalDatas.DeepCopy();
+                                        copyData.Key = lineName;
+                                        DataIntervalEvent?.Invoke(Option, copyData);
+                                    }
+                                }
                                 //});
                             }
                         }

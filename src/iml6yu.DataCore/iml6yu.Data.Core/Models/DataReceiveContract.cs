@@ -31,5 +31,17 @@
         /// 数据
         /// </summary>
         public List<DataReceiveContractItem> Datas { get; set; }
+
+        public DataReceiveContract DeepCopy()
+        {
+            var copy = new DataReceiveContract
+            {
+                Id = this.Id,
+                Key = this.Key,
+                Timestamp = this.Timestamp,
+                Datas = this.Datas.Select(d => d.DeepCopy()).ToList()
+            };
+            return copy;
+        }
     }
 }
