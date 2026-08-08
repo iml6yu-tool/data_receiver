@@ -169,7 +169,7 @@ namespace iml6yu.DataReceive.Core
                     loadResult = LoadConfigAsync(Option.NodeFile).Result;
                 }
                 if (!loadResult.State)
-                    Logger.LogError($"load config error!\r\n{loadResult.Message}");
+                    Logger.LogError($"load config file error({Option.NodeFile})!\r\n{loadResult.Message}");
             }
 
             if (Option.AutoConnect)
@@ -566,6 +566,36 @@ namespace iml6yu.DataReceive.Core
                 }
                 targetValue = 0;
                 return false;
+            }
+            else if(typeCode == 13) //TypeCode.Single float
+            {
+                if (value is float f)
+                {
+                    targetValue = f;
+                    return true;
+                }
+                if (value is double d)
+                {
+                    targetValue = (float)d;
+                    return true;
+                }
+                targetValue = 0f;
+                return false;
+            }
+            else if (typeCode == 14) //TypeCode.Double  double
+            { 
+                if (value is double d)
+                {
+                    targetValue = d;
+                    return true;
+                }
+                if (value is float f)
+                {
+                    targetValue = (double)f;
+                    return true;
+                }
+                targetValue = 0d;
+                return false; 
             }
             else if (typeCode == 16) //DateTime
             {

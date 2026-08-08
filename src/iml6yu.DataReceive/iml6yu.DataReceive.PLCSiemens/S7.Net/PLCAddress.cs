@@ -80,8 +80,14 @@
                         /*
                          * Auth：刘会东
                          * Date：2026年1月21日
-                         * Reason：添加对DateTime Date Time Timer DateTimeLong String S7String S7WString的支持
+                         * Reason：添加对SRL(real float) LRL(Lreal double) DateTime Date Time Timer DateTimeLong String S7String S7WString的支持
                          */
+                        case "SRL":
+                            varType = VarType.Real;
+                            return;
+                        case "LRL":
+                            varType = VarType.LReal;
+                            return;
                         case "DDT":// 年（2位自动补充）月日时分秒周
                             varType = VarType.DateTime;
                             return;
