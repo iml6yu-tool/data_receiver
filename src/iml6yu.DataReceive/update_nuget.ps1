@@ -17,7 +17,7 @@ function Get-LatestNuGetPackages {
     foreach ($package in $allPackages) {
         # 从文件名解析包名和版本（格式：PackageName.Version.nupkg�?
         $fileName = $package.BaseName
-        
+        cd
         # 使用正则表达式匹配包名和版本
         if ($fileName -match '^(.+?)\.(\d+\.\d+\.\d+(-[^\.]+)?)$') {
             $packageName = $matches[1]

@@ -9,6 +9,7 @@
         /// 业务关联的产线
         /// </summary>
         public string ProductLineName { get; set; }
+        public string[] RefLineNames { get; set; }
         /// <summary>
         /// 数据源连接用户名
         /// </summary>

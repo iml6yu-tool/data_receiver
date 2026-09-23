@@ -1,14 +1,26 @@
 ﻿[
   {
-    "fullAddress": "DB102.DDT504",
+    "fullAddress": "DB121.STR2",
     "address": "DB102.DDT504",
-    "valueType": "DateTime",
+    "valueType": "String",
+    "count": 30,
     "isSubscribe": true,
-    "interval": 10000,
+    "interval": 1000,
     "groupName": "产线1",
     "descript": "",
     "alisa": ""
   }
+  //,
+  //{
+  //  "fullAddress": "DB102.SRL504",
+  //  "address": "DB102.ddRL504",
+  //  "valueType": "Single",
+  //  "isSubscribe": true,
+  //  "interval": 10000,
+  //  "groupName": "产线1",
+  //  "descript": "",
+  //  "alisa": ""
+  //}
   //// *******start 测试DateTime的各种类型******************
   //{
   //  "fullAddress": "DB1.DTL126",

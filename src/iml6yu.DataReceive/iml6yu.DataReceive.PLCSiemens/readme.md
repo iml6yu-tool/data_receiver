@@ -65,8 +65,14 @@ SOFTWARE.
 - WriteAsync<T>(string address, T data) 写数据
 - WriteWithVerifyAsync(DataWriteContract data) 写数据并且验证写入是否成功（大多数是因为业务中需要批量写入多条数据，并且设置了写入标志位）
 
-### v1.2.2版本新增加数据类型支持
+### v1.2.9版本新增加数据类型支持
 ```csharp
+ case "SRL":
+    varType = VarType.Real;
+    return;
+case "LRL":
+    varType = VarType.LReal;
+    return;
  case "DDT":// 年月日时分秒 对应s7 1500中的DateTime类型(64bit 8byte)
       varType = VarType.DateTime;
       return;

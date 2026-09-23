@@ -15,9 +15,9 @@ namespace iml6yu.Database.Constant.Services
             Logger = loggerFactory.CreateLogger(this.GetType());
         }
 
-        public ISqlSugarClient Db { get; }
+        public ISqlSugarClient Db { get; set; }
 
-        public ILogger Logger { get; }
+        public ILogger Logger { get; set; }
 
         /// <summary>
         /// 初始化数据库

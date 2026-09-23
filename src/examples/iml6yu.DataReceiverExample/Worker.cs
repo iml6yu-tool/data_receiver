@@ -43,6 +43,12 @@ namespace iml6yu.DataReceiverExample
                 logger.LogInformation("Data changed: at {TagName} \r\n {Value}", DateTimeOffset.FromUnixTimeMilliseconds(e.Timestamp).ToString("yyyy-MM-dd HH:mm:ss.fff"),
                     JsonSerializer.Serialize(e.Datas));
             };
+            receiver.DataIntervalEvent += (sender, e) =>
+            {
+                e.Datas.FirstOrDefault().Value = e.Datas.FirstOrDefault()?.Value.ToString().Trim();
+                logger.LogInformation("Data Interval: at {TagName} \r\n {Value}", DateTimeOffset.FromUnixTimeMilliseconds(e.Timestamp).ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                    JsonSerializer.Serialize(e.Datas));
+            };
             receiver.StartWorkAsync(cancellationToken);
             await base.StartAsync(cancellationToken);
         }
@@ -50,7 +56,7 @@ namespace iml6yu.DataReceiverExample
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
             await receiver.StopWorkAsync();
-            await base.StopAsync(cancellationToken);  
+            await base.StopAsync(cancellationToken);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

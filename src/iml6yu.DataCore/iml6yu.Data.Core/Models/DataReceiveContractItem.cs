@@ -56,7 +56,16 @@ namespace iml6yu.Data.Core.Models
         //        IsFlag = false
         //    };
         //}
-
+        public DataReceiveContractItem DeepCopy()
+        {
+            return new DataReceiveContractItem
+            {
+                Address = this.Address,
+                ValueType = this.ValueType,
+                Value = this.Value,
+                Timestamp = this.Timestamp
+            };
+        }
         public static explicit operator DataReceiveContractItem(DataWriteContractItem item)
         {
             return new DataReceiveContractItem()
