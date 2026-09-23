@@ -9,8 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="iml6yu.DataReceive.PLCSiemens" Version="1.2.6" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.PLCSiemens\iml6yu.DataReceive.PLCSiemens.csproj" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
