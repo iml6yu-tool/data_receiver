@@ -125,7 +125,7 @@ namespace iml6yu.DataReceive.ModbusMaster
             catch (Exception ex)
             {
 
-                Logger.LogError("read coils error.\r\n{0}", ex.Message);
+                Logger.LogError($"{Option.ReceiverName}({Option.OriginHost})read coils error.\r\n{ex.Message}");
             }
 
             return tempDatas;
@@ -145,7 +145,7 @@ namespace iml6yu.DataReceive.ModbusMaster
             catch (Exception ex)
             {
 
-                Logger.LogError("read inputs error.\r\n{0}", ex.Message);
+                Logger.LogError($"{Option.ReceiverName}({Option.OriginHost})read inputs error.\r\n{ex.Message}");
             }
 
             return tempDatas;
@@ -164,7 +164,7 @@ namespace iml6yu.DataReceive.ModbusMaster
             }
             catch (Exception ex)
             {
-                Logger.LogError("read input registers error.\r\n{0}", ex.Message);
+                Logger.LogError($"{Option.ReceiverName}({Option.OriginHost})read input registers error.\r\n{ex.Message}");
             }
 
             return tempDatas;
@@ -183,7 +183,7 @@ namespace iml6yu.DataReceive.ModbusMaster
             }
             catch (Exception ex)
             {
-                Logger.LogError("read holding registers error.\r\n{0}", ex.Message);
+                Logger.LogError($"{Option.ReceiverName}({Option.OriginHost})read holding registers error.\r\n{ex.Message}");
             }
 
             return tempDatas;
@@ -194,7 +194,7 @@ namespace iml6yu.DataReceive.ModbusMaster
         {
             if (values.Length != node.NumberOfPoint)
             {
-                Logger.LogWarning($"Read Modbus Data Error,Return Count not equals Read count. Read Node Count is {node.ReadNodes.Count},Return Value Count is {values.Length}.Read Node Details is \r\n{System.Text.Json.JsonSerializer.Serialize(node)}");
+                Logger.LogWarning($"{Option.ReceiverName}({Option.OriginHost})Read Modbus Data Error,Return Count not equals Read count. Read Node Count is {node.ReadNodes.Count},Return Value Count is {values.Length}.Read Node Details is \r\n{System.Text.Json.JsonSerializer.Serialize(node)}");
                 return;
             }
             long timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
@@ -530,19 +530,34 @@ namespace iml6yu.DataReceive.ModbusMaster
             return list;
         }
 
-        public override async Task<MessageResult> WriteAsync(DataWriteContract data)
+        protected override async Task<MessageResult> WriteBatchAsync(DataWriteContract data)
         {
             if (!IsConnected)
                 return MessageResult.Failed(ResultType.ServerDoApiError, $"the dirver({Option.OriginHost}) not connect");
-
             List<string> errorAddresses = new List<string>();
-            foreach (var item in data.Datas)
+
+            var valueNodes = data.Datas.Where(t => !t.IsFlag).ToList();
+            var flagNodes = data.Datas.Where(t => t.IsFlag).ToList();
+            if (valueNodes != null && valueNodes.Count > 0)
             {
-                if (!(await WriteAsync(item)).State)
-                    errorAddresses.Add(item.Address);
+                foreach (var item in valueNodes)
+                {
+                    if (!(await WriteAsync(item)).State)
+                        errorAddresses.Add(item.Address);
+                }
+                if (errorAddresses.Count > 0)
+                    return MessageResult.Failed(ResultType.DeviceWriteError, $"{Option.ReceiverName}({Option.OriginHost}) write some address error:{string.Join(",", errorAddresses)}");
             }
-            if (errorAddresses.Count > 0)
-                return MessageResult.Failed(ResultType.DeviceWriteError, $"write some address error:{string.Join(",", errorAddresses)}");
+            if (flagNodes != null && flagNodes.Count > 0)
+            {
+                foreach (var item in flagNodes)
+                {
+                    if (!(await WriteAsync(item)).State)
+                        errorAddresses.Add(item.Address);
+                }
+                if (errorAddresses.Count > 0)
+                    return MessageResult.Failed(ResultType.DeviceWriteError, $"{Option.ReceiverName}({Option.OriginHost}) write some address error:{string.Join(",", errorAddresses)}");
+            }
             return MessageResult.Success();
         }
 
@@ -579,7 +594,7 @@ namespace iml6yu.DataReceive.ModbusMaster
         private async Task<MessageResult> WriteAsync(byte slaveAddress, ModbusReadWriteType writeType, ushort bits, object value)
         {
             try
-            { 
+            {
                 switch (writeType)
                 {
                     case ModbusReadWriteType.Coils:
@@ -637,13 +652,13 @@ namespace iml6yu.DataReceive.ModbusMaster
                     case ModbusReadWriteType.ReadInputRegistersFloatLittleEndianByteSwap:
                     case ModbusReadWriteType.ReadInputRegistersLittleEndian4ByteSwap:
                     case ModbusReadWriteType.ReadInputRegistersDoubleLittleEndianByteSwap:
-                        return MessageResult.Failed(ResultType.ParameterError, "ReadInputRegisters read-only, cannot write.", null);
+                        return MessageResult.Failed(ResultType.ParameterError, $"{Option.ReceiverName}({Option.OriginHost})ReadInputRegisters read-only, cannot write.", null);
                 }
                 return MessageResult.Success();
             }
             catch (Exception ex)
             {
-                return MessageResult.Failed(ResultType.DeviceWriteError, $"write modbus data error.\r\n{ex.Message}", null);
+                return MessageResult.Failed(ResultType.DeviceWriteError, $"{Option.ReceiverName}({Option.OriginHost}) write modbus data error.\r\n{ex.Message}", null);
             }
         }
 
@@ -686,14 +701,14 @@ namespace iml6yu.DataReceive.ModbusMaster
             return true;
         }
 
-        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default)
+        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReadItem> addressArray, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (addressArray == null)
-                    return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"参数为null,the addressArray parameter is null.");
+                    return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"{Option.ReceiverName}({Option.OriginHost})参数为null,the addressArray parameter is null.");
                 if (addressArray.Count() == 0)
-                    return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"参数为空,the addressArray length is 0.");
+                    return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"{Option.ReceiverName}({Option.OriginHost})参数为空,the addressArray length is 0.");
 
                 var readAddress = ConvertToModbusReadConfig(addressArray.Select(t => new NodeItem()
                 {
@@ -711,7 +726,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                     }
                 }
                 if (values.Count != addressArray.Count())
-                    return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取数据结果{values.Count}条，预期是{addressArray.Count()}条，摒弃不匹配的结果！");
+                    return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"{Option.ReceiverName}({Option.OriginHost})读取数据结果{values.Count}条，预期是{addressArray.Count()}条，摒弃不匹配的结果！");
                 DataReceiveContract data = new DataReceiveContract()
                 {
                     Id = iml6yu.Fingerprint.GetId(),
@@ -738,16 +753,13 @@ namespace iml6yu.DataReceive.ModbusMaster
         }
 
 
-        public override async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
+        protected override async Task<MessageResult> WriteStrictlyAsync(DataWriteContract data)
         {
             if (!IsConnected)
-                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
+                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver {Option.ReceiverName}({Option.OriginHost}) not connect");
 
             if (data == null || data.Datas == null || data.Datas.Count() == 0 || data.Datas.Any(t => string.IsNullOrEmpty(t.Address)))
                 return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
-
-            if (data.Datas.Count(t => t.IsFlag) > 1)
-                return MessageResult.Failed(ResultType.ParameterError, "the flag item is more than 1", null);
 
             try
             {
@@ -759,7 +771,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                         return MessageResult.Failed(writeResult.Code, writeResult.Message, writeResult.Error);
                 }
                 //读取刚刚写入的结果，确认是否写入成功
-                var readResult = await DirectReadAsync(data.Datas.Where(t=>!t.IsFlag).Select(t => (DataReceiveContractItem)t).ToArray());
+                var readResult = await DirectReadAsync(data.Datas.Where(t => !t.IsFlag).Select(t => (DataReadItem)t).ToArray());
                 if (!readResult.State)
                     return MessageResult.Failed(ResultType.DeviceWriteError, "无法完成校验，未写入标志位，请自行确认后再进行处理。( Verification failed, flag not written. Please confirm manually before proceeding with further operations.)", null);
 
@@ -773,20 +785,24 @@ namespace iml6yu.DataReceive.ModbusMaster
                 }
 
                 //写入标志位
-                var flagAddress = data.Datas.FirstOrDefault(t => t.IsFlag);
-                if (flagAddress != null)
+                var flagNodes = data.Datas.Where(t => t.IsFlag).ToList();
+                if (flagNodes != null && flagNodes.Count > 0)
                 {
-                    var writeResult = await WriteAsync(flagAddress);
-                    if (!writeResult.State)
-                        return MessageResult.Failed(writeResult.Code, $"Wirte flag Address({flagAddress.Address}) failed, detail message:{writeResult.Message}", writeResult.Error);
-                    readResult = await DirectReadAsync([(DataReceiveContractItem)flagAddress]);
-                    if (!readResult.State || readResult.Data.Datas.Count() != 1)
-                        return MessageResult.Failed(ResultType.DeviceWriteError, "无法完成校验，标志位已写入，请自行确认后再进行处理。( Verification failed, flag writted. Please confirm manually before proceeding with further operations.)", null);
+                    foreach (var item in flagNodes)
+                    {
+                        var flageResult = await WriteAsync(item);
+                        if (!flageResult.State)
+                            return MessageResult.Failed(flageResult.Code, flageResult.Message, flageResult.Error);
 
-                    if (!VerifyValueEqual(readResult.Data.Datas.First().Value, flagAddress.Value, flagAddress.ValueType))
-                        return MessageResult.Failed(ResultType.DeviceWriteError, $"Write failed,The actual value of  {flagAddress.Address}  is {readResult.Data.Datas.First().Value}, but the expected value should be {flagAddress.Value}.", null);
+                        readResult = await DirectReadAsync([(DataReadItem)item]);
+                        if (!readResult.State || readResult.Data.Datas.Count() != 1)
+                            return MessageResult.Failed(ResultType.DeviceWriteError, "无法完成校验，标志位已写入，请自行确认后再进行处理。( Verification failed, flag writted. Please confirm manually before proceeding with further operations.)", null);
+
+                        if (!VerifyValueEqual(readResult.Data.Datas.First().Value, item.Value, item.ValueType))
+                            return MessageResult.Failed(ResultType.DeviceWriteError, $"Write failed,The actual value of  {item.Address}  is {readResult.Data.Datas.First().Value}, but the expected value should be {item.Value}.", null);
+
+                    }
                 }
-
                 return MessageResult.Success();
             }
             catch (Exception ex)

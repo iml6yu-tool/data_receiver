@@ -106,7 +106,7 @@ namespace iml6yu.DataReceive.Core
         /// <param name="addressArray"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default);
+        Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReadItem> addressArray, CancellationToken cancellationToken = default);
         /// <summary>
         /// 写数据
         /// </summary>

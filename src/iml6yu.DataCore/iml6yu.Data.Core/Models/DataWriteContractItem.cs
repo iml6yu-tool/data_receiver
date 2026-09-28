@@ -51,6 +51,10 @@ namespace iml6yu.Data.Core.Models
         /// </summary>
         public bool IsFlag { get; set; } = false;
 
+        /// <summary>
+        /// 写入顺序，数字越小越靠前，数字相同则同时写入，IsFlag点位不受此顺序影响
+        /// </summary>
+        public int Sort { get; set; } = 0;
         //public static implicit operator DataReceiveContractItem(DataWriteContractItem item)
         //{
         //    return new DataReceiveContractItem()

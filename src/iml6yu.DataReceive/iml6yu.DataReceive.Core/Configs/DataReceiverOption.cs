@@ -1,4 +1,6 @@
-﻿namespace iml6yu.DataReceive.Core.Configs
+﻿using iml6yu.Data.Core.Models;
+
+namespace iml6yu.DataReceive.Core.Configs
 {
     /// <summary>
     /// 接收器Options
@@ -48,6 +50,11 @@
         /// 节点路径
         /// </summary>
         public string NodeFile { get; set; }
+
+        /// <summary>
+        /// 心跳配置
+        /// </summary>
+        public DataReadItem HeartBeat { get; set; }
         /// <summary>
         /// 是否自动连接
         /// </summary>

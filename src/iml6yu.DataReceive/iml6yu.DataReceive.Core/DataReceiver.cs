@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace iml6yu.DataReceive.Core
 {
@@ -286,7 +287,7 @@ namespace iml6yu.DataReceive.Core
         /// <param name="addressArray"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public abstract Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default);
+        public abstract Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReadItem> addressArray, CancellationToken cancellationToken = default);
 
         public Task StartWorkAsync(CancellationToken token)
         {
@@ -567,7 +568,7 @@ namespace iml6yu.DataReceive.Core
                 targetValue = 0;
                 return false;
             }
-            else if(typeCode == 13) //TypeCode.Single float
+            else if (typeCode == 13) //TypeCode.Single float
             {
                 if (value is float f)
                 {
@@ -583,7 +584,7 @@ namespace iml6yu.DataReceive.Core
                 return false;
             }
             else if (typeCode == 14) //TypeCode.Double  double
-            { 
+            {
                 if (value is double d)
                 {
                     targetValue = d;
@@ -595,7 +596,7 @@ namespace iml6yu.DataReceive.Core
                     return true;
                 }
                 targetValue = 0d;
-                return false; 
+                return false;
             }
             else if (typeCode == 16) //DateTime
             {
@@ -769,15 +770,89 @@ namespace iml6yu.DataReceive.Core
             CacheDataDic.Clear();
             ConfigNodes.Clear();
         }
-
-        public abstract Task<MessageResult> WriteAsync(DataWriteContract data);
-        public virtual async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
+        /// <summary>
+        /// 写入数据不进行验证，也不支持IsFlag 
+        ///  
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public async Task<MessageResult> WriteAsync(DataWriteContract data)
         {
-            return await WriteAsync(data);
+            data.Datas = data.Datas.OrderBy(t => t.IsFlag).ThenBy(t => t.Sort).ThenBy(t => t.Address).ToList();
+            return await WriteBatchAsync(data);
+        }
+
+        /// <summary>
+        /// 批量写入数据
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        protected abstract Task<MessageResult> WriteBatchAsync(DataWriteContract data);
+        /// <summary>
+        /// 写入数据并读取一次进行数据判定（类似mq这类非主动读取的中间件则不进行读取判定）
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
+        {
+            data.Datas = data.Datas.OrderBy(t => t.IsFlag).ThenBy(t => t.Sort).ThenBy(t => t.Address).ToList();
+            return await WriteStrictlyAsync(data);
+        }
+        /// <summary>
+        /// 严格写入（进行写入判定  写入后读取数据）类似mq这里的则不会进行读取判定
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        protected virtual async Task<MessageResult> WriteStrictlyAsync(DataWriteContract data)
+        {
+            return await WriteBatchAsync(data);
         }
         public abstract Task<MessageResult> WriteAsync(DataWriteContractItem data);
 
         public abstract Task<MessageResult> WriteAsync<T>(string address, T data);
+
+        #region 心跳
+        protected FixedSizeRingBuffer<object> HeartBeatValue = new FixedSizeRingBuffer<object>(5);
+        /// <summary>
+        /// 获取当前心跳健康
+        /// </summary>
+        /// <returns></returns>
+        public async Task<HeartBeatState> HeartBeatHealthy()
+        {
+            try
+            {
+                if (IsConnected) return HeartBeatState.Unavailable;
+                using CancellationTokenSource tokenSource = new CancellationTokenSource(50);
+                var currentValue = await ReadAsync(Option.HeartBeat.Address, tokenSource.Token);
+                if (currentValue == null) return HeartBeatState.Unavailable;
+                if (!currentValue.State) return HeartBeatState.Unavailable;
+                if (currentValue.Data == null) return HeartBeatState.Unavailable;
+                if (currentValue.Data.Value == null) return HeartBeatState.Unavailable;
+                if (HeartBeatValue.Count != 0)
+                {
+                    if (HeartBeatValue.HasAnyDifferent(currentValue.Data.Value, out int index))
+                    {
+                        HeartBeatValue.Add(currentValue.Data.Value);
+
+                        if (index < 2)
+                            return HeartBeatState.Healthy;
+                        else
+                            return HeartBeatState.Degraded;
+                    }
+                    //全部都相同，就是很久没有变化了  直接宣布死刑
+                    return HeartBeatState.Unavailable;
+                }
+                HeartBeatValue.Add(currentValue.Data.Value);
+                return HeartBeatState.Healthy;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "读取心跳时发生异常");
+                return HeartBeatState.UnKnown;
+            }
+
+        }
+        #endregion
 
     }
 }

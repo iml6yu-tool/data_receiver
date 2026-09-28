@@ -72,13 +72,13 @@ namespace iml6yu.DataReceiverExample.ModbusTCP
                 {
                     logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 }
-                var a = await receiver.DirectReadAsync([new DataReceiveContractItem() {
+                var a = await receiver.DirectReadAsync([new DataReadItem() {
                     Address ="1.Coils.0",
                     ValueType =3
-                },new DataReceiveContractItem() {
+                },new DataReadItem() {
                     Address ="1.Coils.1",
                     ValueType =3
-                },new DataReceiveContractItem() {
+                },new DataReadItem() {
                     Address ="1.Coils.2",
                     ValueType =3
                 }]);

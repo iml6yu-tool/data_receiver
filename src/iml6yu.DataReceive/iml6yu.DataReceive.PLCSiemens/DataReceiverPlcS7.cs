@@ -87,26 +87,22 @@ namespace iml6yu.DataReceive.PLCSiemens
             });
         }
 
-        public override async Task<MessageResult> WriteAsync(DataWriteContract data)
+        protected override async Task<MessageResult> WriteBatchAsync(DataWriteContract data)
         {
             if (!IsConnected)
-                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
+                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver {Option.ReceiverName}({Option.OriginHost}) not connect");
 
             if (data == null || data.Datas == null || data.Datas.Count() == 0 || data.Datas.Any(t => string.IsNullOrEmpty(t.Address)))
                 return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
 
             try
             {
-                List<DataItem> writeNodes = new List<DataItem>();
-                foreach (var t in data.Datas)
-                {
-                    var item = DataItem.FromAddressAndValue(t.Address, t.Value);
-                    if (item == null)
-                        return MessageResult.Failed(ResultType.ParameterError, $"the address({t.Address}) is error");
-                    writeNodes.Add(item);
-                }
-
-                await Client.WriteAsync(writeNodes.ToArray());
+                var valueNodes = data.Datas.Where(t => !t.IsFlag).Select(t => DataItem.FromAddressAndValue(t.Address, t.Value)).ToArray();
+                if (valueNodes != null && valueNodes.Length > 0)
+                    await Client.WriteAsync(valueNodes);
+                var flagNodes = data.Datas.Where(t => t.IsFlag).Select(t => DataItem.FromAddressAndValue(t.Address, t.Value)).ToArray();
+                if (flagNodes != null && flagNodes.Length > 0)
+                    await Client.WriteAsync(flagNodes);
                 return MessageResult.Success();
             }
             catch (Exception ex)
@@ -327,7 +323,7 @@ namespace iml6yu.DataReceive.PLCSiemens
         //    _ => null
         //};
 
-        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default)
+        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReadItem> addressArray, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -349,7 +345,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                 {
                     var item = addressArray.ElementAt(i);
                     if (!VerifyValue(values[i].Value, item.ValueType, out object v))
-                        return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取失败，预期类型是{((TypeCode)item.ValueType).ToString()}，而实际读取到的类型是{item.Value.GetType().Name},类型不匹配！");
+                        return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取失败，预期类型是{((TypeCode)item.ValueType).ToString()}，而实际读取到的类型是{values[i].Value.GetType().Name},类型不匹配！");
                     data.Datas.Add(new DataReceiveContractItem()
                     {
                         Address = item.Address,
@@ -366,7 +362,7 @@ namespace iml6yu.DataReceive.PLCSiemens
             }
         }
 
-        public override async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
+        protected override async Task<MessageResult> WriteStrictlyAsync(DataWriteContract data)
         {
             if (!IsConnected)
                 return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");

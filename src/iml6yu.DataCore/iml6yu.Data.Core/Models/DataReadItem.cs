@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace iml6yu.Data.Core.Models
 {
-    public class DataReceiveContractItem
+    /// <summary>
+    /// 读取数据对象
+    /// </summary>
+    public class DataReadItem
     {
         /// <summary>
         /// 地址
@@ -36,35 +39,13 @@ namespace iml6yu.Data.Core.Models
         /// </list>
         /// </summary>
         public int ValueType { get; set; }
-        /// <summary>
-        /// 值
-        /// </summary>
-        public object Value { get; set; }
-
-        /// <summary>
-        /// 时间戳 从设备中读取的时间戳
-        /// </summary>
-        public long? Timestamp { get; set; }
-
-        //public static implicit operator DataWriteContractItem(DataReceiveContractItem item)
-        //{
-        //    return new DataWriteContractItem
-        //    {
-        //        Address = item.Address,
-        //        Value = item.Value,
-        //        ValueType = item.ValueType,
-        //        IsFlag = false
-        //    };
-        //}
-        public DataReceiveContractItem DeepCopy()
+        public static explicit operator DataReadItem(DataWriteContractItem item)
         {
-            return new DataReceiveContractItem
+            return new DataReadItem()
             {
-                Address = this.Address,
-                ValueType = this.ValueType,
-                Value = this.Value,
-                Timestamp = this.Timestamp
+                Address = item.Address,
+                ValueType = item.ValueType
             };
-        } 
+        }
     }
 }

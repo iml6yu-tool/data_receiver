@@ -324,7 +324,7 @@ namespace iml6yu.DataReceive.Mqtt
             }
         }
 
-        public override async Task<MessageResult> WriteAsync(DataWriteContract data)
+        protected override async Task<MessageResult> WriteBatchAsync(DataWriteContract data)
         {
             return await WriteAsync(data.Key, data);
         }
@@ -350,7 +350,7 @@ namespace iml6yu.DataReceive.Mqtt
             return MessageResult.Failed((int)result.ReasonCode, result.ReasonString, null);
         }
 
-        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default)
+        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReadItem> addressArray, CancellationToken cancellationToken = default)
         {
             if (addressArray == null)
                 return DataResult<DataReceiveContract>.Failed(ResultType.ParameterError, $"参数为null,the addressArray parameter is null.");
