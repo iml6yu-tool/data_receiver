@@ -135,6 +135,11 @@ namespace iml6yu.DataReceive.Core
         /// <returns></returns>
         Task<MessageResult> WriteAsync<T>(string address, T data);
         /// <summary>
+        /// 获取心跳状态
+        /// </summary>
+        /// <returns></returns>
+        Task<HeartBeatState> HeartBeatHealthy();
+        /// <summary>
         /// 订阅某些Node的值
         /// </summary>
         /// <param name="key">当前订阅的key</param>
