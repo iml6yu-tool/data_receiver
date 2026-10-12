@@ -6,6 +6,7 @@
     public class FixedSizeRingBuffer<T>
     {
         private readonly T[] buffer;
+        private readonly DateTime[] timestamps; // 可选：记录每个元素的时间戳
         private int count;      // 当前有效元素数量
         private int writePos;   // 下一个写入位置
         private readonly object lockObj = new();
@@ -16,6 +17,7 @@
         {
             MaxCapacity = maxCapacity;
             buffer = new T[maxCapacity];
+            timestamps = new DateTime[maxCapacity]; // 可选：初始化时间戳数组
         }
 
         /// <summary>
@@ -26,6 +28,7 @@
             lock (lockObj)
             {
                 buffer[writePos] = value;
+                timestamps[writePos] = DateTime.Now;
                 if (count < MaxCapacity)
                     count++;
                 writePos = (writePos + 1) % MaxCapacity;
@@ -59,6 +62,16 @@
                     idx--;
                     if (idx < 0) idx = MaxCapacity - 1;
                 }
+                //如果最后写入的时间和当前时间差小于3秒，说明还在变化中，不算相同 
+                if ((DateTime.Now - timestamps[writePos == 0 ? MaxCapacity - 1 : writePos - 1]).TotalSeconds < 3)
+                    return true;
+                //如果最后写入时间和当前时间大于3秒并且小于10秒，说明已经处于波动状态，设置diffIndex为MaxCapacity，并且返回true。
+                if ((DateTime.Now - timestamps[writePos == 0 ? MaxCapacity - 1 : writePos - 1]).TotalSeconds >= 3 && (DateTime.Now - timestamps[writePos == 0 ? MaxCapacity - 1 : writePos - 1]).TotalSeconds < 10)
+                {
+                    diffIndex = MaxCapacity;
+                    return true;
+                }
+
                 return false;
             }
         }
@@ -86,5 +99,5 @@
                 Array.Clear(buffer, 0, buffer.Length);
             }
         }
-    } 
+    }
 }

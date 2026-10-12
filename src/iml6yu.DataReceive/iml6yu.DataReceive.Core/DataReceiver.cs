@@ -821,7 +821,9 @@ namespace iml6yu.DataReceive.Core
         {
             try
             {
-                if (IsConnected) return HeartBeatState.Unavailable;
+                if (Option.HeartBeat == null || string.IsNullOrEmpty(Option.HeartBeat.Address))
+                    return HeartBeatState.UnKnown;
+                if (!IsConnected) return HeartBeatState.Unavailable;
                 using CancellationTokenSource tokenSource = new CancellationTokenSource(50);
                 var currentValue = await ReadAsync(Option.HeartBeat.Address, tokenSource.Token);
                 if (currentValue == null) return HeartBeatState.Unavailable;
@@ -832,9 +834,11 @@ namespace iml6yu.DataReceive.Core
                 {
                     if (HeartBeatValue.HasAnyDifferent(currentValue.Data.Value, out int index))
                     {
-                        HeartBeatValue.Add(currentValue.Data.Value);
+                        //不等于-1表示真的有不同的值，等于-1表示值都相同，但是时间比较短
+                        if (index != -1 && index != HeartBeatValue.MaxCapacity)
+                            HeartBeatValue.Add(currentValue.Data.Value);
 
-                        if (index < 2)
+                        if (index >= 0 && index < 2)
                             return HeartBeatState.Healthy;
                         else
                             return HeartBeatState.Degraded;
