@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace iml6yu.Data.Core.Models
@@ -38,7 +39,9 @@ namespace iml6yu.Data.Core.Models
         /// <item>18 String</item>  
         /// </list>
         /// </summary>
-        public int ValueType { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public TypeCode ValueType { get; set; } 
+
         public static explicit operator DataReadItem(DataWriteContractItem item)
         {
             return new DataReadItem()

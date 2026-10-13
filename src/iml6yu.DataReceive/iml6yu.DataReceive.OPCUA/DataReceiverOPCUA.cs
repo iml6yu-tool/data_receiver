@@ -128,7 +128,7 @@ namespace iml6yu.DataReceive.OPCUA
             try
             {
                 var flagNodes = data.Datas.Where(t => t.IsFlag).ToList();
-                var valueNodes = data.Datas.Where(t => !t.IsFlag  ).ToList();
+                var valueNodes = data.Datas.Where(t => !t.IsFlag).ToList();
 
                 string[] address;
                 object?[] values;
@@ -148,7 +148,7 @@ namespace iml6yu.DataReceive.OPCUA
                         {
                             var expectation = valueNodes[i].Value;
                             //获取地址的值 
-                            var targeValue = Convert.ChangeType(writeValues[i].Value, (TypeCode)valueNodes[i].ValueType);
+                            var targeValue = Convert.ChangeType(writeValues[i].Value, valueNodes[i].ValueType);
                             if (targeValue != expectation)
                                 return MessageResult.Failed(ResultType.DeviceWriteError, $"{Option.ReceiverName}({Option.OriginHost})写入地址{valueNodes[i].Address}失败，预期值{expectation}，实际值{targeValue}");
                         }
@@ -170,7 +170,7 @@ namespace iml6yu.DataReceive.OPCUA
                         {
                             var expectation = flagNodes[i].Value;
                             //获取地址的值 
-                            var targeValue = Convert.ChangeType(writeValues[i].Value, (TypeCode)flagNodes[i].ValueType);
+                            var targeValue = Convert.ChangeType(writeValues[i].Value, flagNodes[i].ValueType);
                             if (targeValue != expectation)
                                 return MessageResult.Failed(ResultType.DeviceWriteError, $"{Option.ReceiverName}({Option.OriginHost})写入地址{flagNodes[i].Address}失败，预期值{expectation}，实际值{targeValue}");
                         }
@@ -314,14 +314,15 @@ namespace iml6yu.DataReceive.OPCUA
                 for (var i = 0; i < values.Count; i++)
                 {
                     var item = addressArray.ElementAt(i);
-                    if (!VerifyValue(values[i].Value, item.ValueType, out object v))
-                        return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"{Option.ReceiverName}({Option.OriginHost})读取失败，预期类型是{((TypeCode)item.ValueType).ToString()}，而实际读取到的类型是{values[i].Value.GetType().Name},类型不匹配！");
+                    var valueTypeNumber = (int)item.ValueType;
+                    if (!VerifyValue(values[i].Value, valueTypeNumber, out object v))
+                        return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"{Option.ReceiverName}({Option.OriginHost})读取失败，预期类型是{(item.ValueType).ToString()}，而实际读取到的类型是{values[i].Value.GetType().Name},类型不匹配！");
                     data.Datas.Add(new DataReceiveContractItem()
                     {
                         Address = item.Address,
                         Timestamp = data.Timestamp,
                         Value = v,
-                        ValueType = item.ValueType
+                        ValueType = valueTypeNumber
                     });
                 }
                 return DataResult<DataReceiveContract>.Success(data);

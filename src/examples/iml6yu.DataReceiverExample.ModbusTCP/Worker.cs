@@ -72,51 +72,62 @@ namespace iml6yu.DataReceiverExample.ModbusTCP
                 {
                     logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 }
-                var a = await receiver.DirectReadAsync([new DataReadItem() {
-                    Address ="1.Coils.0",
-                    ValueType =3
-                },new DataReadItem() {
-                    Address ="1.Coils.1",
-                    ValueType =3
-                },new DataReadItem() {
-                    Address ="1.Coils.2",
-                    ValueType =3
-                }]);
+                //var a = await receiver.DirectReadAsync([new DataReadItem() {
+                //    Address ="1.Coils.0",
+                //    ValueType =TypeCode.Boolean
+                //},new DataReadItem() {
+                //    Address ="1.Coils.1",
+                //    ValueType =TypeCode.Boolean
+                //},new DataReadItem() {
+                //    Address ="1.Coils.2",
+                //    ValueType =TypeCode.Boolean
+                //}]);
 
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("主动读取数据");
-                Console.WriteLine(JsonSerializer.Serialize(a));
-                Console.ForegroundColor = ConsoleColor.White;
+                //Console.ForegroundColor = ConsoleColor.Green;
+                //Console.WriteLine("主动读取数据");
+                //Console.WriteLine(JsonSerializer.Serialize(a));
+                //Console.ForegroundColor = ConsoleColor.White;
                 index++;
-                if (index % 3 == 0)
+                //if (index % 3 == 0)
+                //{
+                //var x = await receiver.WriteWithVerifyAsync(new DataWriteContract()
+                //{
+                //    Id = index,
+                //    Key = "",
+                //    Datas = [new DataWriteContractItem() {
+                //        Address ="1.Coils.4",
+                //        Value = true,
+                //        ValueType =TypeCode.Boolean
+                //    },new DataWriteContractItem() {
+                //        Address ="1.Coils.5",
+                //        Value = index%2,
+                //        ValueType =TypeCode.Boolean
+                //    },new DataWriteContractItem() {
+                //        Address ="1.Coils.6",
+                //        Value = true,
+                //        ValueType =TypeCode.Boolean,
+                //        IsFlag=true
+                //    }]
+                //});
+
+                var x = await receiver.WriteAsync(new DataWriteContract()
                 {
-                    var x = await receiver.WriteWithVerifyAsync(new DataWriteContract()
-                    {
-                        Id = index,
-                        Key = "",
-                        Datas = [new DataWriteContractItem() {
-                            Address ="1.Coils.4",
+                    Id = index,
+                    Key = "",
+                    Datas = [new DataWriteContractItem() {
+                            Address ="1.Coils.0",
                             Value = true,
-                            ValueType =3
-                        },new DataWriteContractItem() {
-                            Address ="1.Coils.5",
-                            Value = index%2,
-                            ValueType =3
-                        },new DataWriteContractItem() {
-                            Address ="1.Coils.6",
-                            Value = true,
-                            ValueType =3,
-                            IsFlag=true
+                            ValueType =TypeCode.Boolean
                         }]
-                    });
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"写入结果:{JsonSerializer.Serialize(x, new JsonSerializerOptions
-                    {
-                        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                    })}");
-                    Console.ForegroundColor = ConsoleColor.White;
-                }
-                await Task.Delay(10000, stoppingToken);
+                });
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"写入结果:{JsonSerializer.Serialize(x, new JsonSerializerOptions
+                {
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                })}");
+                Console.ForegroundColor = ConsoleColor.White;
+                //}
+                await Task.Delay(1000, stoppingToken);
             }
         }
     }

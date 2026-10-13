@@ -344,14 +344,15 @@ namespace iml6yu.DataReceive.PLCSiemens
                 for (var i = 0; i < values.Count; i++)
                 {
                     var item = addressArray.ElementAt(i);
-                    if (!VerifyValue(values[i].Value, item.ValueType, out object v))
-                        return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取失败，预期类型是{((TypeCode)item.ValueType).ToString()}，而实际读取到的类型是{values[i].Value.GetType().Name},类型不匹配！");
+                    var valueTypeNumber = (int)item.ValueType;
+                    if (!VerifyValue(values[i].Value, valueTypeNumber, out object v))
+                        return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取失败，预期类型是{(item.ValueType).ToString()}，而实际读取到的类型是{values[i].Value.GetType().Name},类型不匹配！");
                     data.Datas.Add(new DataReceiveContractItem()
                     {
                         Address = item.Address,
                         Timestamp = data.Timestamp,
                         Value = v,
-                        ValueType = item.ValueType
+                        ValueType = valueTypeNumber
                     });
                 }
                 return DataResult<DataReceiveContract>.Success(data);
@@ -390,7 +391,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                     var address = data.Datas.FirstOrDefault(t => DataItem.FromAddress(t.Address) == item);
                     if (address == null)
                         return MessageResult.Failed(ResultType.DeviceWriteError, $"数据写入失败");
-                    if (!VerifyValueEqual(item.Value, address.Value, address.ValueType))
+                    if (!VerifyValueEqual(item.Value, address.Value, (int)address.ValueType))
                         return MessageResult.Failed(ResultType.DeviceWriteError, $"数据{address.Address}写入失败,当前值是{item.Value},预期值是{address.Value}");
                 }
                 if (data.Datas.Any(t => t.IsFlag))
@@ -402,7 +403,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                     //读取当前写入的数据
                     var v = await Client.ReadAsync(address.Address);
                     //验证当前读取的值和预期写入的值是否相等
-                    if (!VerifyValueEqual(v, address.Value, address.ValueType))
+                    if (!VerifyValueEqual(v, address.Value, (int)address.ValueType))
                         return MessageResult.Failed(ResultType.DeviceWriteError, $"数据{address.Address}写入失败,当前值是{v},预期值是{address.Value}");
                 }
                 return MessageResult.Success();

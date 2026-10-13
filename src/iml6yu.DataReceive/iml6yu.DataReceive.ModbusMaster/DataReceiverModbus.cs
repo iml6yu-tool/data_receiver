@@ -534,7 +534,7 @@ namespace iml6yu.DataReceive.ModbusMaster
         {
             if (!IsConnected)
                 return MessageResult.Failed(ResultType.ServerDoApiError, $"the dirver({Option.OriginHost}) not connect");
-            List<string> errorAddresses = new List<string>();
+            List<(string, string)> errorAndAddresses = new List<(string, string)>();
 
             var valueNodes = data.Datas.Where(t => !t.IsFlag).ToList();
             var flagNodes = data.Datas.Where(t => t.IsFlag).ToList();
@@ -542,21 +542,23 @@ namespace iml6yu.DataReceive.ModbusMaster
             {
                 foreach (var item in valueNodes)
                 {
-                    if (!(await WriteAsync(item)).State)
-                        errorAddresses.Add(item.Address);
+                    var result = await WriteAsync(item);
+                    if (!result.State)
+                        errorAndAddresses.Add((result.Message, item.Address));
                 }
-                if (errorAddresses.Count > 0)
-                    return MessageResult.Failed(ResultType.DeviceWriteError, $"{Option.ReceiverName}({Option.OriginHost}) write some address error:{string.Join(",", errorAddresses)}");
+                if (errorAndAddresses.Count > 0)
+                    return MessageResult.Failed(ResultType.DeviceWriteError, $"{Option.ReceiverName}({Option.OriginHost}) write some address error:{string.Join(",", errorAndAddresses.Select(t=>$"{t.Item2}:{t.Item1} ; "))}");
             }
             if (flagNodes != null && flagNodes.Count > 0)
             {
                 foreach (var item in flagNodes)
                 {
-                    if (!(await WriteAsync(item)).State)
-                        errorAddresses.Add(item.Address);
+                    var result = await WriteAsync(item);
+                    if (!result.State)
+                        errorAndAddresses.Add((result.Message, item.Address));
                 }
-                if (errorAddresses.Count > 0)
-                    return MessageResult.Failed(ResultType.DeviceWriteError, $"{Option.ReceiverName}({Option.OriginHost}) write some address error:{string.Join(",", errorAddresses)}");
+                if (errorAndAddresses.Count > 0)
+                    return MessageResult.Failed(ResultType.DeviceWriteError, $"{Option.ReceiverName}({Option.OriginHost}) write some address error:{string.Join(",", errorAndAddresses.Select(t => $"{t.Item2}:{t.Item1} ; "))}");
             }
             return MessageResult.Success();
         }
@@ -685,7 +687,25 @@ namespace iml6yu.DataReceive.ModbusMaster
             }
             else
             {
-                if (writeType != ModbusReadWriteType.Coils && writeType != ModbusReadWriteType.HoldingRegisters)
+                if (writeType != ModbusReadWriteType.Coils
+                    && writeType != ModbusReadWriteType.HoldingRegisters
+                    && writeType != ModbusReadWriteType.HoldingRegisters2
+                    && writeType != ModbusReadWriteType.HoldingRegisters2ByteSwap
+                    && writeType != ModbusReadWriteType.HoldingRegistersLittleEndian2
+                    && writeType != ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
+                    && writeType != ModbusReadWriteType.HoldingRegisters4
+                    && writeType != ModbusReadWriteType.HoldingRegisters4ByteSwap
+                    && writeType != ModbusReadWriteType.HoldingRegistersLittleEndian4
+                    && writeType != ModbusReadWriteType.HoldingRegistersLittleEndian4ByteSwap
+                    && writeType != ModbusReadWriteType.HoldingRegistersFloat
+                    && writeType != ModbusReadWriteType.HoldingRegistersFloatByteSwap
+                    && writeType != ModbusReadWriteType.HoldingRegistersFloatLittleEndian
+                    && writeType != ModbusReadWriteType.HoldingRegistersFloatLittleEndianByteSwap
+                    && writeType != ModbusReadWriteType.HoldingRegistersDouble
+                    && writeType != ModbusReadWriteType.HoldingRegistersDoubleByteSwap
+                    && writeType != ModbusReadWriteType.HoldingRegistersDoubleLittleEndian
+                    && writeType != ModbusReadWriteType.HoldingRegistersDoubleLittleEndianByteSwap
+                     )
                 {
                     Logger.LogWarning($"node({address}) wirteType config error.the second bit must ModbusReadType type(Coils,HoldingRegisters)");
                     return false;
@@ -714,7 +734,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                 {
                     Address = t.Address,
                     FullAddress = t.Address,
-                    ValueType = (TypeCode)t.ValueType,
+                    ValueType = t.ValueType,
                 }).ToList());
 
                 Dictionary<string, ReceiverTempDataValue> values = new Dictionary<string, ReceiverTempDataValue>();
@@ -741,7 +761,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                         Address = address.Address,
                         Timestamp = data.Timestamp,
                         Value = values[address.Address].Value,
-                        ValueType = address.ValueType
+                        ValueType = (int)address.ValueType
                     });
                 }
                 return DataResult<DataReceiveContract>.Success(data);
@@ -798,7 +818,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                         if (!readResult.State || readResult.Data.Datas.Count() != 1)
                             return MessageResult.Failed(ResultType.DeviceWriteError, "无法完成校验，标志位已写入，请自行确认后再进行处理。( Verification failed, flag writted. Please confirm manually before proceeding with further operations.)", null);
 
-                        if (!VerifyValueEqual(readResult.Data.Datas.First().Value, item.Value, item.ValueType))
+                        if (!VerifyValueEqual(readResult.Data.Datas.First().Value, item.Value, (int)item.ValueType))
                             return MessageResult.Failed(ResultType.DeviceWriteError, $"Write failed,The actual value of  {item.Address}  is {readResult.Data.Datas.First().Value}, but the expected value should be {item.Value}.", null);
 
                     }

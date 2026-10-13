@@ -31,7 +31,7 @@ namespace iml6yu.DataReceive.Core.Configs
         /// <summary>
         /// 重连间隔 ms
         /// </summary>
-        public int ReConnectPeriod { get; set; } = 60000;
+        public int ReConnectPeriod { get; set; } = 30000;
         /// <summary>
         /// 重连次数
         /// </summary>

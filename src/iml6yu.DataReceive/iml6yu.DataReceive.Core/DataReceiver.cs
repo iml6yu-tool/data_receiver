@@ -307,7 +307,7 @@ namespace iml6yu.DataReceive.Core
                             Logger.LogWarning($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort})正在尝试重连...");
                             await ConnectAsync();
                         }
-                        await Task.Delay(TimeSpan.FromSeconds(30), token);
+                        await Task.Delay(TimeSpan.FromSeconds(Option.ReConnectPeriod), token);
                     }
                 }
                 catch (TaskCanceledException tcex)
@@ -455,7 +455,7 @@ namespace iml6yu.DataReceive.Core
                     continue;
                 if (!VerifyValue(datas.Value[key].Value, CacheDataDic[key].Data.ValueType, out object v))
                 {
-                    Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{(TypeCode)CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
+                    Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
                     continue;
                 }
                 data.Datas.Add(new DataReceiveContractItem()
@@ -500,7 +500,7 @@ namespace iml6yu.DataReceive.Core
 
                 if (!VerifyValue(datas.Value[key].Value, CacheDataDic[key].Data.ValueType, out object v))
                 {
-                    Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{(TypeCode)CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
+                    Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
                     continue;
                 }
 
