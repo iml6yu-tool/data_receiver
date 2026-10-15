@@ -115,9 +115,9 @@ namespace iml6yu.DataReceiverExample.ModbusTCP
                     Id = index,
                     Key = "",
                     Datas = [new DataWriteContractItem() {
-                            Address ="1.Coils.0",
-                            Value = true,
-                            ValueType =TypeCode.Boolean
+                            Address ="1.HoldingRegistersDouble.6",
+                            Value = (new Random().Next())*0.0001,
+                            ValueType =TypeCode.Double
                         }]
                 });
                 Console.ForegroundColor = ConsoleColor.Yellow;
