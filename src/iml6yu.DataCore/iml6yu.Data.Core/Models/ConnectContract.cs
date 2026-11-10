@@ -38,6 +38,6 @@ namespace iml6yu.Data.Core.Models
         /// </summary>
         public string Message { get; set; }
 
-        public bool IsConnected { get; set; } = true;
+        public bool IsConnected { get; set; } = false;
     }
 }

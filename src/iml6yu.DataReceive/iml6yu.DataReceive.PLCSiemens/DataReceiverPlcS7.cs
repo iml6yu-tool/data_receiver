@@ -156,10 +156,11 @@ namespace iml6yu.DataReceive.PLCSiemens
         protected override Plc CreateClient(DataReceiverPlcS7Option option)
         {
             if (IsConnected)
-                return Client;
+                return Client; 
             Client = new Plc(
                 (S7.Net.CpuType)option.CpuType,
                 option.OriginHost,
+                option.OriginPort??102,
                 (short)option.Rack,
                (short)option.Slot);
             return Client;

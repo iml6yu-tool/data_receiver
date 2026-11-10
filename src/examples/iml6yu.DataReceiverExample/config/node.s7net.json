@@ -1,15 +1,15 @@
 ﻿[
-  {
-    "fullAddress": "DB121.STR2",
-    "address": "DB102.DDT504",
-    "valueType": "String",
-    "count": 30,
-    "isSubscribe": true,
-    "interval": 1000,
-    "groupName": "产线1",
-    "descript": "",
-    "alisa": ""
-  }
+  //{
+  //  "fullAddress": "DB121.STR2",
+  //  "address": "DB102.DDT504",
+  //  "valueType": "String",
+  //  "count": 30,
+  //  "isSubscribe": true,
+  //  "interval": 1000,
+  //  "groupName": "产线1",
+  //  "descript": "",
+  //  "alisa": ""
+  //}
   //,
   //{
   //  "fullAddress": "DB102.SRL504",

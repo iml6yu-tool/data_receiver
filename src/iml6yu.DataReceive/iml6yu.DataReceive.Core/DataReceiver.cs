@@ -307,7 +307,7 @@ namespace iml6yu.DataReceive.Core
                             Logger.LogWarning($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort})正在尝试重连...");
                             await ConnectAsync();
                         }
-                        await Task.Delay(TimeSpan.FromSeconds(Option.ReConnectPeriod), token);
+                        await Task.Delay(TimeSpan.FromMilliseconds(Option.ReConnectPeriod==0?30000: Option.ReConnectPeriod), token);
                     }
                 }
                 catch (TaskCanceledException tcex)
