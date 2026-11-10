@@ -10,10 +10,10 @@ using Microsoft.Extensions.Logging;
 using MQTTnet;
 using System.Net.Http;
 using System.Text.Json;
-#if NET6_0
+#if NET6_0 || NET7_0 
 using MQTTnet.Client;
 #endif
-
+ 
 namespace iml6yu.DataReceive.Mqtt
 {
     public class DataReceiverMqtt : DataReceiver<IMqttClient, DataReceiverMqttOption>
@@ -268,7 +268,7 @@ namespace iml6yu.DataReceive.Mqtt
 
         private MqttClientSubscribeOptions CreateSubscribeOptions(List<string> topics)
         {
-#if NET6_0
+#if NET6_0 || NET7_0
             var mqttSubscribeOptionsBuilder = new MqttFactory().CreateSubscribeOptionsBuilder();
 #elif NET8_0_OR_GREATER
             var mqttSubscribeOptionsBuilder = new MqttClientFactory().CreateSubscribeOptionsBuilder();
@@ -285,7 +285,7 @@ namespace iml6yu.DataReceive.Mqtt
 
         private MqttClientUnsubscribeOptions CreateUnSubscribeOptions(List<string> topics)
         {
-#if NET6_0
+#if NET6_0 || NET7_0
             var mqttUnsubscribeOptionsBuilder = new MqttFactory().CreateUnsubscribeOptionsBuilder();
 #elif NET8_0_OR_GREATER
             var mqttUnsubscribeOptionsBuilder = new MqttClientFactory().CreateUnsubscribeOptionsBuilder();

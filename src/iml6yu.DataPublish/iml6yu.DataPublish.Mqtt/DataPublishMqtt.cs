@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-#if NET6_0
+#if NET6_0 || NET7_0
 using MQTTnet.Client;
 #endif
 
@@ -96,7 +96,7 @@ namespace iml6yu.DataPublish.Mqtt
 
         protected override IMqttClient CreateClient(DataPublisherOption option)
         {
-#if NET6_0
+#if NET6_0 || NET7_0
             Client = new MqttFactory().CreateMqttClient();
 #elif NET8_0_OR_GREATER
             Client = new MqttClientFactory().CreateMqttClient();

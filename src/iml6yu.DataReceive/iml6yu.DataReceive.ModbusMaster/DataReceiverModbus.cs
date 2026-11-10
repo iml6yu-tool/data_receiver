@@ -230,7 +230,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                 || readType == ModbusReadWriteType.ReadInputRegistersFloatLittleEndian
                 || readType == ModbusReadWriteType.HoldingRegistersFloatLittleEndian)
             {
-                var bytes = values.SelectMany(t => BitConverter.GetBytes(t).Reverse()).ToArray();
+                var bytes = values.SelectMany(t => Enumerable.Reverse(BitConverter.GetBytes(t))).ToArray();
                 return Get32BitValue(valueTypeCode, bytes);
             }
             if (readType == ModbusReadWriteType.HoldingRegistersLittleEndian2ByteSwap
@@ -253,7 +253,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                || readType == ModbusReadWriteType.ReadInputRegistersDoubleLittleEndian
                || readType == ModbusReadWriteType.HoldingRegistersDoubleLittleEndian)
             {
-                var bytes = values.SelectMany(t => BitConverter.GetBytes(t).Reverse()).ToArray();
+                var bytes = values.SelectMany(t => Enumerable.Reverse(BitConverter.GetBytes(t))).ToArray();
                 return Get64BitValue(valueTypeCode, bytes);
             }
 
@@ -282,7 +282,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                 || readType == ModbusReadWriteType.ReadInputRegistersFloat
                 || readType == ModbusReadWriteType.HoldingRegistersFloat)
             {
-                var bytes = values.Reverse().SelectMany(t => BitConverter.GetBytes(t)).ToArray();
+                var bytes = Enumerable.Reverse(values).SelectMany(t => BitConverter.GetBytes(t)).ToArray();
                 return Get32BitValue(valueTypeCode, bytes);
             }
 
@@ -306,7 +306,7 @@ namespace iml6yu.DataReceive.ModbusMaster
                 || readType == ModbusReadWriteType.ReadInputRegistersDouble
                 || readType == ModbusReadWriteType.HoldingRegistersDouble)
             {
-                var bytes = values.Reverse().SelectMany(t => BitConverter.GetBytes(t)).ToArray();
+                var bytes = Enumerable.Reverse(values).SelectMany(t => BitConverter.GetBytes(t)).ToArray();
                 return Get64BitValue(valueTypeCode, bytes);
             }
             else if (readType == ModbusReadWriteType.HoldingRegisters4ByteSwap
