@@ -307,7 +307,7 @@ namespace iml6yu.DataReceive.Core
                             Logger.LogWarning($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort})正在尝试重连...");
                             await ConnectAsync();
                         }
-                        await Task.Delay(TimeSpan.FromMilliseconds(Option.ReConnectPeriod==0?30000: Option.ReConnectPeriod), token);
+                        await Task.Delay(TimeSpan.FromMilliseconds(Option.ReConnectPeriod == 0 ? 30000 : Option.ReConnectPeriod), token);
                     }
                 }
                 catch (TaskCanceledException tcex)
@@ -778,6 +778,11 @@ namespace iml6yu.DataReceive.Core
         /// <returns></returns>
         public async Task<MessageResult> WriteAsync(DataWriteContract data)
         {
+            foreach (var item in data.Datas)
+            {
+                if (!TryConvertWriteContractItemValue(item))
+                    return MessageResult.Failed(ResultType.ParameterError, $"The address({item.Address})'s value type is {item.Value.GetType().Name}, but ValueType is {item.ValueType.ToString()}!");
+            }
             data.Datas = data.Datas.OrderBy(t => t.IsFlag).ThenBy(t => t.Sort).ThenBy(t => t.Address).ToList();
             return await WriteBatchAsync(data);
         }
@@ -795,6 +800,11 @@ namespace iml6yu.DataReceive.Core
         /// <returns></returns>
         public async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
         {
+            foreach (var item in data.Datas)
+            {
+                if (!TryConvertWriteContractItemValue(item))
+                    return MessageResult.Failed(ResultType.ParameterError, $"The address({item.Address})'s value type is {item.Value.GetType().Name}, but ValueType is {item.ValueType.ToString()}!");
+            }
             data.Datas = data.Datas.OrderBy(t => t.IsFlag).ThenBy(t => t.Sort).ThenBy(t => t.Address).ToList();
             return await WriteStrictlyAsync(data);
         }
@@ -807,9 +817,29 @@ namespace iml6yu.DataReceive.Core
         {
             return await WriteBatchAsync(data);
         }
-        public abstract Task<MessageResult> WriteAsync(DataWriteContractItem data);
+        public async Task<MessageResult> WriteAsync(DataWriteContractItem data)
+        { 
+            if (!TryConvertWriteContractItemValue(data))
+                return MessageResult.Failed(ResultType.ParameterError, $"The address({data.Address})'s value type is {data.Value.GetType().Name}, but ValueType is {data.ValueType.ToString()}!");
+           return await WriteOneAsync(data);
+        }
+        public abstract Task<MessageResult> WriteOneAsync(DataWriteContractItem data);
 
         public abstract Task<MessageResult> WriteAsync<T>(string address, T data);
+
+        private bool TryConvertWriteContractItemValue(DataWriteContractItem data)
+        {
+            try
+            {
+                data.Value = Convert.ChangeType(data.Value, data.ValueType);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Convert DataWriteContractItem({data.Address}) error! {ex.Message}");
+                return false;
+            }
+        }
 
         #region 心跳
         protected FixedSizeRingBuffer<object> HeartBeatValue = new FixedSizeRingBuffer<object>(5);

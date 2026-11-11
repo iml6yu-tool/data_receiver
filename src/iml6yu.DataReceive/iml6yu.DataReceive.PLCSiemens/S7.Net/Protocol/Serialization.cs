@@ -1,6 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
 using S7.Net.Types;
+using System;
+using System.Collections.Generic;
 
 namespace S7.Net.Protocol
 {
@@ -31,6 +32,66 @@ namespace S7.Net.Protocol
                 return Date.ToByteArray((System.DateTime)dataItem.Value);
             }
 
+            #region 添加更多类型的解析 不要依赖SerializeValue方法，这个方法解析不考虑dataItem.VarType ，有隐形bug
+            if (dataItem.VarType == VarType.Bit)
+            {
+                return new[] { (byte)((bool)dataItem.Value ? 1 : 0) };
+            }
+            if (dataItem.VarType == VarType.Byte)
+            {
+                return Types.Byte.ToByteArray((byte)dataItem.Value);
+            }
+            if (dataItem.VarType == VarType.Word || dataItem.VarType == VarType.Int)
+            {
+                if (dataItem.Value.GetType().Name == "Int16")
+                    return Types.Int.ToByteArray((Int16)dataItem.Value);
+                else
+                    return Types.Word.ToByteArray((UInt16)dataItem.Value);
+            }
+
+            if (dataItem.VarType == VarType.DWord || dataItem.VarType == VarType.DInt)
+            {
+                if (dataItem.Value.GetType().Name == "Int32")
+                    return Types.DInt.ToByteArray((Int32)dataItem.Value);
+                else
+                    return Types.DWord.ToByteArray((UInt32)dataItem.Value);
+            }
+
+            if (dataItem.VarType == VarType.Real)
+            {
+                return Types.Real.ToByteArray((float)dataItem.Value);
+            }
+
+            if (dataItem.VarType == VarType.LReal)
+            {
+                return Types.LReal.ToByteArray((double)dataItem.Value);
+            }
+
+            if (dataItem.VarType == VarType.String )
+            {
+                var stringVal = (string)dataItem.Value;
+                return Types.String.ToByteArray(stringVal, stringVal.Length);
+            }
+            if (dataItem.VarType == VarType.S7String)
+            {
+                var stringVal = (string)dataItem.Value;
+                return Types.S7String.ToByteArray(stringVal, stringVal.Length);
+            }
+            if (dataItem.VarType == VarType.S7WString)
+            {
+                var stringVal = (string)dataItem.Value;
+                return Types.S7WString.ToByteArray(stringVal, stringVal.Length);
+            } 
+
+            if (dataItem.VarType == VarType.DateTime)
+            {
+                return Types.DateTime.ToByteArray((System.DateTime)dataItem.Value);
+            }
+            if (dataItem.VarType == VarType.DateTimeLong)
+            {
+                return Types.DateTimeLong.ToByteArray((System.DateTime)dataItem.Value);
+            }
+            #endregion
             return SerializeValue(dataItem.Value);
         }
 

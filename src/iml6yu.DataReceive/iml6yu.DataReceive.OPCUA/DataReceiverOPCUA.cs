@@ -184,7 +184,7 @@ namespace iml6yu.DataReceive.OPCUA
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
-        public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)
+        public override async Task<MessageResult> WriteOneAsync(DataWriteContractItem data)
         {
             if (data == null)
                 return MessageResult.Failed(ResultType.ParameterError, $"{Option.ReceiverName}({Option.OriginHost})写入数据不能为空!");

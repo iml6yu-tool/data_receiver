@@ -563,7 +563,7 @@ namespace iml6yu.DataReceive.ModbusMaster
             return MessageResult.Success();
         }
 
-        public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)
+        public override async Task<MessageResult> WriteOneAsync(DataWriteContractItem data)
         {
             if (!IsConnected)
                 return MessageResult.Failed(ResultType.ServerDoApiError, $"the dirver({Option.OriginHost}) not connect");

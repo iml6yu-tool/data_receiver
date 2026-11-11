@@ -7,7 +7,7 @@
     <!-- 启用可空引用类型，提升代码健壮性 -->
     <Nullable>enable</Nullable>
     <!--版本-->
-    <Version>2.0.0-beta261110001</Version>
+    <Version>2.0.0-beta261111001</Version>
     <!-- 将所有警告视为错误，确保代码质量 -->
     <!--<TreatWarningsAsErrors>false</TreatWarningsAsErrors>-->
     <!-- 启用全局using指令，简化代码 -->

@@ -45,11 +45,20 @@ if (-not (Test-Path -LiteralPath $ReferenceLibs)) {
 
 $destFull = [System.IO.Path]::GetFullPath($Destination)
 
+# 目标框架优先级列表（显式声明为字符串数组，避免单元素时被展开成字符串）
+[string[]]$tfmOrder = if (-not [string]::IsNullOrWhiteSpace($TargetFramework)) {
+    @($TargetFramework)
+} else {
+    @('net9.0', 'net8.0', 'net6.0')
+}
+
 # 扫描当前项目中 bin 目录下的编译产物（排除 obj 与目标 Libs 目录本身）
+# 指定了 TargetFramework 时，只保留该框架目录下的产物，其它框架版本一律不参与
 $candidates = Get-ChildItem -LiteralPath $SourceRoot -Recurse -File | Where-Object {
     $_.Name -like 'iml6yu*' -and
     ($_.FullName -match '\\bin\\') -and
-    ($_.FullName -notlike "$destFull*")
+    ($_.FullName -notlike "$destFull*") -and
+    ([string]::IsNullOrWhiteSpace($TargetFramework) -or $_.FullName -match "\\$([regex]::Escape($TargetFramework))\\")
 }
 
 # 按文件名分组，便于按文件名匹配
@@ -76,7 +85,6 @@ function Get-CandidateScore {
     }
 
     # 2. 目标框架优先
-    $tfmOrder = if ($TargetFramework) { @($TargetFramework) } else { @('net9.0', 'net8.0', 'net6.0') }
     $matchedTfm = $false
     for ($i = 0; $i -lt $tfmOrder.Count; $i++) {
         if ($path -match "\\$([regex]::Escape($tfmOrder[$i]))\\") {

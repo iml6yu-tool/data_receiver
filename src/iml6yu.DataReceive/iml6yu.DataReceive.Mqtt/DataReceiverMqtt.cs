@@ -329,7 +329,7 @@ namespace iml6yu.DataReceive.Mqtt
             return await WriteAsync(data.Key, data);
         }
 
-        public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)
+        public override async Task<MessageResult> WriteOneAsync(DataWriteContractItem data)
         {
             return MessageResult.Failed(ResultType.NotImplemented, "Mqtt not allow this method", null);
         }
