@@ -281,6 +281,13 @@ namespace iml6yu.DataReceive.Core
                 return CollectionResult<DataReceiveContractItem>.Success(1, datas.Count, datas, datas.Count);
             });
         }
+
+        public async Task<CollectionResult<DataReceiveContractItem>> ReadsAsync(IEnumerable<DataReadItem> addressArray, CancellationToken cancellationToken = default)
+        {
+            return await ReadsAsync(addressArray.Select(t => t.Address).ToArray(), cancellationToken);
+        }
+
+
         /// <summary>
         /// 实时读取数据
         /// </summary>
@@ -818,10 +825,10 @@ namespace iml6yu.DataReceive.Core
             return await WriteBatchAsync(data);
         }
         public async Task<MessageResult> WriteAsync(DataWriteContractItem data)
-        { 
+        {
             if (!TryConvertWriteContractItemValue(data))
                 return MessageResult.Failed(ResultType.ParameterError, $"The address({data.Address})'s value type is {data.Value.GetType().Name}, but ValueType is {data.ValueType.ToString()}!");
-           return await WriteOneAsync(data);
+            return await WriteOneAsync(data);
         }
         public abstract Task<MessageResult> WriteOneAsync(DataWriteContractItem data);
 
