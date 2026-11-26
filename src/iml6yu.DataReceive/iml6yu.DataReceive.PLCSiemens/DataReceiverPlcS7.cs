@@ -6,6 +6,7 @@ using iml6yu.DataReceive.Core.Models;
 using iml6yu.DataReceive.PLCSiemens.Configs;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using S7.Net;
 using S7.Net.Protocol.S7;
 using S7.Net.Types;
@@ -57,6 +58,8 @@ namespace iml6yu.DataReceive.PLCSiemens
                 return MessageResult.Success();
             try
             {
+                if (Client != null)
+                    await DisConnectAsync();
                 CreateClient(Option);
                 await Client.OpenAsync();
                 OnConnectionEvent(this.Option, new ConnectArgs(true));
@@ -65,6 +68,7 @@ namespace iml6yu.DataReceive.PLCSiemens
             catch (Exception ex)
             {
                 OnConnectionEvent(this.Option, new ConnectArgs(false, ex.Message));
+                await DisConnectAsync();
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
@@ -98,7 +102,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                     return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
 
                 List<DataItem> valueNodes = new List<DataItem>();
-                List<DataItem> flagNodes = new List<DataItem>(); 
+                List<DataItem> flagNodes = new List<DataItem>();
                 foreach (var item in data.Datas)
                 {
                     //if (!TryConvertWriteContractItemValue(item))
@@ -181,7 +185,7 @@ namespace iml6yu.DataReceive.PLCSiemens
             }
         }
 
-      
+
         /// <summary>
         /// 验证当前值是否和传入参数的值匹配
         /// </summary>
@@ -227,48 +231,54 @@ namespace iml6yu.DataReceive.PLCSiemens
 
         protected override Task WhileDoAsync(CancellationToken tokenSource)
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {   //读取数据
-                Parallel.ForEach(readNodes, readNode =>
-                {
-                    Parallel.ForEach(readNode.Value, async item =>
-                    {
-                        while (!tokenSource.IsCancellationRequested)
-                        {
-                            try
-                            {
-                                if (IsConnected)
-                                    _ = Client.ReadMultipleVarsAsync(item.Value.Values.ToList()).ContinueWith(async t =>
-                                    {
-                                        if (t.IsFaulted)
-                                        {
-                                            Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data error. {t.Exception?.Message}");
-                                        }
-                                        //获取当前时间戳
-                                        var timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                                        var result = t.Result;
-                                        Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
-                                        foreach (var value in result)
-                                        {
-                                            var dataItem = item.Value.FirstOrDefault(t => t.Value == value);
-                                            if (dataItem.Key != null)
-                                            {
-                                                tempDatas.Add(dataItem.Key, new ReceiverTempDataValue(value.Value, timestamp));
-                                            }
-                                        }
-                                        await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
-                                    });
-                                await Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource);
-                            }
-                            catch (Exception ex)
-                            {
-                                Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data exception. {ex.Message}");
-                                await Task.Delay(item.Key == 0 ? 500 : item.Key);
-                            }
-                        }
-                    });
+                await Parallel.ForEachAsync(readNodes, async (readNode, groupToken) =>
+                   {
+                       await Parallel.ForEachAsync(readNode.Value, async (item, intervalToken) =>
+                         {
+                             var readDataItems = item.Value.Values.ToList();
+                             while (!tokenSource.IsCancellationRequested)
+                             {
+                                 try
+                                 {
+                                     if (VerifyConnect())
+                                     {
+                                         //这个方法就是将读取到的数据写入到readDataItems中,所以在读取之前将值设置成null，避免数据污染；
+                                         readDataItems.ForEach(t => t.Value = null); 
+                                         _ = Client.ReadMultipleVarsAsync(readDataItems).ContinueWith(async t =>
+                                         {
+                                             if (t.IsFaulted)
+                                             {
+                                                 Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data error. {t.Exception?.Message}");
+                                                 return;
+                                             }
+                                             //获取当前时间戳
+                                             var timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                                             Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
+                                             foreach (var dataItem in item.Value)
+                                             {
+                                                 if (dataItem.Value.Value != null)
+                                                 {
+                                                     tempDatas.Add(dataItem.Key, new ReceiverTempDataValue(dataItem.Value, timestamp));
+                                                 }
+                                             }
+                                             await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
+                                         });
+                                     }
+                                 }
+                                 catch (Exception ex)
+                                 {
+                                     Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data exception. {ex.Message}");
+                                 }
+                                 finally
+                                 {
+                                     await Task.Delay(item.Key == 0 ? 500 : item.Key);
+                                 }
+                             }
+                         });
 
-                });
+                   });
             }, tokenSource);
 
         }
@@ -437,7 +447,7 @@ namespace iml6yu.DataReceive.PLCSiemens
                     return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
                 if (data.Datas.Count(t => t.IsFlag) > 1)
                     return MessageResult.Failed(ResultType.ParameterError, "the flag item is more than 1", null);
-                 
+
                 foreach (var item in data.Datas)
                 {
                     //if (!TryConvertWriteContractItemValue(item))

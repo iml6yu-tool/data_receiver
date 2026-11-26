@@ -39,6 +39,7 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                 catch (Exception ex)
                 {
                     OnConnectionEvent(this.Option, new ConnectArgs(false, ex.Message));
+                    await DisConnectAsync();
                     CreateClient(Option);
                     return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
                 }
@@ -78,10 +79,10 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
         protected override Task WhileDoAsync(CancellationToken token)
         {
             //此方法中的两次释放CPU是必要的释放，避免方法执行时间过长导致CPU占用。
-            return Task.Run(async () =>
+            return Task.Run(async() =>
             {
                 //取时间间隔最小且不为0的间隔（串口通信无法按照每一组进行间隔等待，因为串口不能多线程并发读取）
-                var delayTime = TimeSpan.FromMilliseconds(readNodes.Values.SelectMany(t => t.Keys).Where(t => t > 0).Min(t => t));
+                var delayTime = TimeSpan.FromMilliseconds(readNodes.Values.SelectMany(t => t.Keys).Where(t => t > 0).DefaultIfEmpty(500).Min(t => t));
                 while (!token.IsCancellationRequested)
                 {
                     try
@@ -104,22 +105,20 @@ namespace iml6yu.DataReceive.ModbusMasterRTU
                                             tempDatas = ReadModbusNodeItem(readConfig, node, tempDatas);
                                         }
                                         await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
-                                    }
-                                    //释放一次CPU
-                                    await Task.Delay(0);
-                                }
-                                //释放一次CPU
-                                await Task.Delay(0);
+                                    } 
+                                } 
                             }
                         }
                         if (token.IsCancellationRequested)
-                            return;
-                        //延迟等待
-                        await Task.Delay(delayTime);
+                            return; 
                     }
                     catch (Exception ex)
                     {
                         Logger.LogError(ex, "Modbus RTU Data Receive WhileDoAsync Error:{0}", ex.Message);
+                       
+                    }
+                    finally
+                    {
                         //延迟等待
                         await Task.Delay(delayTime);
                     }

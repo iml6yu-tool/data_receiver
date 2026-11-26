@@ -31,28 +31,29 @@ namespace iml6yu.DataReceive.Core
         {
             get
             {
-                if (DoTask == null)
-                    return ReceiverState.Uninitialized;
-
                 //客户端没有实例化，就是未实例化
-                if (!IsConnected && Client == null)
+                if (DoTask == null )
                     return ReceiverState.Uninitialized;
 
                 //如果没有连接，会自动重连，所以属于准备中
                 if (!IsConnected && Client != null)
-                    return ReceiverState.Reading;
+                    return ReceiverState.Reading; 
                 if (DoTask.Status == TaskStatus.Created)
                     return ReceiverState.Ready;
+                
+
                 if (DoTask.Status == TaskStatus.WaitingForActivation)
-                    return ReceiverState.Ready;
+                    return ReceiverState.Working;
                 if (DoTask.Status == TaskStatus.WaitingToRun)
-                    return ReceiverState.Ready;
+                    return ReceiverState.Working;
                 if (DoTask.Status == TaskStatus.Running)
                     return ReceiverState.Working;
                 if (DoTask.Status == TaskStatus.WaitingForChildrenToComplete)
                     return ReceiverState.Working;
                 if (DoTask.Status == TaskStatus.RanToCompletion)
                     return ReceiverState.Working;
+
+
                 if (DoTask.Status == TaskStatus.Canceled)
                     return ReceiverState.Stoped;
                 if (DoTask.Status == TaskStatus.Faulted)
@@ -175,7 +176,7 @@ namespace iml6yu.DataReceive.Core
 
             if (Option.AutoConnect)
             {
-                ConnectAsync().Wait();
+                Task.Run(async () => { await ConnectAsync(); });
             }
         }
 
@@ -302,7 +303,7 @@ namespace iml6yu.DataReceive.Core
             {
                 try
                 {
-                    ReceiveDatas(token);
+                    InitReceiveDatasAction(token);
                     //避免重复调用的时候出现多个检测的task
                     if (DoTask != null && DoTask.Status == TaskStatus.Running)
                         DoTask.Dispose();
@@ -372,7 +373,7 @@ namespace iml6yu.DataReceive.Core
         /// 收到数据后进行的逻辑处理
         /// </summary>
         /// <param name="items"></param>
-        protected virtual void ReceiveDatas(CancellationToken token)
+        protected virtual void InitReceiveDatasAction(CancellationToken token)
         {
             Task.Run(async () =>
             {
@@ -399,7 +400,7 @@ namespace iml6yu.DataReceive.Core
                                 }
                                 //订阅事件
                                 if (Subscribers.Count > 0)
-                                    Parallel.ForEach(Subscribers, item =>
+                                    _ = Parallel.ForEachAsync(Subscribers, (item, token) =>
                                     {
                                         if (item.Value.Count > 0)
                                         {
@@ -416,6 +417,7 @@ namespace iml6yu.DataReceive.Core
                                                 }
                                             }
                                         }
+                                        return ValueTask.CompletedTask;
                                     });
                             }
 
@@ -771,6 +773,8 @@ namespace iml6yu.DataReceive.Core
 
         public virtual void Dispose()
         {
+            DisConnectAsync().Wait();
+
             DoTask?.Dispose();
             Subscribers?.Clear();
             MessageChannel.Writer.Complete();
