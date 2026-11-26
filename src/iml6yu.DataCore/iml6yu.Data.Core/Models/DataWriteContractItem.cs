@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace iml6yu.Data.Core.Models
@@ -35,7 +36,8 @@ namespace iml6yu.Data.Core.Models
         /// <item>18 String</item>  
         /// </list>
         /// </summary>
-        public int ValueType { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public TypeCode ValueType { get; set; }
         /// <summary>
         /// 值
         /// </summary>
@@ -51,6 +53,10 @@ namespace iml6yu.Data.Core.Models
         /// </summary>
         public bool IsFlag { get; set; } = false;
 
+        /// <summary>
+        /// 写入顺序，数字越小越靠前，数字相同则同时写入，IsFlag点位不受此顺序影响
+        /// </summary>
+        public int Sort { get; set; } = 0;
         //public static implicit operator DataReceiveContractItem(DataWriteContractItem item)
         //{
         //    return new DataReceiveContractItem()
@@ -62,15 +68,15 @@ namespace iml6yu.Data.Core.Models
         //    };
         //}
 
-        public static explicit operator DataWriteContractItem(DataReceiveContractItem item)
-        {
-            return new DataWriteContractItem
-            {
-                Address = item.Address,
-                Value = item.Value,
-                ValueType = item.ValueType,
-                IsFlag = false
-            };
-        }
+        //public static explicit operator DataWriteContractItem(DataReceiveContractItem item)
+        //{
+        //    return new DataWriteContractItem
+        //    {
+        //        Address = item.Address,
+        //        Value = item.Value,
+        //        ValueType = item.ValueType,
+        //        IsFlag = false
+        //    };
+        //}
     }
 }

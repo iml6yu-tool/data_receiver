@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace iml6yu.DataReceive.Core
 {
@@ -30,28 +31,29 @@ namespace iml6yu.DataReceive.Core
         {
             get
             {
-                if (DoTask == null)
-                    return ReceiverState.Uninitialized;
-
                 //客户端没有实例化，就是未实例化
-                if (!IsConnected && Client == null)
+                if (DoTask == null )
                     return ReceiverState.Uninitialized;
 
                 //如果没有连接，会自动重连，所以属于准备中
                 if (!IsConnected && Client != null)
-                    return ReceiverState.Reading;
+                    return ReceiverState.Reading; 
                 if (DoTask.Status == TaskStatus.Created)
                     return ReceiverState.Ready;
+                
+
                 if (DoTask.Status == TaskStatus.WaitingForActivation)
-                    return ReceiverState.Ready;
+                    return ReceiverState.Working;
                 if (DoTask.Status == TaskStatus.WaitingToRun)
-                    return ReceiverState.Ready;
+                    return ReceiverState.Working;
                 if (DoTask.Status == TaskStatus.Running)
                     return ReceiverState.Working;
                 if (DoTask.Status == TaskStatus.WaitingForChildrenToComplete)
                     return ReceiverState.Working;
                 if (DoTask.Status == TaskStatus.RanToCompletion)
                     return ReceiverState.Working;
+
+
                 if (DoTask.Status == TaskStatus.Canceled)
                     return ReceiverState.Stoped;
                 if (DoTask.Status == TaskStatus.Faulted)
@@ -174,7 +176,7 @@ namespace iml6yu.DataReceive.Core
 
             if (Option.AutoConnect)
             {
-                ConnectAsync().Wait();
+                Task.Run(async () => { await ConnectAsync(); });
             }
         }
 
@@ -280,13 +282,20 @@ namespace iml6yu.DataReceive.Core
                 return CollectionResult<DataReceiveContractItem>.Success(1, datas.Count, datas, datas.Count);
             });
         }
+
+        public async Task<CollectionResult<DataReceiveContractItem>> ReadsAsync(IEnumerable<DataReadItem> addressArray, CancellationToken cancellationToken = default)
+        {
+            return await ReadsAsync(addressArray.Select(t => t.Address).ToArray(), cancellationToken);
+        }
+
+
         /// <summary>
         /// 实时读取数据
         /// </summary>
         /// <param name="addressArray"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public abstract Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default);
+        public abstract Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReadItem> addressArray, CancellationToken cancellationToken = default);
 
         public Task StartWorkAsync(CancellationToken token)
         {
@@ -294,7 +303,7 @@ namespace iml6yu.DataReceive.Core
             {
                 try
                 {
-                    ReceiveDatas(token);
+                    InitReceiveDatasAction(token);
                     //避免重复调用的时候出现多个检测的task
                     if (DoTask != null && DoTask.Status == TaskStatus.Running)
                         DoTask.Dispose();
@@ -306,7 +315,7 @@ namespace iml6yu.DataReceive.Core
                             Logger.LogWarning($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort})正在尝试重连...");
                             await ConnectAsync();
                         }
-                        await Task.Delay(TimeSpan.FromSeconds(30), token);
+                        await Task.Delay(TimeSpan.FromMilliseconds(Option.ReConnectPeriod == 0 ? 30000 : Option.ReConnectPeriod), token);
                     }
                 }
                 catch (TaskCanceledException tcex)
@@ -364,7 +373,7 @@ namespace iml6yu.DataReceive.Core
         /// 收到数据后进行的逻辑处理
         /// </summary>
         /// <param name="items"></param>
-        protected virtual void ReceiveDatas(CancellationToken token)
+        protected virtual void InitReceiveDatasAction(CancellationToken token)
         {
             Task.Run(async () =>
             {
@@ -391,7 +400,7 @@ namespace iml6yu.DataReceive.Core
                                 }
                                 //订阅事件
                                 if (Subscribers.Count > 0)
-                                    Parallel.ForEach(Subscribers, item =>
+                                    _ = Parallel.ForEachAsync(Subscribers, (item, token) =>
                                     {
                                         if (item.Value.Count > 0)
                                         {
@@ -408,6 +417,7 @@ namespace iml6yu.DataReceive.Core
                                                 }
                                             }
                                         }
+                                        return ValueTask.CompletedTask;
                                     });
                             }
 
@@ -454,7 +464,7 @@ namespace iml6yu.DataReceive.Core
                     continue;
                 if (!VerifyValue(datas.Value[key].Value, CacheDataDic[key].Data.ValueType, out object v))
                 {
-                    Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{(TypeCode)CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
+                    Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
                     continue;
                 }
                 data.Datas.Add(new DataReceiveContractItem()
@@ -499,7 +509,7 @@ namespace iml6yu.DataReceive.Core
 
                 if (!VerifyValue(datas.Value[key].Value, CacheDataDic[key].Data.ValueType, out object v))
                 {
-                    Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{(TypeCode)CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
+                    Logger.LogWarning($"{key}上报的数据类型是{datas.Value[key].Value.GetType()}与配置的类型{CacheDataDic[key].Data.ValueType}不一致，数据已丢弃！");
                     continue;
                 }
 
@@ -567,7 +577,7 @@ namespace iml6yu.DataReceive.Core
                 targetValue = 0;
                 return false;
             }
-            else if(typeCode == 13) //TypeCode.Single float
+            else if (typeCode == 13) //TypeCode.Single float
             {
                 if (value is float f)
                 {
@@ -583,7 +593,7 @@ namespace iml6yu.DataReceive.Core
                 return false;
             }
             else if (typeCode == 14) //TypeCode.Double  double
-            { 
+            {
                 if (value is double d)
                 {
                     targetValue = d;
@@ -595,7 +605,7 @@ namespace iml6yu.DataReceive.Core
                     return true;
                 }
                 targetValue = 0d;
-                return false; 
+                return false;
             }
             else if (typeCode == 16) //DateTime
             {
@@ -763,21 +773,131 @@ namespace iml6yu.DataReceive.Core
 
         public virtual void Dispose()
         {
+            DisConnectAsync().Wait();
+
             DoTask?.Dispose();
             Subscribers?.Clear();
             MessageChannel.Writer.Complete();
             CacheDataDic.Clear();
             ConfigNodes.Clear();
         }
-
-        public abstract Task<MessageResult> WriteAsync(DataWriteContract data);
-        public virtual async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
+        /// <summary>
+        /// 写入数据不进行验证，也不支持IsFlag 
+        ///  
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public async Task<MessageResult> WriteAsync(DataWriteContract data)
         {
-            return await WriteAsync(data);
+            foreach (var item in data.Datas)
+            {
+                if (!TryConvertWriteContractItemValue(item))
+                    return MessageResult.Failed(ResultType.ParameterError, $"The address({item.Address})'s value type is {item.Value.GetType().Name}, but ValueType is {item.ValueType.ToString()}!");
+            }
+            data.Datas = data.Datas.OrderBy(t => t.IsFlag).ThenBy(t => t.Sort).ThenBy(t => t.Address).ToList();
+            return await WriteBatchAsync(data);
         }
-        public abstract Task<MessageResult> WriteAsync(DataWriteContractItem data);
+
+        /// <summary>
+        /// 批量写入数据
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        protected abstract Task<MessageResult> WriteBatchAsync(DataWriteContract data);
+        /// <summary>
+        /// 写入数据并读取一次进行数据判定（类似mq这类非主动读取的中间件则不进行读取判定）
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
+        {
+            foreach (var item in data.Datas)
+            {
+                if (!TryConvertWriteContractItemValue(item))
+                    return MessageResult.Failed(ResultType.ParameterError, $"The address({item.Address})'s value type is {item.Value.GetType().Name}, but ValueType is {item.ValueType.ToString()}!");
+            }
+            data.Datas = data.Datas.OrderBy(t => t.IsFlag).ThenBy(t => t.Sort).ThenBy(t => t.Address).ToList();
+            return await WriteStrictlyAsync(data);
+        }
+        /// <summary>
+        /// 严格写入（进行写入判定  写入后读取数据）类似mq这里的则不会进行读取判定
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        protected virtual async Task<MessageResult> WriteStrictlyAsync(DataWriteContract data)
+        {
+            return await WriteBatchAsync(data);
+        }
+        public async Task<MessageResult> WriteAsync(DataWriteContractItem data)
+        {
+            if (!TryConvertWriteContractItemValue(data))
+                return MessageResult.Failed(ResultType.ParameterError, $"The address({data.Address})'s value type is {data.Value.GetType().Name}, but ValueType is {data.ValueType.ToString()}!");
+            return await WriteOneAsync(data);
+        }
+        public abstract Task<MessageResult> WriteOneAsync(DataWriteContractItem data);
 
         public abstract Task<MessageResult> WriteAsync<T>(string address, T data);
+
+        private bool TryConvertWriteContractItemValue(DataWriteContractItem data)
+        {
+            try
+            {
+                data.Value = Convert.ChangeType(data.Value, data.ValueType);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Convert DataWriteContractItem({data.Address}) error! {ex.Message}");
+                return false;
+            }
+        }
+
+        #region 心跳
+        protected FixedSizeRingBuffer<object> HeartBeatValue = new FixedSizeRingBuffer<object>(5);
+        /// <summary>
+        /// 获取当前心跳健康
+        /// </summary>
+        /// <returns></returns>
+        public async Task<HeartBeatState> HeartBeatHealthy()
+        {
+            try
+            {
+                if (Option.HeartBeat == null || string.IsNullOrEmpty(Option.HeartBeat.Address))
+                    return HeartBeatState.UnKnown;
+                if (!IsConnected) return HeartBeatState.Unavailable;
+                using CancellationTokenSource tokenSource = new CancellationTokenSource(50);
+                var currentValue = await ReadAsync(Option.HeartBeat.Address, tokenSource.Token);
+                if (currentValue == null) return HeartBeatState.Unavailable;
+                if (!currentValue.State) return HeartBeatState.Unavailable;
+                if (currentValue.Data == null) return HeartBeatState.Unavailable;
+                if (currentValue.Data.Value == null) return HeartBeatState.Unavailable;
+                if (HeartBeatValue.Count != 0)
+                {
+                    if (HeartBeatValue.HasAnyDifferent(currentValue.Data.Value, out int index))
+                    {
+                        //不等于-1表示真的有不同的值，等于-1表示值都相同，但是时间比较短
+                        if (index != -1 && index != HeartBeatValue.MaxCapacity)
+                            HeartBeatValue.Add(currentValue.Data.Value);
+
+                        if (index >= 0 && index < 2)
+                            return HeartBeatState.Healthy;
+                        else
+                            return HeartBeatState.Degraded;
+                    }
+                    //全部都相同，就是很久没有变化了  直接宣布死刑
+                    return HeartBeatState.Unavailable;
+                }
+                HeartBeatValue.Add(currentValue.Data.Value);
+                return HeartBeatState.Healthy;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "读取心跳时发生异常");
+                return HeartBeatState.UnKnown;
+            }
+
+        }
+        #endregion
 
     }
 }

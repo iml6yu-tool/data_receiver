@@ -16,6 +16,17 @@ namespace iml6yu.DataReceiverExample
 
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
+            _ = Task.Run(async () =>
+              {
+                  while (!cancellationToken.IsCancellationRequested)
+                  {
+                      if (logger.IsEnabled(LogLevel.Information))
+                      {
+                          logger.LogInformation("Á¬½Ó×´Ì¬ : {0}", receiver.IsConnected);
+                      }
+                      await Task.Delay(1000, cancellationToken);
+                  }
+              });
             receiver.ConnectionEvent += (sender, e) =>
             {
                 if (e.IsConntion)
@@ -28,15 +39,15 @@ namespace iml6yu.DataReceiverExample
                 }
             };
 
-            receiver.ErrorEvent += (sender, e) =>
-            {
-                logger.LogError(e.Ex, "Error occurred: {Message}", e.Message);
-            };
+            //receiver.ErrorEvent += (sender, e) =>
+            //{
+            //    logger.LogError(e.Ex, "Error occurred: {Message}", e.Message);
+            //};
 
-            receiver.WarnEvent += (sender, e) =>
-            {
-                logger.LogWarning("Warning: {Message}", e.Message);
-            };
+            //receiver.WarnEvent += (sender, e) =>
+            //{
+            //    logger.LogWarning("Warning: {Message}", e.Message);
+            //};
 
             receiver.DataChangedEvent += (sender, e) =>
             {

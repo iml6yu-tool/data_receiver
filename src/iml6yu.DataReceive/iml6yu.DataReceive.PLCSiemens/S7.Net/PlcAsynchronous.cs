@@ -292,7 +292,7 @@ namespace S7.Net
             {
                 //验证pdu数据过多后进行重新整理变量尝试读取
                 var reDataItems = ReBuilderDataItems(dataItems);
-                await Parallel.ForEachAsync(reDataItems, async (dic, token) =>
+                foreach (var dic in reDataItems)
                 {
                     foreach (var item in dic.Keys)
                     {
@@ -308,7 +308,8 @@ namespace S7.Net
                             }
                         }
                     }
-                });
+                }
+
 #if DEBUG
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dataItems.Select(t => new { Address = $"{t.DataType.ToString()}{t.DB}.{t.VarType.ToString()}{t.StartByteAdr}.{t.BitAdr}", Value = t.Value })));
@@ -519,21 +520,7 @@ namespace S7.Net
                 {
                     //新的DataItem， （原来的DataItem,在新的里面的Count值）
                     Dictionary<DataItem, List<(DataItem, int)>> currentDataItems = new Dictionary<DataItem, List<(DataItem, int)>>();
-                    var lenght = 0;
-                    if (key == VarType.Bit)
-                        lenght = 1;
-                    else if (key == VarType.Byte || key == VarType.String || key == VarType.S7String)
-                        lenght = 8;
-                    else if (key == VarType.Real || key == VarType.DInt || key == VarType.DWord || key == VarType.Timer || key == VarType.Time)
-                        lenght = 32;
-                    else if (key == VarType.LReal || key == VarType.DateTime)
-                        lenght = 64;
-                    else if (key == VarType.Word || key == VarType.Int || key == VarType.Counter || key == VarType.Date || key == VarType.S7WString)
-                        lenght = 16;
-                    else if (key == VarType.DateTimeLong)
-                        lenght = 96;
-                    else
-                        lenght = 1;
+                    var lenght = GetVarTypeValueLength(key);
                     var list = varTypeRefDataItemDic[key];
                     foreach (var item in list)
                     {
@@ -579,6 +566,30 @@ namespace S7.Net
                 }
             }
             return resultDataItem;
+        }
+        /// <summary>
+        /// 根据VarType获取目标类型应该有多少个bit
+        /// </summary>
+        /// <param name="varType"></param>
+        /// <returns></returns>
+        public int GetVarTypeValueLength(VarType varType)
+        {
+            int lenght;
+            if (varType == VarType.Bit)
+                lenght = 1;
+            else if (varType == VarType.Byte || varType == VarType.String || varType == VarType.S7String)
+                lenght = 8;
+            else if (varType == VarType.Real || varType == VarType.DInt || varType == VarType.DWord || varType == VarType.Timer || varType == VarType.Time)
+                lenght = 32;
+            else if (varType == VarType.LReal || varType == VarType.DateTime)
+                lenght = 64;
+            else if (varType == VarType.Word || varType == VarType.Int || varType == VarType.Counter || varType == VarType.Date || varType == VarType.S7WString)
+                lenght = 16;
+            else if (varType == VarType.DateTimeLong)
+                lenght = 96;
+            else
+                lenght = 1;
+            return lenght;
         }
 
         /// <summary>

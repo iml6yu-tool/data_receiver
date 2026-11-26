@@ -35,10 +35,10 @@ namespace iml6yu.DataService.ModbusTCP
             if (!string.IsNullOrEmpty(option.IPAddress))
                 iPAddress = IPAddress.Parse(option.IPAddress);
             int port = option.Port;
-#if NET6_0
+#if NET6_0 || NET7_0
             listener?.Server.Close();
 #endif
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             listener?.Server.Close();
             listener?.Dispose();
 #endif

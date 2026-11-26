@@ -6,6 +6,7 @@ using iml6yu.DataReceive.Core.Models;
 using iml6yu.DataReceive.PLCSiemens.Configs;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using S7.Net;
 using S7.Net.Protocol.S7;
 using S7.Net.Types;
@@ -57,6 +58,8 @@ namespace iml6yu.DataReceive.PLCSiemens
                 return MessageResult.Success();
             try
             {
+                if (Client != null)
+                    await DisConnectAsync();
                 CreateClient(Option);
                 await Client.OpenAsync();
                 OnConnectionEvent(this.Option, new ConnectArgs(true));
@@ -65,6 +68,7 @@ namespace iml6yu.DataReceive.PLCSiemens
             catch (Exception ex)
             {
                 OnConnectionEvent(this.Option, new ConnectArgs(false, ex.Message));
+                await DisConnectAsync();
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
@@ -87,26 +91,38 @@ namespace iml6yu.DataReceive.PLCSiemens
             });
         }
 
-        public override async Task<MessageResult> WriteAsync(DataWriteContract data)
+        protected override async Task<MessageResult> WriteBatchAsync(DataWriteContract data)
         {
-            if (!IsConnected)
-                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
-
-            if (data == null || data.Datas == null || data.Datas.Count() == 0 || data.Datas.Any(t => string.IsNullOrEmpty(t.Address)))
-                return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
-
             try
             {
-                List<DataItem> writeNodes = new List<DataItem>();
-                foreach (var t in data.Datas)
+                if (!IsConnected)
+                    return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver {Option.ReceiverName}({Option.OriginHost}) not connect");
+
+                if (data == null || data.Datas == null || data.Datas.Count() == 0 || data.Datas.Any(t => string.IsNullOrEmpty(t.Address)))
+                    return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
+
+                List<DataItem> valueNodes = new List<DataItem>();
+                List<DataItem> flagNodes = new List<DataItem>();
+                foreach (var item in data.Datas)
                 {
-                    var item = DataItem.FromAddressAndValue(t.Address, t.Value);
-                    if (item == null)
-                        return MessageResult.Failed(ResultType.ParameterError, $"the address({t.Address}) is error");
-                    writeNodes.Add(item);
+                    //if (!TryConvertWriteContractItemValue(item))
+                    //    return MessageResult.Failed(ResultType.ParameterError, $"The address({item.Address})'s value type is {item.Value.GetType().Name}, but ValueType is {item.ValueType.ToString()}, can't write!");
+
+                    var dataItem = DataItem.FromAddressAndValue(item.Address, item.Value);
+                    if (!VerifyVarTypeRefValueType(item.Value, dataItem.VarType))
+                        return MessageResult.Failed(ResultType.ParameterError, $"The address({item.Address})'s value type is {item.Value.GetType().Name}, but VarType is {dataItem.VarType.ToString()}, can't write!");
+
+                    if (item.IsFlag)
+                        flagNodes.Add(dataItem);
+                    else
+                        valueNodes.Add(dataItem);
                 }
 
-                await Client.WriteAsync(writeNodes.ToArray());
+                if (valueNodes != null && valueNodes.Count > 0)
+                    await Client.WriteAsync(valueNodes.ToArray());
+
+                if (flagNodes != null && flagNodes.Count > 0)
+                    await Client.WriteAsync(flagNodes.ToArray());
                 return MessageResult.Success();
             }
             catch (Exception ex)
@@ -116,16 +132,22 @@ namespace iml6yu.DataReceive.PLCSiemens
             }
         }
 
-        public override async Task<MessageResult> WriteAsync(DataWriteContractItem data)
+        public override async Task<MessageResult> WriteOneAsync(DataWriteContractItem data)
         {
             if (!IsConnected)
                 return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
 
             try
             {
+                //if (!TryConvertWriteContractItemValue(data))
+                //    return MessageResult.Failed(ResultType.ParameterError, $"The address({data.Address})'s value type is {data.Value.GetType().Name}, but ValueType is {data.ValueType.ToString()}, can't write!");
+
                 var item = DataItem.FromAddressAndValue(data.Address, data.Value);
                 if (item == null)
-                    return MessageResult.Failed(ResultType.ParameterError, $"the address({data.Address}) is error");
+                    return MessageResult.Failed(ResultType.ParameterError, $"The address({data.Address}) is error");
+                if (!VerifyVarTypeRefValueType(item.Value, item.VarType))
+                    return MessageResult.Failed(ResultType.ParameterError, $"The address({data.Address})'s value type is {data.Value.GetType().Name}, but VarType is {item.VarType.ToString()}, can't write!");
+
                 await Client.WriteAsync(item);
                 return MessageResult.Success();
             }
@@ -135,6 +157,8 @@ namespace iml6yu.DataReceive.PLCSiemens
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
+
+
 
         public override async Task<MessageResult> WriteAsync<T>(string address, T data)
         {
@@ -145,7 +169,11 @@ namespace iml6yu.DataReceive.PLCSiemens
             {
                 var item = DataItem.FromAddressAndValue(address, data);
                 if (item == null)
-                    return MessageResult.Failed(ResultType.ParameterError, $"the address({address}) is error");
+                    return MessageResult.Failed(ResultType.ParameterError, $"The address({address}) is error");
+
+                if (!VerifyVarTypeRefValueType(data, item.VarType))
+                    return MessageResult.Failed(ResultType.ParameterError, $"The address({address})'s value type is {data.GetType().Name}, but VarType is {item.VarType.ToString()}, can't write!");
+
 
                 await Client.WriteAsync(item);
                 return MessageResult.Success();
@@ -157,6 +185,37 @@ namespace iml6yu.DataReceive.PLCSiemens
             }
         }
 
+
+        /// <summary>
+        /// 验证当前值是否和传入参数的值匹配
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="data"></param>
+        /// <param name="varType"></param>
+        /// <returns></returns>
+        private bool VerifyVarTypeRefValueType<T>(T data, VarType varType)
+        {
+            switch (varType)
+            {
+                case VarType.Bit:
+                    return data is bool;
+                case VarType.Byte:
+                    return data is byte;
+                case VarType.Word:
+                case VarType.Int:
+                    return data is short || data is ushort;
+                case VarType.DWord:
+                case VarType.DInt:
+                    return data is int || data is uint;
+                case VarType.Real:
+                    return data is float;
+                case VarType.LReal:
+                    return data is double;
+                default:
+                    return true;
+            }
+        }
+
         protected override Plc CreateClient(DataReceiverPlcS7Option option)
         {
             if (IsConnected)
@@ -164,6 +223,7 @@ namespace iml6yu.DataReceive.PLCSiemens
             Client = new Plc(
                 (S7.Net.CpuType)option.CpuType,
                 option.OriginHost,
+                option.OriginPort ?? 102,
                 (short)option.Rack,
                (short)option.Slot);
             return Client;
@@ -171,48 +231,54 @@ namespace iml6yu.DataReceive.PLCSiemens
 
         protected override Task WhileDoAsync(CancellationToken tokenSource)
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {   //读取数据
-                Parallel.ForEach(readNodes, readNode =>
-                {
-                    Parallel.ForEach(readNode.Value, async item =>
-                    {
-                        while (!tokenSource.IsCancellationRequested)
-                        {
-                            try
-                            {
-                                if (IsConnected)
-                                    _ = Client.ReadMultipleVarsAsync(item.Value.Values.ToList()).ContinueWith(async t =>
-                                    {
-                                        if (t.IsFaulted)
-                                        {
-                                            Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data error. {t.Exception?.Message}");
-                                        }
-                                        //获取当前时间戳
-                                        var timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                                        var result = t.Result;
-                                        Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
-                                        foreach (var value in result)
-                                        {
-                                            var dataItem = item.Value.FirstOrDefault(t => t.Value == value);
-                                            if (dataItem.Key != null)
-                                            {
-                                                tempDatas.Add(dataItem.Key, new ReceiverTempDataValue(value.Value, timestamp));
-                                            }
-                                        }
-                                        await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
-                                    });
-                                await Task.Delay(item.Key == 0 ? 500 : item.Key, tokenSource);
-                            }
-                            catch (Exception ex)
-                            {
-                                Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data exception. {ex.Message}");
-                                await Task.Delay(item.Key == 0 ? 500 : item.Key);
-                            }
-                        }
-                    });
+                await Parallel.ForEachAsync(readNodes, async (readNode, groupToken) =>
+                   {
+                       await Parallel.ForEachAsync(readNode.Value, async (item, intervalToken) =>
+                         {
+                             var readDataItems = item.Value.Values.ToList();
+                             while (!tokenSource.IsCancellationRequested)
+                             {
+                                 try
+                                 {
+                                     if (VerifyConnect())
+                                     {
+                                         //这个方法就是将读取到的数据写入到readDataItems中,所以在读取之前将值设置成null，避免数据污染；
+                                         readDataItems.ForEach(t => t.Value = null); 
+                                         _ = Client.ReadMultipleVarsAsync(readDataItems).ContinueWith(async t =>
+                                         {
+                                             if (t.IsFaulted)
+                                             {
+                                                 Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data error. {t.Exception?.Message}");
+                                                 return;
+                                             }
+                                             //获取当前时间戳
+                                             var timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                                             Dictionary<string, ReceiverTempDataValue> tempDatas = new Dictionary<string, ReceiverTempDataValue>();
+                                             foreach (var dataItem in item.Value)
+                                             {
+                                                 if (dataItem.Value.Value != null)
+                                                 {
+                                                     tempDatas.Add(dataItem.Key, new ReceiverTempDataValue(dataItem.Value, timestamp));
+                                                 }
+                                             }
+                                             await ReceiveDataToMessageChannelAsync(Option.ProductLineName, tempDatas);
+                                         });
+                                     }
+                                 }
+                                 catch (Exception ex)
+                                 {
+                                     Logger.LogError($"{Option.ReceiverName}({Option.OriginHost}:{Option.OriginPort}) read data exception. {ex.Message}");
+                                 }
+                                 finally
+                                 {
+                                     await Task.Delay(item.Key == 0 ? 500 : item.Key);
+                                 }
+                             }
+                         });
 
-                });
+                   });
             }, tokenSource);
 
         }
@@ -327,7 +393,7 @@ namespace iml6yu.DataReceive.PLCSiemens
         //    _ => null
         //};
 
-        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReceiveContractItem> addressArray, CancellationToken cancellationToken = default)
+        public override async Task<DataResult<DataReceiveContract>> DirectReadAsync(IEnumerable<DataReadItem> addressArray, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -348,14 +414,15 @@ namespace iml6yu.DataReceive.PLCSiemens
                 for (var i = 0; i < values.Count; i++)
                 {
                     var item = addressArray.ElementAt(i);
-                    if (!VerifyValue(values[i].Value, item.ValueType, out object v))
-                        return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取失败，预期类型是{((TypeCode)item.ValueType).ToString()}，而实际读取到的类型是{item.Value.GetType().Name},类型不匹配！");
+                    var valueTypeNumber = (int)item.ValueType;
+                    if (!VerifyValue(values[i].Value, valueTypeNumber, out object v))
+                        return DataResult<DataReceiveContract>.Failed(ResultType.DeviceReadError, $"读取失败，预期类型是{(item.ValueType).ToString()}，而实际读取到的类型是{values[i].Value.GetType().Name},类型不匹配！");
                     data.Datas.Add(new DataReceiveContractItem()
                     {
                         Address = item.Address,
                         Timestamp = data.Timestamp,
                         Value = v,
-                        ValueType = item.ValueType
+                        ValueType = valueTypeNumber
                     });
                 }
                 return DataResult<DataReceiveContract>.Success(data);
@@ -366,55 +433,77 @@ namespace iml6yu.DataReceive.PLCSiemens
             }
         }
 
-        public override async Task<MessageResult> WriteWithVerifyAsync(DataWriteContract data)
+        protected override async Task<MessageResult> WriteStrictlyAsync(DataWriteContract data)
         {
-            if (!IsConnected)
-                return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
-
-            if (data == null || data.Datas == null || data.Datas.Count() == 0 || data.Datas.Any(t => string.IsNullOrEmpty(t.Address)))
-                return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
-            if (data.Datas.Count(t => t.IsFlag) > 1)
-                return MessageResult.Failed(ResultType.ParameterError, "the flag item is more than 1", null);
+            List<DataItem> valueNodes = new List<DataItem>();
+            List<DataItem> flagNodes = new List<DataItem>();
+            Dictionary<DataItem, DataWriteContractItem> dataItemRefDataWriteContractItem = new Dictionary<DataItem, DataWriteContractItem>();
             try
             {
-                List<DataItem> writeNodes = new List<DataItem>();
-                foreach (var t in data.Datas)
+                if (!IsConnected)
+                    return MessageResult.Failed(ResultType.DeviceWriteError, $"the dirver({Option.OriginHost}) not connect");
+
+                if (data == null || data.Datas == null || data.Datas.Count() == 0 || data.Datas.Any(t => string.IsNullOrEmpty(t.Address)))
+                    return MessageResult.Failed(ResultType.ParameterError, "the write data is null or empty or item any address is null");
+                if (data.Datas.Count(t => t.IsFlag) > 1)
+                    return MessageResult.Failed(ResultType.ParameterError, "the flag item is more than 1", null);
+
+                foreach (var item in data.Datas)
                 {
-                    if (t.IsFlag) continue;
-                    var item = DataItem.FromAddressAndValue(t.Address, t.Value);
-                    if (item == null)
-                        return MessageResult.Failed(ResultType.ParameterError, $"the address({t.Address}) is error");
-                    writeNodes.Add(item);
+                    //if (!TryConvertWriteContractItemValue(item))
+                    //    return MessageResult.Failed(ResultType.ParameterError, $"The address({item.Address})'s value type is {item.Value.GetType().Name}, but ValueType is {item.ValueType.ToString()}, can't write!");
+
+                    var dataItem = DataItem.FromAddressAndValue(item.Address, item.Value);
+                    if (!VerifyVarTypeRefValueType(item.Value, dataItem.VarType))
+                        return MessageResult.Failed(ResultType.ParameterError, $"The address({item.Address})'s value type is {item.Value.GetType().Name}, but VarType is {dataItem.VarType.ToString()}, can't write!");
+
+                    if (item.IsFlag)
+                        flagNodes.Add(dataItem);
+                    else
+                        valueNodes.Add(dataItem);
+
+                    dataItemRefDataWriteContractItem.Add(dataItem, item);
                 }
 
-                await Client.WriteAsync(writeNodes.ToArray());
-                var writeResult = await Client.ReadMultipleVarsAsync(writeNodes);
-                foreach (var item in writeResult)
+                await Client.WriteAsync(valueNodes.ToArray());
+
+                var valueNodesResult = await Client.ReadMultipleVarsAsync(valueNodes);
+                foreach (var item in valueNodesResult)
                 {
-                    var address = data.Datas.FirstOrDefault(t => DataItem.FromAddress(t.Address) == item);
-                    if (address == null)
-                        return MessageResult.Failed(ResultType.DeviceWriteError, $"数据写入失败");
-                    if (!VerifyValueEqual(item.Value, address.Value, address.ValueType))
+                    var address = dataItemRefDataWriteContractItem[item];
+
+                    if (!VerifyValueEqual(item.Value, address.Value, (int)address.ValueType))
                         return MessageResult.Failed(ResultType.DeviceWriteError, $"数据{address.Address}写入失败,当前值是{item.Value},预期值是{address.Value}");
                 }
-                if (data.Datas.Any(t => t.IsFlag))
+
+
+                //写入数据
+                await Client.WriteAsync(flagNodes.ToArray());
+                //读取当前写入的数据
+                var flagNodesResult = await Client.ReadMultipleVarsAsync(flagNodes);
+                //验证当前读取的值和预期写入的值是否相等
+                foreach (var item in flagNodesResult)
                 {
-                    var address = data.Datas.First(t => t.IsFlag);
-                    var item = DataItem.FromAddressAndValue(address.Address, address.Value);
-                    //写入数据
-                    await Client.WriteAsync(item);
-                    //读取当前写入的数据
-                    var v = await Client.ReadAsync(address.Address);
-                    //验证当前读取的值和预期写入的值是否相等
-                    if (!VerifyValueEqual(v, address.Value, address.ValueType))
-                        return MessageResult.Failed(ResultType.DeviceWriteError, $"数据{address.Address}写入失败,当前值是{v},预期值是{address.Value}");
+                    var address = dataItemRefDataWriteContractItem[item];
+                    if (!VerifyValueEqual(item.Value, address.Value, (int)address.ValueType))
+                        return MessageResult.Failed(ResultType.DeviceWriteError, $"数据{address.Address}写入失败,当前值是{item.Value},预期值是{address.Value}");
                 }
+
                 return MessageResult.Success();
             }
             catch (Exception ex)
             {
                 Logger.LogError($"write data error. {ex.Message}");
                 return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+            }
+            finally
+            {
+                valueNodes.Clear();
+                flagNodes.Clear();
+                dataItemRefDataWriteContractItem.Clear();
+                valueNodes = null;
+                flagNodes = null;
+                dataItemRefDataWriteContractItem = null;
             }
         }
 

@@ -23,7 +23,7 @@ namespace iml6yu.DataServiceExample.OpcUa
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
-            dataService?.StopServicer(); 
+            dataService?.StopServicer();
             return base.StopAsync(cancellationToken);
         }
 
@@ -52,32 +52,32 @@ namespace iml6yu.DataServiceExample.OpcUa
                             new DataWriteContractItem(){
                                 Address = "ns=2;TestBoolean1",
                                 Value=(new Random()).Next(0,10)%2==0,
-                                ValueType = (int)TypeCode.Boolean,
+                                ValueType =  TypeCode.Boolean,
                             },
                             new DataWriteContractItem(){
                                 Address = "ns=2;TestBoolean2",
                                 Value=(new Random()).Next(0,10)%2==0,
-                                ValueType = (int)TypeCode.Boolean,
+                                ValueType =  TypeCode.Boolean,
                             },
                             new DataWriteContractItem(){
                                 Address = "ns=2;TestInt1",
                                 Value=(new Random()).Next(0,100),
-                                ValueType = (int)TypeCode.Int32,
+                                ValueType =  TypeCode.Int32,
                             },
                             new DataWriteContractItem(){
                                 Address = "ns=2;TestInt2",
                                 Value=(new Random()).Next(0,100),
-                                ValueType = (int)TypeCode.Int64,
+                                ValueType =  TypeCode.Int64,
                             },
                             new DataWriteContractItem(){
                                 Address = "ns=2;TestDouble1",
                                 Value=(new Random()).Next(0,100)/100d,
-                                ValueType = (int)TypeCode.Double,
+                                ValueType = TypeCode.Double,
                             },
                             new DataWriteContractItem(){
                                 Address = "ns=2;TestFloat1",
                                 Value=(new Random()).Next(0,100)/100f,
-                                ValueType = (int)TypeCode.Single,
+                                ValueType =  TypeCode.Single,
                             }
                         }
                     });
@@ -90,7 +90,7 @@ namespace iml6yu.DataServiceExample.OpcUa
                     {
                         Address = "ns=2;TestDateTime",
                         Value = DateTime.Now,
-                        ValueType = (int)TypeCode.DateTime,
+                        ValueType = TypeCode.DateTime,
                     });
                     _logger.LogInformation(System.Text.Json.JsonSerializer.Serialize(message,
                         new System.Text.Json.JsonSerializerOptions()

@@ -10,6 +10,8 @@ namespace iml6yu.Data.Core.JsonConverts
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             ReadCommentHandling = JsonCommentHandling.Skip,
+            // 允许尾随逗号，避免 Json 末尾多了一个逗号导致解析失败
+            AllowTrailingCommas = true, 
             PropertyNameCaseInsensitive = true
         };
 

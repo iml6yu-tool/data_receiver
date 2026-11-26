@@ -14,6 +14,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\iml6yu.DataCore\iml6yu.Data.Core\iml6yu.Data.Core.csproj" />
+    <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.Core\iml6yu.DataReceive.Core.csproj" />
+    <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.ModbusMaster\iml6yu.DataReceive.ModbusMaster.csproj" />
+    <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.ModbusMasterTCP\iml6yu.DataReceive.ModbusMasterTCP.csproj" />
+    <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.ModbusMasterRTU\iml6yu.DataReceive.ModbusMasterRTU.csproj" />
+    <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.Mqtt\iml6yu.DataReceive.Mqtt.csproj" />
+    <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.Mqtt.Default\iml6yu.DataReceive.Mqtt.Default.csproj" />
+    <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.Mqtt.InPlant\iml6yu.DataReceive.Mqtt.InPlant.csproj" />
+    <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.OPCUA\iml6yu.DataReceive.OPCUA.csproj" />
+    <ProjectReference Include="..\..\iml6yu.DataReceive\iml6yu.DataReceive.PLCSiemens\iml6yu.DataReceive.PLCSiemens.csproj" />
   </ItemGroup>
 
   <ItemGroup>

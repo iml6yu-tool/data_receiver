@@ -65,16 +65,6 @@ namespace iml6yu.Data.Core.Models
                 Value = this.Value,
                 Timestamp = this.Timestamp
             };
-        }
-        public static explicit operator DataReceiveContractItem(DataWriteContractItem item)
-        {
-            return new DataReceiveContractItem()
-            {
-                Address = item.Address,
-                ValueType = item.ValueType,
-                Value = item.Value,
-                Timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds()
-            }; 
-        }
+        } 
     }
 }
