@@ -2,6 +2,8 @@
 
 **面向工业物联网（IIoT）的多协议数据采集与数据服务类库**
 
+[English](README.en.md) | 简体中文
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![.NET](https://img.shields.io/badge/.NET-6.0%20%7C%207.0%20%7C%208.0%20%7C%209.0%20%7C%2010.0-512BD4)
 [![GitHub stars](https://img.shields.io/github/stars/iml6yu-tool/data_receiver?style=social)](https://github.com/iml6yu-tool/data_receiver/stargazers)
@@ -24,6 +26,7 @@
 - [配置说明](#配置说明)
 - [核心 API](#核心-api)
 - [事件模型](#事件模型)
+- [详细使用规则](#详细使用规则)
 - [数据服务（DataService）](#数据服务dataservice)
 - [示例项目](#示例项目)
 - [构建](#构建)
@@ -486,6 +489,94 @@ Modbus 读写类型包含大小端与字节交换变体（`HoldingRegisters2Byte
 | `Key` | 产线 / 业务分组名称 |
 | `Timestamp` | 毫秒时间戳 |
 | `Datas` | `DataReceiveContractItem` 列表（`Address`、`Value`、`ValueType`、`Timestamp`） |
+
+---
+
+## 详细使用规则
+
+> 本节给出各协议的核心使用规则摘要。完整的项目骨架、WinForms / 控制台 / Windows 服务三种宿主写法、现场踩坑清单与二次开发示例，请查阅 `src/iml6yu.DataReceive/Docs` 下的系列文档：
+
+| 文档 | 主要内容 |
+| --- | --- |
+| [00 汇总：一套代码打通 Modbus / S7 / OPC UA / MQTT](src/iml6yu.DataReceive/Docs/00-汇总-iml6yu.DataReceive多协议数据采集类库.md) | 架构、包结构、生命周期、协议选型、扩展开发 |
+| [01 Modbus TCP 数据采集](src/iml6yu.DataReceive/Docs/01-ModbusTCP数据采集.md) | 地址格式、读取类型全表、四种端序、合并读取、写入 |
+| [02 Modbus RTU 数据采集](src/iml6yu.DataReceive/Docs/02-ModbusRTU数据采集.md) | 串口参数、单循环调度、485 现场问题 |
+| [03 西门子 S7 数据采集](src/iml6yu.DataReceive/Docs/03-西门子S7数据采集.md) | DB 块地址、扩展数据类型、PDU、Rack/Slot |
+| [04 OPC UA 数据采集](src/iml6yu.DataReceive/Docs/04-OPCUA数据采集.md) | NodeId、URL、安全策略、批量读取 |
+| [05 MQTT 数据采集](src/iml6yu.DataReceive/Docs/05-MQTT数据采集.md) | 主题、三种报文格式、发布写入 |
+
+### 通用规则
+
+| 规则 | 说明 |
+| --- | --- |
+| 停止方式 | `StartWorkAsync` 传入的 `CancellationToken` 是唯一可靠的停止手段；`StopWorkAsync()` 只负责断开与释放，不取消 token |
+| 不要重复启动 | 重复调用 `StartWorkAsync` 会启动多套采集循环，导致设备请求量翻倍 |
+| `Address` 唯一 | `address` 是缓存与事件的 Key，必须全局唯一；重复会导致配置加载失败 |
+| `GroupName` 非空 | 分组字典以 `groupName` 为键，空值会导致配置加载失败 |
+| 间隔下限 | `interval = 0` 视为 500ms；不要小于设备响应时间，否则请求堆积 |
+| 类型匹配 | `valueType` 必须与协议读取类型一致，否则数据被丢弃并记录“数据已丢弃”警告 |
+| 事件要快 | 事件在后台线程执行，耗时逻辑请转投自己的队列；通道容量 5000，满时丢最旧数据并告警 |
+| 主动读取 | `DirectReadAsync` 会直连设备，不要放在高频循环中，避免与轮询争抢连接 |
+| 健康判断 | 不要只看 `IsConnected` / `State`，应结合缓存时间戳与 `HeartBeatHealthy()` 综合判断 |
+
+### Modbus TCP
+
+- **地址格式**：`<从站号>.<ReadType>.<起始地址>`，例如 `1.Coils.0`、`1.HoldingRegisters.100`、`2.HoldingRegistersFloat.200`、`1.ReadInputRegisters2.0`。
+- **地址基准**：起始地址为 **0 基**（手册中的 `40001` → `0`）；`ReadType` 大小写敏感，必须与枚举名完全一致。
+- **读取类型**：1 位（`Coils` / `Inputs`）、16 位（`HoldingRegisters` / `ReadInputRegisters`）、32 位（`*2` / `*Float`）、64 位（`*4` / `*Double`）。
+- **端序选择**：`ABCD`（大端）、`BADC`（字内交换）、`DCBA`（完整小端）、`CDAB`（低字在前）。建议用已知值逐种试读确认。
+- **类型匹配**：1 位 → `Boolean`；16 位 → `Int16` / `UInt16`；32 位 → `Int32` / `UInt32` / `Single`；64 位 → `Int64` / `UInt64` / `Double`。
+- **合并读取**：同一 `groupName` + `interval` 下按“站号 + 读取类型”排序，地址连续时合并为一次请求；地址重叠的点位会被跳过。32 位点位间隔 2，64 位间隔 4。
+- **写入规则**：`Coils` 传 `bool`；`HoldingRegisters` 传 `ushort` 走单寄存器写；`*Float*` 必须传 `float`，`*Double*` 必须传 `double`；`Inputs` 与 `ReadInputRegisters*` 只读。
+- **限制**：单次读取线圈上限 2000、寄存器上限 125；`count` 字段对 Modbus 无效。
+
+详见 [01 Modbus TCP 数据采集](src/iml6yu.DataReceive/Docs/01-ModbusTCP数据采集.md)。
+
+### Modbus RTU
+
+- **地址格式**：与 TCP 完全一致：`<从站号>.<ReadType>.<起始地址>`，同样 0 基。
+- **串口参数**：`comPort`、`baudRate`（默认 9600）、`parity`（默认 None）、`dataBits`（默认 8）、`stopBit`（默认 One），必须与设备逐项一致。
+- **调度策略**：串行总线不能并发，RTU 为**单循环顺序执行**；等待时间取所有点位中最小且大于 0 的 `interval`，未配置时默认 500ms。
+- **总线约束**：一条总线只能有一个主站实例；同一总线站号不能重复；长距离或高波特率需在两端接 120Ω 终端电阻。
+- **写入规则**：与 TCP 相同。
+- **选型提示**：若现场是“485 转以太网”的串口服务器，请改用 `ModbusMasterTCP` 并通过从站号路由，不要用 RTU 打开虚拟串口。
+
+详见 [02 Modbus RTU 数据采集](src/iml6yu.DataReceive/Docs/02-ModbusRTU数据采集.md)。
+
+### Siemens S7
+
+- **地址体系**：`fullAddress` 为 S7 物理地址，`address` 为业务键。DB 区示例：`DB1.DBX0.0`（位）、`DB1.DBB2`（字节）、`DB1.DBW4`（字）、`DB1.DBD6`（双字）、`DB1.SRL10`（Real）、`DB1.LRL14`（LReal）、`DB1.DDT18`（日期时间）、`DB1.STR48`（字符串）。
+- **非 DB 区**：`I0.0` / `IB0` / `IW0` / `ID0`、`Q0.0` / `QB0` / `QW0` / `QD0`、`M0.0` / `MB0` / `MW0` / `MD0`、`T1`、`C1`。
+- **类型匹配**：`DBX` → `Boolean`；`DBB` → `Byte`；`DBW` → `Int16` / `UInt16`；`DBD` → `Int32` / `UInt32`；`SRL` → `Single`；`LRL` → `Double`。
+- **`count` 的作用**：仅字符串 / 数组需要配置读取长度，普通数值点位保持默认 `1`。
+- **轮询方式**：按 `groupName` + `interval` 分组，每个循环用 `ReadMultipleVarsAsync` 一次读取全组；建议 `interval >= 200ms`，点位多时按组拆分以避开 PDU 限制。
+- **写入规则**：`Bit` 写 `bool`、`Real` 写 `float`、`LReal` 写 `double`、`Word` 写 `short` / `ushort`；严格写入时标志位最多 1 个。
+- **现场要点**：S7-1200/1500 需开启 PUT/GET 通信；DB 需取消“优化的块访问”；`DBD` 不是浮点，浮点必须用 `SRL`。
+
+详见 [03 西门子 S7 数据采集](src/iml6yu.DataReceive/Docs/03-西门子S7数据采集.md)。
+
+### OPC UA
+
+- **地址格式**：`fullAddress` 即 NodeId，推荐字符串标识（如 `ns=2;s=Demo.Line1.Speed`）；也支持 `ns=2;i=1234` 等数字标识。
+- **连接地址**：`originHost` 填写完整 URL（如 `opc.tcp://192.168.1.10:4840`），不要再设置 `originPort`，否则会拼接出非法地址。
+- **认证方式**：匿名，或同时配置 `originName` + `originPwd`；默认安全策略为 `None`，仅适用于内网。
+- **读取方式**：按 `groupName` + `interval` 分组轮询批量 `Read`，一次请求节点数受服务端 `MaxNodesPerRead` 限制，单组建议不超过 500 个节点。
+- **类型匹配**：读取结果按 `valueType` 校验，支持 `Boolean` / `Int16` / `UInt16` / `Int32` / `UInt32` / `Int64` / `UInt64` / `Single` / `Double` / `DateTime` / `String`。
+- **写入规则**：`WriteWithVerifyAsync` 在 OPC UA 下不会额外回读校验，强一致场景请写入后自行 `DirectReadAsync` 验证。
+- **现场要点**：当前实现为轮询而非订阅；事件时间戳是本地接收时间；默认自动接受不受信任证书，生产环境建议改为人工信任。
+
+详见 [04 OPC UA 数据采集](src/iml6yu.DataReceive/Docs/04-OPCUA数据采集.md)。
+
+### MQTT
+
+- **推送模型**：`StartWorkAsync` 只负责连接、保活与取消时断开；数据节奏由设备发布频率决定，`interval` 不产生轮询。
+- **点位白名单**：`fullAddress` 对应报文中的地址，`address` 是系统业务键；一旦加载点位配置，未配置的地址会被丢弃。
+- **事件 Key**：始终是 `productLineName`；`groupName` 仅用于把一条报文拆成多批投递。
+- **报文格式**：`Mqtt.Default` 接收 `DataReceiveContract` JSON；`Mqtt.InPlant` 接收中控 `RTValue` 数组（时间戳为秒）；也可通过 `AddMqttReceiver(option, dataParse, ...)` 自定义解析。
+- **写入即发布**：`WriteAsync<T>(topic, data)` 发布序列化后的对象；`WriteAsync(DataWriteContract)` 以 `Key` 作为主题；`WriteOneAsync` 未实现。
+- **现场要点**：同一报文重复地址只取第一条；QoS 与 ClientId 未开放配置，需要时使用 `receiver.Client` 或继承扩展；Broker ACL 需同时允许订阅与发布。
+
+详见 [05 MQTT 数据采集](src/iml6yu.DataReceive/Docs/05-MQTT数据采集.md)。
 
 ---
 
