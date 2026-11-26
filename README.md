@@ -1,6 +1,4 @@
-# data_receiver
-
-**面向工业物联网（IIoT）的多协议数据采集与数据服务类库**
+# iml6yu.Data · 多协议工业数据采集与数据服务类库
 
 [English](README.en.md) | 简体中文
 

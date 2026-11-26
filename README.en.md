@@ -1,6 +1,4 @@
-# data_receiver
-
-**Multi-protocol data acquisition and data service library for Industrial IoT (IIoT)**
+# iml6yu.Data · Multi-Protocol Industrial Data Acquisition & Data Service Library
 
 English | [简体中文](README.md)
 
