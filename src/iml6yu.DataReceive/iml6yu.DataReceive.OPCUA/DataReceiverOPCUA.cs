@@ -6,7 +6,6 @@ using iml6yu.DataReceive.OPCUA.Configs;
 using iml6yu.Result;
 using Microsoft.Extensions.Logging;
 using Opc.Ua;
-using OpcUaHelper;
 using System.Linq;
 
 namespace iml6yu.DataReceive.OPCUA
@@ -48,6 +47,11 @@ namespace iml6yu.DataReceive.OPCUA
             {
                 var serviceUrl = Option.OriginPort.HasValue ? $"{Option.OriginHost}:{Option.OriginPort}" : Option.OriginHost;
                 await Client.ConnectServer(serviceUrl);
+                OnConnectionEvent(Option, new Data.Core.ConnectArgs()
+                {
+                    IsConntion = IsConnected,
+                    Message = IsConnected ? "连接成功" : "连接失败"
+                });
                 return MessageResult.Success();
             }
             catch (Exception ex)
@@ -59,21 +63,17 @@ namespace iml6yu.DataReceive.OPCUA
 
         public override async Task<MessageResult> DisConnectAsync()
         {
-
-            MessageResult r = await Task.Run(() =>
+            try
             {
-                try
-                {
-                    Client?.Disconnect();
-                    return MessageResult.Success();
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, ex.Message);
-                    return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
-                }
-            });
-            return r;
+                if (Client != null)
+                    await Client.DisconnectAsync();
+                return MessageResult.Success();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, ex.Message);
+                return MessageResult.Failed(ResultType.Failed, ex.Message, ex);
+            }
         }
 
         protected override async Task<MessageResult> WriteBatchAsync(DataWriteContract data)
@@ -84,20 +84,20 @@ namespace iml6yu.DataReceive.OPCUA
             if (!VerifyConnect())
                 return MessageResult.Failed(ResultType.DeviceConnectionError, "设备未连接", null);
 
-            var r = await Task.Run(() =>
+            var r = await Task.Run(async () =>
             {
                 try
                 {
                     var valueNodes = data.Datas.Where(d => !d.IsFlag).Select(d => (d.Address, d.Value)).ToList();
                     if (valueNodes == null || valueNodes.Count == 0)
                         return false;
-                    var result = Client.WriteNodes(valueNodes.Select(t => t.Address).ToArray(), valueNodes.Select(t => t.Value).ToArray());
+                    var result = await Client.WriteNodesAsync(valueNodes.Select(t => t.Address).ToArray(), valueNodes.Select(t => t.Value).ToArray());
                     if (!result) return result;
                     //写入flag
                     var flagNodes = data.Datas.Where(d => d.IsFlag).Select(d => (d.Address, d.Value)).ToList();
                     if (flagNodes == null || flagNodes.Count == 0)
                         return result;
-                    return Client.WriteNodes(flagNodes.Select(t => t.Address).ToArray(), flagNodes.Select(t => t.Value).ToArray());
+                    return await Client.WriteNodesAsync(flagNodes.Select(t => t.Address).ToArray(), flagNodes.Select(t => t.Value).ToArray());
                 }
                 catch (Exception ex)
                 {
@@ -137,7 +137,7 @@ namespace iml6yu.DataReceive.OPCUA
                 {
                     address = valueNodes.Select(d => d.Address).ToArray();
                     values = valueNodes.Select(d => d.Value).ToArray();
-                    var writeResult = Client.WriteNodes(address, values);
+                    var writeResult = await Client.WriteNodesAsync(address, values);
                     //写入成功后进行读取对比数值判定
                     if (!writeResult)
                         return MessageResult.Failed(ResultType.DeviceWriteError, $"{Option.ReceiverName}({Option.OriginHost})写入数据失败。数据信息：{string.Join(" , ", valueNodes.Select(t => $"{t.Address}:{t.Value}").ToList())}");
@@ -159,7 +159,7 @@ namespace iml6yu.DataReceive.OPCUA
                 {
                     address = flagNodes.Select(d => d.Address).ToArray();
                     values = flagNodes.Select(d => d.Value).ToArray();
-                    var writeResult = Client.WriteNodes(address, values);
+                    var writeResult = await Client.WriteNodesAsync(address, values);
                     //写入成功后进行读取对比数值判定
                     if (!writeResult)
                         return MessageResult.Failed(ResultType.DeviceWriteError, $"写入数据失败。数据信息：{string.Join(" , ", flagNodes.Select(t => $"{t.Address}:{t.Value}").ToList())}");
@@ -215,22 +215,15 @@ namespace iml6yu.DataReceive.OPCUA
 
         protected override OpcUaClient CreateClient(DataReceiverOPCUAOption option)
         {
-            Client = new OpcUaClient();
-            Client.ConnectComplete += (es, ee) =>
+            Client = new OpcUaClient
             {
-                OnConnectionEvent(option, new Data.Core.ConnectArgs()
-                {
-                    IsConntion = Client.Connected,
-                    Message = "连接失败"
-                });
+                OpcUaName = option.ReceiverName,
+                ReconnectPeriod = option.ReConnectPeriod,
+                ConnectTimeout = option.ConnectTimeout,
+                UserIdentity = !string.IsNullOrEmpty(option.OriginName) && !string.IsNullOrEmpty(option.OriginPwd)
+                    ? new UserIdentity(option.OriginName, option.OriginPwd)
+                    : new UserIdentity(new AnonymousIdentityToken())
             };
-            Client.OpcUaName = option.ReceiverName;
-            Client.ReconnectPeriod = option.ReConnectPeriod;
-            if (!string.IsNullOrEmpty(option.OriginName) && !string.IsNullOrEmpty(option.OriginPwd))
-                Client.UserIdentity = new UserIdentity(option.OriginName, option.OriginPwd);
-            else
-                Client.UserIdentity = new UserIdentity(new AnonymousIdentityToken());
-
             return Client;
         }
 
@@ -239,10 +232,10 @@ namespace iml6yu.DataReceive.OPCUA
             return Task.Run(() =>
             {
                 //按组分
-                Parallel.ForEach(readNodes.Values, item =>
+                Parallel.ForEachAsync(readNodes.Values, (item, groupToken) =>
                 {
                     //按时间间隔分
-                    Parallel.ForEach(item, async kv =>
+                    Parallel.ForEachAsync(item, async (kv, intervalToken) =>
                     {
                         while (!token.IsCancellationRequested)
                         {
@@ -268,16 +261,18 @@ namespace iml6yu.DataReceive.OPCUA
                                 }
                                 if (token.IsCancellationRequested)
                                     return;
-                                await Task.Delay(kv.Key);
                             }
                             catch (Exception ex)
                             {
                                 Logger.LogError(ex, $"{Option.ReceiverName}({Option.OriginHost}) OPCUA  读取错误 Read Error:{ex.Message}");
-                                await Task.Delay(kv.Key);
                             }
-
+                            finally
+                            {
+                                await Task.Delay(kv.Key == 0 ? 500 : kv.Key);
+                            } 
                         }
                     });
+                    return ValueTask.CompletedTask;
                 });
             }, token);
         }
@@ -332,5 +327,6 @@ namespace iml6yu.DataReceive.OPCUA
                 return DataResult<DataReceiveContract>.Failed(ResultType.Failed, ex.Message, ex);
             }
         }
+         
     }
 }

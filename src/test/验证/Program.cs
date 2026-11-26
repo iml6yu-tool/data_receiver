@@ -9,7 +9,7 @@ namespace 验证
         static void Main(string[] args)
         {
             Console.WriteLine("Hello, World!");
-             
+
             //Person person = new Person("aaa");
 
             //OperationA operationA = new OperationA();
@@ -22,17 +22,58 @@ namespace 验证
             //operationA.Msg();
             //operationB.Msg();
 
-            #region Test DeepCopy
-            var p = new Person("aaa") { Id = 1, Title = "ttt", Description = "ddd", F1 = 1 };
-            var cp = p.DeepCopy();
-            cp.Name = "bbb";
-            Console.WriteLine($"p.Name={p.Name},cp.Name={cp.Name}");
-            var a = "xxx";
-            var b = a;
-            b = "yyy";
-            Console.WriteLine($"a={a},b={b}");
-            #endregion
-            Console.ReadLine();
+            //#region Test DeepCopy
+            //var p = new Person("aaa") { Id = 1, Title = "ttt", Description = "ddd", F1 = 1 };
+            //var cp = p.DeepCopy();
+            //cp.Name = "bbb";
+            //Console.WriteLine($"p.Name={p.Name},cp.Name={cp.Name}");
+            //var a = "xxx";
+            //var b = a;
+            //b = "yyy";
+            //Console.WriteLine($"a={a},b={b}");
+            //#endregion
+            var task = TestTaskState();
+            Console.WriteLine(task.Status);
+            while (Console.ReadLine() != "q")
+            {
+                Console.WriteLine(task.Status);
+            }
+        }
+
+        public static Task TestTaskState()
+        {
+            return Task.Run(  () =>
+            {
+                //for (var index = 0; index < 1; index++)
+                //{
+                //    Task.Run(() =>
+                //     {
+                //         int i = 0;
+                //         while (i < 10)
+                //         {
+                //             Console.WriteLine($"TaskState={Task.CurrentId}  {Task.CurrentId}  {Task.CurrentId}");
+                //             Thread.Sleep(1000);
+                //             i++;
+                //         }
+                //     }).GetAwaiter().GetResult();
+                //}
+                  Parallel.ForEachAsync([1], async (a, b) =>
+                  {
+                      Console.WriteLine($"1111111111111111111");
+                      Parallel.ForEachAsync([1], async (a, b) =>
+                      {
+                          int i = 0;
+                          while (i < 10)
+                          {
+                              Console.WriteLine($"TaskState={Task.CurrentId}  {Task.CurrentId}  {Task.CurrentId}");
+                              Thread.Sleep(1000);
+                              i++;
+                          }
+                      }).GetAwaiter().GetResult();
+                      Console.WriteLine($"22222");
+                  }).GetAwaiter().GetResult();
+
+            });
         }
     }
 }
@@ -111,4 +152,3 @@ public class OperationA
         }
     }
 }
- 

@@ -292,7 +292,7 @@ namespace S7.Net
             {
                 //验证pdu数据过多后进行重新整理变量尝试读取
                 var reDataItems = ReBuilderDataItems(dataItems);
-                await Parallel.ForEachAsync(reDataItems, async (dic, token) =>
+                foreach (var dic in reDataItems)
                 {
                     foreach (var item in dic.Keys)
                     {
@@ -308,7 +308,8 @@ namespace S7.Net
                             }
                         }
                     }
-                });
+                }
+
 #if DEBUG
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(dataItems.Select(t => new { Address = $"{t.DataType.ToString()}{t.DB}.{t.VarType.ToString()}{t.StartByteAdr}.{t.BitAdr}", Value = t.Value })));
